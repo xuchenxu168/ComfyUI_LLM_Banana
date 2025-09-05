@@ -1,0 +1,477 @@
+{
+  "id": "8962dbcb-0002-486f-a9ba-277cbb33f650",
+  "revision": 0,
+  "last_node_id": 10,
+  "last_link_id": 15,
+  "nodes": [
+    {
+      "id": 6,
+      "type": "KenChenLLMGeminiBananaMultimodalBananaNode",
+      "pos": [
+        900,
+        100
+      ],
+      "size": [
+        400,
+        642
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 2
+        },
+        {
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMultimodalBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "",
+        "Analyze this image in detail. Describe the composition, colors, lighting, and artistic style. Also suggest improvements or variations.",
+        "gemini-1.5-flash",
+        "http://127.0.0.1:None",
+        0.9,
+        0.9,
+        40,
+        2048,
+        0,
+        "Natural Language",
+        true,
+        true,
+        true,
+        "smart",
+        "255,255,255",
+        1,
+        0.95,
+        40,
+        8192,
+        0,
+        "randomize",
+        ""
+      ]
+    },
+    {
+      "id": 7,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1350,
+        100
+      ],
+      "size": [
+        400,
+        300
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "f2838ed5e59de4d73cde5c98354b87a8d3200190",
+        "Node name for S&R": "ShowText|pysssss",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 1,
+      "type": "KenChenLLMGeminiBananaTextToImageBananaNode",
+      "pos": [
+        -610.0303955078125,
+        65.69315338134766
+      ],
+      "size": [
+        400,
+        690
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "generation_text",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "generated_image",
+          "type": "IMAGE",
+          "slot_index": 1,
+          "links": [
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaTextToImageBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "",
+        "A majestic mountain landscape at sunset with a crystal clear lake reflecting the golden light, photorealistic, highly detailed, 8K resolution",
+        "gemini-2.0-flash-exp-image-generation",
+        "http://127.0.0.1:None",
+        0.9,
+        0.9,
+        40,
+        2048,
+        42,
+        "Auto Settings",
+        "Auto Select",
+        true,
+        true,
+        true,
+        "smart",
+        "255,255,255",
+        1,
+        0.95,
+        40,
+        8192,
+        0,
+        "randomize",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 4,
+      "type": "KenChenLLMGeminiBananaImageToImageBananaNode",
+      "pos": [
+        60.18980026245117,
+        38.30376052856445
+      ],
+      "size": [
+        400,
+        690
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "generation_text",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "generated_image",
+          "type": "IMAGE",
+          "slot_index": 1,
+          "links": [
+            4
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaImageToImageBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "",
+        "Transform this landscape into a winter scene with snow-covered mountains and frozen lake, maintaining the same composition",
+        "gemini-2.0-flash-exp-image-generation",
+        "http://127.0.0.1:None",
+        0.9,
+        0.9,
+        40,
+        2048,
+        84,
+        "Auto Settings",
+        "Auto Select",
+        true,
+        true,
+        true,
+        "smart",
+        "255,255,255",
+        1,
+        0.95,
+        40,
+        8192,
+        0,
+        "randomize",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 2,
+      "type": "PreviewImage",
+      "pos": [
+        621.7501220703125,
+        74.48546600341797
+      ],
+      "size": [
+        210,
+        246
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.57",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 3,
+      "type": "ShowText|pysssss",
+      "pos": [
+        -150.2717742919922,
+        28.31862449645996
+      ],
+      "size": [
+        155.12599182128906,
+        328.1431884765625
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "f2838ed5e59de4d73cde5c98354b87a8d3200190",
+        "Node name for S&R": "ShowText|pysssss",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 5,
+      "type": "PreviewImage",
+      "pos": [
+        581.5170288085938,
+        450.96649169921875
+      ],
+      "size": [
+        210,
+        246
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 4
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.57",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": []
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      3,
+      0,
+      "STRING"
+    ],
+    [
+      2,
+      1,
+      1,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      4,
+      0,
+      null,
+      null,
+      "STRING"
+    ],
+    [
+      4,
+      4,
+      1,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      6,
+      0,
+      7,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Gemini Banana Text-to-Image",
+      "bounding": [
+        -626.3561401367188,
+        -17.98833656311035,
+        450,
+        984.3399047851562
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Gemini Banana Image-to-Image",
+      "bounding": [
+        40.024627685546875,
+        -39.59737014770508,
+        474.3377990722656,
+        997.0479125976562
+      ],
+      "color": "#8A2BE2",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Gemini Banana Multimodal Analysis",
+      "bounding": [
+        880,
+        50,
+        444.432861328125,
+        871.9930419921875
+      ],
+      "color": "#228B22",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "ds": {
+      "scale": 0.5793883535819029,
+      "offset": [
+        1540.6945952129342,
+        455.8284880382401
+      ]
+    },
+    "frontendVersion": "1.25.11",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

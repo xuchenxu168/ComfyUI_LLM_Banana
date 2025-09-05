@@ -1,0 +1,1242 @@
+{
+  "id": "529ca37b-4324-4b72-9705-f664d490327f",
+  "revision": 0,
+  "last_node_id": 19,
+  "last_link_id": 16,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "easy showAnything",
+      "pos": [
+        -1612.9046630859375,
+        -2044.049072265625
+      ],
+      "size": [
+        328.9773864746094,
+        498.44354248046875
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "Here is a portrait of the woman from the left, now dressed in the outfit from the right and walking on the street, using the specified camera and lighting settings, and the exact dimensions you requested."
+      ]
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        -3093.536865234375,
+        -2094.884033203125
+      ],
+      "size": [
+        420.5924987792969,
+        772.603759765625
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "c6f3d4a36ad55892095d684fcf851c104633b50c919efbf4eb82502d572881fc.png",
+        "image"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [
+        -3675.84521484375,
+        -2091.777099609375
+      ],
+      "size": [
+        438.6556701660156,
+        793.6774291992188
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "微信图片_20250617111905.png",
+        "image"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "easy showAnything",
+      "pos": [
+        -2571.893310546875,
+        -1430.9560546875
+      ],
+      "size": [
+        280.8206481933594,
+        245.33132934570312
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "1148fbe5fe0276780c56f0adfa22b96d5200d832",
+        "Node name for S&R": "easy showAnything"
+      },
+      "widgets_values": [
+        "The woman on the left puts on the right and walks on the street."
+      ]
+    },
+    {
+      "id": 5,
+      "type": "ImageConcanate",
+      "pos": [
+        -2566.4912109375,
+        -2094.378173828125
+      ],
+      "size": [
+        283.3724365234375,
+        102
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像_1",
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 3
+        },
+        {
+          "label": "图像_2",
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "ba9153cb06fc77bfd86c36835f1817482e8328a0",
+        "Node name for S&R": "ImageConcanate",
+        "ue_properties": {
+          "version": "7.0.1",
+          "widget_ue_connectable": {}
+        }
+      },
+      "widgets_values": [
+        "left",
+        true
+      ]
+    },
+    {
+      "id": 6,
+      "type": "GeminiBananaTextTranslation",
+      "pos": [
+        -2610.661376953125,
+        -1936.71435546875
+      ],
+      "size": [
+        372.1278076171875,
+        452
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "translated_text",
+          "type": "STRING",
+          "links": [
+            2,
+            6
+          ]
+        },
+        {
+          "name": "detected_language",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "translation_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "GeminiBananaTextTranslation",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "text": true,
+            "translation_engine": true,
+            "source_language": true,
+            "target_language": true,
+            "quality_mode": true,
+            "preserve_formatting": true,
+            "context_aware": true,
+            "temperature": true,
+            "max_output_tokens": true,
+            "context_info": true,
+            "custom_instructions": true
+          },
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "",
+        "左边的女人穿上右边的衣服，走在大街上，",
+        "google-translate",
+        "zh-CN",
+        "en",
+        "high",
+        true,
+        true,
+        0.3,
+        4096,
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 7,
+      "type": "KenChenLLMGeminiBananaImageToImageBananaNode",
+      "pos": [
+        -2099.774169921875,
+        -2075.030029296875
+      ],
+      "size": [
+        400,
+        1090
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 5
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "generation_text",
+          "type": "STRING",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "generated_image",
+          "type": "IMAGE",
+          "links": [
+            9
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaImageToImageBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "proxy": true,
+            "size": true,
+            "quality": true,
+            "style": true,
+            "detail_level": true,
+            "camera_control": true,
+            "lighting_control": true,
+            "template_selection": true,
+            "quality_enhancement": true,
+            "enhance_quality": true,
+            "smart_resize": true,
+            "fill_color": true,
+            "temperature": true,
+            "top_p": true,
+            "top_k": true,
+            "max_output_tokens": true,
+            "seed": true,
+            "custom_size": true,
+            "custom_additions": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "",
+        "左边的女人穿上右边的衣服",
+        "gemini-2.5-flash-image-preview",
+        "http://127.0.0.1:None",
+        "1024x1792",
+        "standard",
+        "professional_portrait",
+        "Premium Quality",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        true,
+        true,
+        true,
+        "crop",
+        "255，255，255",
+        1,
+        0.9,
+        40,
+        8192,
+        118979532,
+        "randomize",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 8,
+      "type": "KenChenLLMGeminiBananaTextToImageBananaNode",
+      "pos": [
+        -3739.5205078125,
+        -3445.522216796875
+      ],
+      "size": [
+        400,
+        1090
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "generation_text",
+          "type": "STRING",
+          "links": [
+            7
+          ]
+        },
+        {
+          "name": "generated_image",
+          "type": "IMAGE",
+          "links": [
+            8
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaTextToImageBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "proxy": true,
+            "size": true,
+            "quality": true,
+            "style": true,
+            "detail_level": true,
+            "camera_control": true,
+            "lighting_control": true,
+            "template_selection": true,
+            "quality_enhancement": true,
+            "enhance_quality": true,
+            "smart_resize": true,
+            "fill_color": true,
+            "temperature": true,
+            "top_p": true,
+            "top_k": true,
+            "max_output_tokens": true,
+            "seed": true,
+            "custom_size": true,
+            "custom_instructions": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "",
+        "A beautiful landscape with mountains and lake",
+        "gemini-2.5-flash-image-preview",
+        "http://127.0.0.1:None",
+        "1024x1792",
+        "ultra_hd",
+        "vivid",
+        "Premium Quality",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        true,
+        true,
+        true,
+        "crop",
+        "255,255,255",
+        1,
+        0.9,
+        40,
+        8192,
+        261900659,
+        "randomize",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 9,
+      "type": "easy showAnything",
+      "pos": [
+        -2360.103759765625,
+        -3438.122802734375
+      ],
+      "size": [
+        328.9773864746094,
+        498.44354248046875
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "Absolutely! Here is your vivid, high-contrast landscape with mountains and a lake, rendered in a tall portrait composition with vibrant colors and dramatic lighting."
+      ]
+    },
+    {
+      "id": 10,
+      "type": "PreviewImage",
+      "pos": [
+        -3195.112060546875,
+        -3445.182861328125
+      ],
+      "size": [
+        663.9168090820312,
+        970.7136840820312
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 8
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": "PreviewImage",
+      "pos": [
+        -1187.5523681640625,
+        -2028.37548828125
+      ],
+      "size": [
+        708.8531494140625,
+        1039.2498779296875
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 9
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "LoadImage",
+      "pos": [
+        -3542.5234375,
+        -513.597900390625
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            11
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "640.png",
+        "image"
+      ]
+    },
+    {
+      "id": 13,
+      "type": "LoadImage",
+      "pos": [
+        -3159.33447265625,
+        -498.470947265625
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            12
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "4849861.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 14,
+      "type": "LoadImage",
+      "pos": [
+        -3531.50439453125,
+        -96.049072265625
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            13
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "output (5).png",
+        "image"
+      ]
+    },
+    {
+      "id": 15,
+      "type": "LoadImage",
+      "pos": [
+        -3133.463623046875,
+        -55.137691497802734
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "output (1) (1).jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 16,
+      "type": "GeminiBananaTextTranslation",
+      "pos": [
+        -2736.08251953125,
+        -576.96826171875
+      ],
+      "size": [
+        372.1278076171875,
+        452
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "translated_text",
+          "type": "STRING",
+          "links": [
+            10,
+            15
+          ]
+        },
+        {
+          "name": "detected_language",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "translation_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "GeminiBananaTextTranslation",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "text": true,
+            "translation_engine": true,
+            "source_language": true,
+            "target_language": true,
+            "quality_mode": true,
+            "preserve_formatting": true,
+            "context_aware": true,
+            "temperature": true,
+            "max_output_tokens": true,
+            "context_info": true,
+            "custom_instructions": true
+          },
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "",
+        "图1的女人穿着图2的衣服，走在大街上，戴着图3的手表，喝着图4的咖啡，，",
+        "google-translate",
+        "zh-CN",
+        "en",
+        "high",
+        true,
+        true,
+        0.3,
+        4096,
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 17,
+      "type": "easy showAnything",
+      "pos": [
+        -2765.142578125,
+        95.0845947265625
+      ],
+      "size": [
+        282.4229431152344,
+        143.05392456054688
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "1148fbe5fe0276780c56f0adfa22b96d5200d832",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "The woman in Figure 1 is wearing the clothes in Figure 2, walking on the street, wearing the watch in Figure 3, drinking the coffee in Figure 4,"
+      ]
+    },
+    {
+      "id": 18,
+      "type": "GeminiBananaMultiImageEdit",
+      "pos": [
+        -2202.076171875,
+        -567.4013671875
+      ],
+      "size": [
+        400,
+        1130
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 11
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 12
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 13
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 14
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 15
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            16
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "GeminiBananaMultiImageEdit",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "size": true,
+            "quality": true,
+            "style": true,
+            "detail_level": true,
+            "camera_control": true,
+            "lighting_control": true,
+            "template_selection": true,
+            "quality_enhancement": true,
+            "enhance_quality": true,
+            "smart_resize": true,
+            "fill_strategy": true,
+            "fill_color": true,
+            "temperature": true,
+            "top_p": true,
+            "top_k": true,
+            "max_output_tokens": true,
+            "seed": true,
+            "post_generation_control": true,
+            "custom_size": true,
+            "custom_additions": true
+          },
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "",
+        "请根据这些图片进行专业的图像编辑",
+        "gemini-2.5-flash-image-preview",
+        "1024x1792",
+        "hd",
+        "natural",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        true,
+        true,
+        true,
+        "smart",
+        "255,255,255",
+        1,
+        0.95,
+        40,
+        8192,
+        626633,
+        "randomize",
+        "randomize",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 19,
+      "type": "PreviewImage",
+      "pos": [
+        -1693.2386474609375,
+        -585.703125
+      ],
+      "size": [
+        1164.621337890625,
+        1335.496826171875
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 16
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      7,
+      0,
+      1,
+      0,
+      "*"
+    ],
+    [
+      2,
+      6,
+      0,
+      4,
+      0,
+      "*"
+    ],
+    [
+      3,
+      2,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      3,
+      0,
+      5,
+      1,
+      "IMAGE"
+    ],
+    [
+      5,
+      5,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      6,
+      0,
+      7,
+      1,
+      "STRING"
+    ],
+    [
+      7,
+      8,
+      0,
+      9,
+      0,
+      "*"
+    ],
+    [
+      8,
+      8,
+      1,
+      10,
+      0,
+      "IMAGE"
+    ],
+    [
+      9,
+      7,
+      1,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      10,
+      16,
+      0,
+      17,
+      0,
+      "*"
+    ],
+    [
+      11,
+      12,
+      0,
+      18,
+      0,
+      "IMAGE"
+    ],
+    [
+      12,
+      13,
+      0,
+      18,
+      1,
+      "IMAGE"
+    ],
+    [
+      13,
+      14,
+      0,
+      18,
+      2,
+      "IMAGE"
+    ],
+    [
+      14,
+      15,
+      0,
+      18,
+      3,
+      "IMAGE"
+    ],
+    [
+      15,
+      16,
+      0,
+      18,
+      4,
+      "STRING"
+    ],
+    [
+      16,
+      18,
+      0,
+      19,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Nano-Banana官方API单图编辑",
+      "bounding": [
+        -3747.2587890625,
+        -2183.029052734375,
+        3402.6904296875,
+        1404.9063720703125
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Nano-Banana官方API图像生成",
+      "bounding": [
+        -3776.56396484375,
+        -3556.839111328125,
+        1909.1722412109375,
+        1316.017822265625
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Nano-Banana官方API多图编辑",
+      "bounding": [
+        -3722.43505859375,
+        -731.291015625,
+        3275.1943359375,
+        1713.9583740234375
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "ds": {
+      "scale": 0.25401326852420286,
+      "offset": [
+        5248.979904307562,
+        3513.6460640045934
+      ]
+    },
+    "frontendVersion": "1.25.11",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

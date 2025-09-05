@@ -1,0 +1,1461 @@
+{
+  "id": "72b89537-607d-4da4-a1d6-9f5486f27886",
+  "revision": 0,
+  "last_node_id": 24,
+  "last_link_id": 21,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [
+        967.128173828125,
+        -1647.5301513671875
+      ],
+      "size": [
+        438.6556701660156,
+        793.6774291992188
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            6
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "926513f4cc97c78f5efbbcad14614510e76a867dfeeef-Ubf42O_fw1200.png",
+        "image"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "PreviewImage",
+      "pos": [
+        2985.900634765625,
+        155.99972534179688
+      ],
+      "size": [
+        584.1869506835938,
+        762.8710327148438
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "easy showAnything",
+      "pos": [
+        2667.908447265625,
+        418.7190856933594
+      ],
+      "size": [
+        210,
+        281.41961669921875
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "生成中..\nGenerate a natural, realistic image of The woman in Figure 1 is wearing the clothes in Figure 2, walking on the street, wearing the watch in Figure 3, drinking the coffee in Figure 4, Use natural lighting and authentic colors for a lifelike appearance. Camera Settings: Natural color balance and realistic exposure. Lighting: Soft, natural lighting with subtle shadows. Focus on realism and natural beauty. Generate in ultra-high definition with exceptional detail. IMPORTANT: Generate image in exact dimensions 1024x1792 pixels with tall portrait composition with vertical emphasis, ensure the main subject fits completely within the frame. Ensure the main subject is properly centered and fully visible within the 1024x1792 frame. Do not crop or cut off any important parts of the subject. CRITICAL: You MUST return an actual generated image, not just a description. Use your image generation capabilities to create the visual content. Detail Level: Professional Detail - Include professional-level detail and refined elements. Quality Enhancement: ENABLED - Apply advanced image quality improvements including sharpening, contrast enhancement, and color optimization. Apply enhanced image quality processing for professional output. Use intelligent resizing with proper padding and composition. Generate in high definition with professional detail.  \n ![image1](https://webstatic.aiproxy.vip/output/20250905/34b24958-0c32-468b-bdaf-c2ec26d28ecf.png) [下载1](https://webstatic.aiproxy.vip/output/20250905/34b24958-0c32-468b-bdaf-c2ec26d28ecf.png)  \n"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "LoadImage",
+      "pos": [
+        1147.728271484375,
+        27.715307235717773
+      ],
+      "size": [
+        270,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            16
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "pasted/image (36).png",
+        "image"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "LoadImage",
+      "pos": [
+        1452.9071044921875,
+        27.311010360717773
+      ],
+      "size": [
+        270,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            17
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "4849861.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "GoogleTranslateTextNode",
+      "pos": [
+        1770.818359375,
+        168.92941284179688
+      ],
+      "size": [
+        252.7609100341797,
+        309.6268615722656
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            20
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui_custom_nodes_alekpet",
+        "ver": "e11d490f7edbe52816fca2f416166af2a0be5064",
+        "Node name for S&R": "GoogleTranslateTextNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "from_translate": true,
+            "to_translate": true,
+            "manual_translate": true,
+            "text": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "auto",
+        "en",
+        false,
+        "Manual Trasnlate",
+        "图1的女人穿着图2的衣服，走在大街上，戴着图3的手表，喝着图4的咖啡，"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "LoadImage",
+      "pos": [
+        1134.2584228515625,
+        432.4519958496094
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            18
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "output (5).png",
+        "image"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "LoadImage",
+      "pos": [
+        1588.4534912109375,
+        545.1468505859375
+      ],
+      "size": [
+        270,
+        314.00006103515625
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            19
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "output (1) (1).jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "PreviewImage",
+      "pos": [
+        3298.588134765625,
+        -1602.8883056640625
+      ],
+      "size": [
+        582.6949462890625,
+        849.1848754882812
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "easy showAnything",
+      "pos": [
+        2844.04345703125,
+        -1591.5948486328125
+      ],
+      "size": [
+        332.79632568359375,
+        486.2960510253906
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "生成中..\nCreate a professional portrait photograph of The woman on the left is holding the coffee on the right and walking down the street Use studio lighting, professional composition, and high-end camera settings. Camera Settings: 85mm lens, f/2.8 aperture, professional color grading. Lighting: Three-point lighting setup with soft key light and fill. Achieve magazine-quality portrait photography. Generate in ultra-high definition with exceptional detail and professional quality. Generate image optimized for Original size dimensions. CRITICAL: You MUST return an actual generated image, not just a description. Use your image generation capabilities to create the visual content. Detail Level: Premium Quality - Achieve premium quality with exceptional attention to detail. Quality Enhancement: ENABLED - Apply advanced image quality improvements including sharpening, contrast enhancement, and color optimization. Apply enhanced image quality processing for professional output. Use intelligent resizing with proper padding and composition. Generate in ultra-high definition with exceptional detail and professional quality.  \n ![image1](https://webstatic.aiproxy.vip/output/20250905/b862d7a5-d3df-4919-b2a8-e84486196d6e.png) [下载1](https://webstatic.aiproxy.vip/output/20250905/b862d7a5-d3df-4919-b2a8-e84486196d6e.png)  \n"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "LoadImage",
+      "pos": [
+        1528.9234619140625,
+        -1548.8546142578125
+      ],
+      "size": [
+        420.5924987792969,
+        772.603759765625
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            5
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "output (1) (1).jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "ImageConcanate",
+      "pos": [
+        1575.5198974609375,
+        -1697.9193115234375
+      ],
+      "size": [
+        283.3724365234375,
+        102
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像_1",
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 5
+        },
+        {
+          "label": "图像_2",
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            7,
+            21
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "ba9153cb06fc77bfd86c36835f1817482e8328a0",
+        "Node name for S&R": "ImageConcanate",
+        "ue_properties": {
+          "version": "7.0.1",
+          "widget_ue_connectable": {}
+        }
+      },
+      "widgets_values": [
+        "left",
+        true
+      ]
+    },
+    {
+      "id": 13,
+      "type": "PreviewImage",
+      "pos": [
+        1407.700927734375,
+        -712.3455810546875
+      ],
+      "size": [
+        556.7953491210938,
+        536.9500732421875
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 7
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "easy imageToBase64",
+      "pos": [
+        1020.5946044921875,
+        -3214.163330078125
+      ],
+      "size": [
+        140,
+        26
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            10
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy imageToBase64",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "LoadImage",
+      "pos": [
+        976.2213134765625,
+        -2989.132080078125
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            8
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.54",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "282743066-90cd60fce18d5bc36937961fd95107ec1383f5f9ab3e281001fb082bbe339af5.png",
+        "image"
+      ]
+    },
+    {
+      "id": 16,
+      "type": "easy showAnything",
+      "pos": [
+        1267.9852294921875,
+        -2486.975341796875
+      ],
+      "size": [
+        409.3641357421875,
+        316.7236022949219
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      },
+      "widgets_values": [
+        "一条蜿蜒的水晶溪流穿越未知维度的高山谷地，溪水中流淌着星光般的能量粒子，两岸散布着发光的异界野花和古老的符文石块。巍峨的山峦层叠而起，云雾缭绕，天空中悬浮着神秘的光柱直射而下。溪水缓缓流淌着，波光粼粼中闪烁着超自然的蓝紫色光芒，花朵随着能量波动轻柔摇摆，光束在山谷间缓慢扫射。采用广角镜头，低角度仰视拍摄，景深层次丰富，光线从画面深处向前景延伸，营造强烈的纵深感和引导线。壮阔、宏大、神秘、超凡脱俗、未来感。赛博朋克与奇幻结合的视觉风格，高饱和度色彩，强烈的光影对比，带有科幻电影般的史诗感和神秘的未来主义美学。"
+      ]
+    },
+    {
+      "id": 17,
+      "type": "Comfly_Prompt_Expand_From_Image",
+      "pos": [
+        1313.16015625,
+        -3249.059326171875
+      ],
+      "size": [
+        379.167724609375,
+        545
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "ref_image",
+          "type": "STRING",
+          "widget": {
+            "name": "ref_image"
+          },
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "expanded_prompt",
+          "type": "STRING",
+          "links": [
+            9,
+            15
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "Comfly_Prompt_Expand_From_Image",
+        "ue_properties": {
+          "version": "7.0.1",
+          "widget_ue_connectable": {}
+        }
+      },
+      "widgets_values": [
+        "Flux描述",
+        "",
+        "",
+        "",
+        "claude-sonnet-4-20250514-thinking",
+        "## 角色设定 (System Role):\n你是一个AI提示词专家，我需要你帮我根据参考图生成让精妙无比的提示词，要求：\n\n提示词=主体(主体描述)+场景(场景描述)+运动(运动描述)+镜头语言+氛围词+风格化主体描述:主体描述是对主体外观特征细节的描述，可通过形容词或短句列举，例如“一位身着少数民族服饰的黑发苗族少女”、\"一位来自异世界的飞天仙子，身着破旧却华丽的服饰，背后展开一对由废墟碎片构成的奇异翅膀”。场景描述:场景描述是对主体所处环境特征细节的描述，可通过形容词或短句列举运动描述:运动描述是对运动特征细节的描述，包含运动的幅度、速率和运动作用的效果，例如“猛烈地摇摆”、\"缓慢地移动\"、\"打碎了玻璃\"。镜头语言:镜头语言包含景别、视角、镜头、运镜等，常见镜头语言详见下方提示词词典。\n氛围词:氛围词是对预期画面氛围的描述，例如“梦幻\"、“孤独”、“宏伟\"，常见氛围词详见下方提示词词典。\n风格化:风格化是对画面风格语言的描述，例如“赛博朋克”、\"勾线插画”、\"废土风格\"，常见风格化详见下方提示词词典。\n\n参考案例如下：\n```\n一位身穿轻盈白色连衣裙的长发美女，肤色白皙，眼神温柔，微笑着，神情宁静。在金色的沙滩上，阳光明媚，海浪轻拍岸边，远处是碧蓝的大海与无边的天空交接，海风轻拂。她轻轻地在沙滩上步行，步伐优雅而缓慢，时而低头踩踏着海水，留下清晰的脚印，时而抬起头看向远方，微风吹动她的长发。镜头采用中景，稍微偏低的视角，以侧面跟随镜头运作，画面随她的步伐缓缓推进。镜头会偶尔拉近，捕捉她面部的柔和表情和细微的动作变化。宁静、柔和、浪漫、梦幻。清新自然的摄影风格，带有暖色调，画面略带柔焦效果，给人一种温暖的海边度假感。\n```\n\n请为我按照要求为图像生成高质量，十足创意，吸暴眼球，文字要求200字以内，除了提示词，不要有任何其他的内容，只有提示词，\n",
+        "壮阔，宏大，神秘，气势非宏，未来神秘感，",
+        "",
+        0.7,
+        782291330164001,
+        "randomize",
+        0.8000000000000002,
+        400,
+        ""
+      ]
+    },
+    {
+      "id": 18,
+      "type": "PreviewImage",
+      "pos": [
+        2301.79931640625,
+        -3399.346923828125
+      ],
+      "size": [
+        525.3892822265625,
+        705.6387329101562
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 11
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "type": "ShowText|pysssss",
+      "pos": [
+        2300.4306640625,
+        -2493.806396484375
+      ],
+      "size": [
+        465.01617431640625,
+        253.4031219482422
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "f2838ed5e59de4d73cde5c98354b87a8d3200190",
+        "Node name for S&R": "ShowText|pysssss",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      }
+    },
+    {
+      "id": 20,
+      "type": "KenChenLLMGeminiBananaMirrorImageEditNode",
+      "pos": [
+        2904.553466796875,
+        -3390.944091796875
+      ],
+      "size": [
+        449.728515625,
+        1148
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMirrorImageEditNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_url": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "temperature": true,
+            "top_p": true,
+            "max_output_tokens": true
+          },
+          "version": "7.0.1"
+        },
+        "xiser_content_color": "#8f5c1e"
+      },
+      "widgets_values": [
+        "T8的贞贞的AI工坊",
+        "",
+        "在传入的图中加一个未来科幻机甲巨人，端着未见过的梦幻冲锋伧，猛烈扫射，场面非宏，",
+        "nano-banana [Comfly-T8]",
+        "http://127.0.0.1:None",
+        "1024x1792",
+        "ultra_hd",
+        "professional_portrait",
+        "Premium Quality",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        "Auto Select",
+        162947119,
+        true,
+        "255,255,255",
+        1,
+        0.9,
+        40,
+        8192,
+        180982490,
+        "randomize",
+        "",
+        "nano-banana",
+        ""
+      ],
+      "bgcolor": "#8f5c1e"
+    },
+    {
+      "id": 21,
+      "type": "PreviewImage",
+      "pos": [
+        3424.056640625,
+        -3358.550048828125
+      ],
+      "size": [
+        417.8271484375,
+        791.5245361328125
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 14
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        }
+      }
+    },
+    {
+      "id": 22,
+      "type": "KenChenLLMGeminiBananaMirrorImageGenNode",
+      "pos": [
+        1757.2474365234375,
+        -3409.205810546875
+      ],
+      "size": [
+        438.5409851074219,
+        1289.3729248046875
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 15
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            11,
+            13
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            12
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMirrorImageGenNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_url": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "temperature": true,
+            "top_p": true,
+            "max_output_tokens": true
+          },
+          "version": "7.0.1"
+        },
+        "xiser_content_color": "#8f5c1e"
+      },
+      "widgets_values": [
+        "comfly",
+        "",
+        "一条蜿蜒如银河的神秘溪流，水面映射着异界般的金色光辉，溪床散布着古老的巨石，仿佛远古文明的遗迹。在雄伟的群山峡谷中，层峦叠嶂直插云霄，密布的暗绿针叶林如沉睡的巨兽，山谷深处隐藏着未知的秘密。野花星罗棋布，散发着超凡脱俗的光晕。溪水缓缓流淌着，发出空灵的音律，偶尔激起神秘的水花，阳光如天外之光穿透云层，在山谷中投下超现实的光束。采用超广角全景镜头，俯瞰式高空视角，缓慢推拉变焦，营造出时空穿越般的运镜效果。壮阔、神秘、超凡、永恒、未来感。科幻现实主义风格，融合赛博朋克色调，HDR超高动态范围，带有量子光效和全息质感。",
+        "gemini-2.5-flash-image-preview",
+        "http://127.0.0.1:None",
+        "1024x1792",
+        "ultra_hd",
+        "professional_portrait",
+        "Premium Quality",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        "Auto Select",
+        220934881,
+        "randomize",
+        "255,255,255",
+        1,
+        0.9,
+        40,
+        8192,
+        149739633,
+        "randomize",
+        "",
+        "nano-banana",
+        ""
+      ],
+      "color": "#233",
+      "bgcolor": "#8f5c1e"
+    },
+    {
+      "id": 23,
+      "type": "GeminiBananaMirrorMultiImageEdit",
+      "pos": [
+        2078.70703125,
+        85.6415786743164
+      ],
+      "size": [
+        476.3331604003906,
+        1451.55859375
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 16
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 17
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 18
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 19
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 20
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "GeminiBananaMirrorMultiImageEdit",
+        "xiser_content_color": "#8f5c1e",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "mirror_site": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "proxy": true,
+            "size": true,
+            "quality": true,
+            "style": true,
+            "detail_level": true,
+            "camera_control": true,
+            "lighting_control": true,
+            "template_selection": true,
+            "quality_enhancement": true,
+            "enhance_quality": true,
+            "smart_resize": true,
+            "fill_color": true,
+            "temperature": true,
+            "top_p": true,
+            "top_k": true,
+            "max_output_tokens": true,
+            "seed": true,
+            "custom_size": true,
+            "api4gpt_service": true,
+            "custom_additions": true
+          },
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "T8的贞贞的AI工坊",
+        "",
+        "请根据这些图片进行专业的图像编辑",
+        "nano-banana [Comfly-T8]",
+        "http://127.0.0.1:None",
+        "1024x1792",
+        "hd",
+        "natural",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        true,
+        true,
+        true,
+        "255,255,255",
+        1,
+        0.95,
+        40,
+        8192,
+        469687,
+        "randomize",
+        "",
+        "nano-banana",
+        ""
+      ],
+      "bgcolor": "#8f5c1e"
+    },
+    {
+      "id": 24,
+      "type": "KenChenLLMGeminiBananaMirrorImageEditNode",
+      "pos": [
+        2165.704345703125,
+        -1607.1746826171875
+      ],
+      "size": [
+        531.3509521484375,
+        1206.3287353515625
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 21
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            4
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMirrorImageEditNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_url": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "temperature": true,
+            "top_p": true,
+            "max_output_tokens": true
+          },
+          "version": "7.0.1"
+        },
+        "xiser_content_color": "#8f5c1e"
+      },
+      "widgets_values": [
+        "T8的贞贞的AI工坊",
+        "",
+        "The woman on the left is holding the coffee on the right and walking down the street",
+        "nano-banana [Comfly-T8]",
+        "http://127.0.0.1:None",
+        "Original size",
+        "ultra_hd",
+        "professional_portrait",
+        "Premium Quality",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        "Auto Select",
+        162294930,
+        "255,255,255",
+        "255,255,255",
+        1,
+        1,
+        40,
+        8192,
+        126430206,
+        "randomize",
+        "",
+        "nano-banana",
+        ""
+      ],
+      "bgcolor": "#8f5c1e"
+    }
+  ],
+  "links": [
+    [
+      1,
+      23,
+      0,
+      2,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      23,
+      1,
+      3,
+      0,
+      "*"
+    ],
+    [
+      3,
+      24,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      24,
+      1,
+      10,
+      0,
+      "*"
+    ],
+    [
+      5,
+      11,
+      0,
+      12,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      1,
+      0,
+      12,
+      1,
+      "IMAGE"
+    ],
+    [
+      7,
+      12,
+      0,
+      13,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      15,
+      0,
+      14,
+      0,
+      "IMAGE"
+    ],
+    [
+      9,
+      17,
+      0,
+      16,
+      0,
+      "*"
+    ],
+    [
+      10,
+      14,
+      0,
+      17,
+      0,
+      "STRING"
+    ],
+    [
+      11,
+      22,
+      0,
+      18,
+      0,
+      "IMAGE"
+    ],
+    [
+      12,
+      22,
+      1,
+      19,
+      0,
+      "STRING"
+    ],
+    [
+      13,
+      22,
+      0,
+      20,
+      0,
+      "IMAGE"
+    ],
+    [
+      14,
+      20,
+      0,
+      21,
+      0,
+      "IMAGE"
+    ],
+    [
+      15,
+      17,
+      0,
+      22,
+      0,
+      "STRING"
+    ],
+    [
+      16,
+      4,
+      0,
+      23,
+      0,
+      "IMAGE"
+    ],
+    [
+      17,
+      5,
+      0,
+      23,
+      1,
+      "IMAGE"
+    ],
+    [
+      18,
+      7,
+      0,
+      23,
+      2,
+      "IMAGE"
+    ],
+    [
+      19,
+      8,
+      0,
+      23,
+      3,
+      "IMAGE"
+    ],
+    [
+      20,
+      6,
+      0,
+      23,
+      4,
+      "STRING"
+    ],
+    [
+      21,
+      12,
+      0,
+      24,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "镜像站Nano-Banana API调用",
+      "bounding": [
+        935.2805786132812,
+        -3524.997802734375,
+        3262.342529296875,
+        1645.52197265625
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "镜像站单图编辑API调用",
+      "bounding": [
+        940.54736328125,
+        -1806.9010009765625,
+        3439.297607421875,
+        1694.306640625
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "镜像多图API调用",
+      "bounding": [
+        945.7942504882812,
+        -60.20681381225586,
+        3460.524169921875,
+        1801.3446044921875
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "ds": {
+      "scale": 0.14641000000000048,
+      "offset": [
+        3482.8409933296475,
+        5770.161139730765
+      ]
+    },
+    "frontendVersion": "1.25.11",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}
