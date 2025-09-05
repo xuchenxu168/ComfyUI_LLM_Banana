@@ -1,0 +1,11 @@
+zhipuai
+transformers
+torchvision
+tqdm
+Pillow
+numpy
+google-genai
+pydub
+scipy
+httpx
+openai

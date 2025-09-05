@@ -1,0 +1,255 @@
+{
+    "api_key": "",
+    "multimodal_api_key": "",
+    "base_url": "https://generativelanguage.googleapis.com",
+    "proxy": "None",
+    "default_model": {
+        "text_gen": "gemini-2.0-flash-lite",
+        "multimodal": "gemini-2.5-pro-exp-03-25",
+        "image_gen": "gemini-2.5-flash-image-preview",
+        "image_edit": "gemini-2.5-flash-image-preview"
+    },
+    "default_params": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 40,
+        "max_output_tokens": 8192,
+        "seed": 0,
+        "gen_control": "randomize"
+    },
+    "retry_settings": {
+        "max_retries": 5,
+        "base_delay": 2,
+        "max_delay": 90,
+        "timeout": 120
+    },
+    "mirror_sites": {
+        "nano-banana官方": {
+            "url": "https://generativelanguage.googleapis.com",
+            "api_key": "",
+            "api_format": "gemini",
+            "models": [
+                "gemini-2.0-flash-lite",
+                "gemini-1.5-pro",
+                "gemini-1.5-flash-8b",
+                "gemini-2.5-pro-exp-03-25",
+                "gemini-2.5-flash-preview-04-17",
+                "gemini-2.5-pro-preview-05-06",
+                "gemini-2.0-flash",
+                "gemini-1.5-flash",
+                "gemini-2.0-flash-exp-image-generation",
+                "gemini-2.5-flash-image-preview",
+                "gemini-2.5-flash-image-hd",
+                "gemini-2.0-flash-preview-image-generation"
+            ],
+            "description": "Google Gemini 官方API，支持完整的Gemini模型生态，提供最佳性能和稳定性。✅ 已集成nano-banana官方调用方式，优先使用google.genai库，失败时自动回退到REST API"
+        },
+        "comfly": {
+            "url": "https://ai.comfly.chat/v1",
+            "api_key": ""
+        },
+        "T8的贞贞的AI工坊": {
+            "url": "https://ai.t8star.cn",
+            "api_key": "",
+            "api_format": "openai",
+            "models": ["gemini-2.5-flash-image-preview"],
+            "description": "T8贞贞的AI工坊镜像站，支持Gemini 2.5 Flash Image Preview模型，使用OpenAI兼容的API格式"
+        },
+        "API4GPT": {
+            "url": "https://www.api4gpt.com",
+            "api_key": "",
+            "api_format": "gemini",
+            "models": ["gemini-2.5-flash-image-preview", "gemini-2.5-flash-image-hd", "gemini-2.5-flash-image-preview-hd"],
+            "description": "API4GPT镜像站，支持直接调用Gemini模型（经济方案）和多种图像服务"
+        },
+        "OpenRouter": {
+            "url": "https://openrouter.ai/api/v1",
+            "api_key": "",
+            "api_format": "openrouter",
+            "models": ["gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation", "google/gemini-2.5-flash-image-preview:free", "google/gemini-2.5-flash-image-preview"],
+            "description": "OpenRouter镜像站，支持多种AI模型和图像生成服务"
+        },
+        "OpenAI": {
+            "url": "https://api.openai.com/v1",
+            "api_key": "",
+            "api_format": "openai",
+            "models": ["gpt-4o-image", "gpt-4-vision-preview"],
+            "description": "OpenAI 官方API，使用OpenAI兼容的chat/completions格式"
+        },
+        "custom": {
+            "url": "https://your-custom-mirror.com",
+            "api_key": ""
+        }
+    },
+    "openai_mirror_settings": {
+        "api_key": "",
+        "default_model": "gpt-4o-image",
+        "temperature": 0.7,
+        "max_tokens": 4096
+    },
+    "safety_settings": {
+        "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_NONE",
+        "HARM_CATEGORY_HATE_SPEECH": "BLOCK_NONE", 
+        "HARM_CATEGORY_HARASSMENT": "BLOCK_NONE",
+        "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_NONE"
+    },
+    "models": {
+        "text_models": [
+            "gemini-2.0-flash-lite",
+            "gemini-1.5-pro",
+            "gemini-1.5-flash-8b"
+        ],
+        "multimodal_models": [
+            "gemini-2.5-pro-exp-03-25",
+            "gemini-2.5-flash-preview-04-17",
+            "gemini-2.5-pro-preview-05-06",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+            "gemini-2.0-flash-exp-image-generation"
+        ],
+        "image_gen_models": [
+            "gemini-2.5-flash-image-preview",
+            "gemini-2.0-flash"
+        ],
+        "image_edit_models": [
+            "gemini-2.5-flash-image-preview",
+            "gemini-2.0-flash"
+        ],
+        "enhanced_image_models": [
+            "gemini-2.5-flash-image-preview",
+            "gemini-2.5-flash-image-hd",
+            "gemini-2.0-flash-preview-image-generation"
+        ],
+        "openai_compatible_models": [
+            "gpt-4o-image",
+            "gpt-4-vision-preview",
+            "gemini-pro-vision",
+            "claude-3-opus",
+            "claude-3-sonnet"
+        ]
+    },
+    "features": {
+        "pure_text_to_image": true,
+        "image_to_image_editing": true,
+        "multimodal_understanding": true,
+        "smart_retry_mechanism": true,
+        "intelligent_error_handling": true,
+        "image_size_optimization": true,
+        "response_modalities_control": true,
+        "enhanced_logging": true,
+        "enhanced_image_quality": true,
+        "smart_resize_with_padding": true,
+        "custom_fill_colors": true,
+        "advanced_prompt_enhancement": true,
+        "style_templates": true,
+        "custom_instructions": true,
+        "detail_level_control": true,
+        "camera_control_system": true,
+        "lighting_control_system": true,
+        "template_selection_system": true,
+        "quality_enhancement_toggle": true
+    },
+    "image_settings": {
+        "max_image_size": 2048,
+        "default_format": "JPEG",
+        "quality": 95,
+        "supported_formats": ["JPEG", "PNG", "WEBP"],
+        "size_presets": [
+            "Original size",
+            "512x512",
+            "768x768", 
+            "1024x1024",
+            "1024x1792",
+            "1792x1024",
+            "1536x1536",
+            "2048x2048",
+            "1920x1080",
+            "2560x1440",
+            "3840x2160"
+        ],
+        "quality_presets": ["standard", "hd", "ultra_hd", "ai_enhanced", "ai_ultra"],
+        "style_presets": [
+            "vivid", "natural", "artistic", "cinematic", "photographic",
+            "professional_portrait", "cinematic_landscape", "product_photography",
+            "digital_concept_art", "anime_style_art", "photorealistic_render",
+            "classical_oil_painting", "watercolor_painting", "cyberpunk_future",
+            "vintage_film_photography", "architectural_photography", "gourmet_food_photography"
+        ],
+        "default_size": "1024x1024",
+        "default_quality": "hd",
+        "default_style": "natural",
+        "default_detail_level": "Professional Detail",
+        "default_camera_control": "Auto Select",
+        "default_lighting_control": "Auto Settings",
+        "default_template": "Auto Select"
+    },
+    "limits": {
+        "max_video_frames": 10,
+        "max_image_size": 4096,
+        "max_audio_duration": 300,
+        "max_prompt_length": 8000
+    },
+    "error_codes": {
+        "429": "Rate limit exceeded - using exponential backoff",
+        "500": "Server error - retrying with jitter",
+        "502": "Bad gateway - temporary service issue",
+        "503": "Service unavailable - server overloaded",
+        "504": "Gateway timeout - request took too long"
+    },
+    "pricing_info": {
+        "image_generation_cost_per_image": "$0.039",
+        "image_editing_cost_per_request": "$0.039", 
+        "tokens_per_image": 1290,
+        "cost_per_million_tokens": "$30.00"
+    },
+    "notes": {
+        "nano_banana": "完整的 Gemini Banana 实现，集成参考项目的所有功能模块",
+        "best_practices": [
+            "使用官方API获得最佳性能和稳定性",
+            "镜像站适用于网络受限环境",
+            "OpenAI格式兼容多种第三方服务",
+            "Enable response_modalities=['TEXT', 'IMAGE'] for image generation",
+            "Implement smart retry with exponential backoff for reliability",
+            "Use appropriate image formats and sizes for API optimization",
+            "Handle safety filters and quota limits gracefully",
+            "Provide detailed error messages for user guidance",
+            "🚀 超越参考项目的智能图像处理技术",
+            "✨ 高级图像质量增强和锐化",
+            "🎨 智能风格模板和提示词增强",
+            "🔧 智能尺寸调整和边缘扩展填充",
+            "📊 专业细节等级控制（Basic Detail → Masterpiece Level）",
+            "📷 专业相机控制（Wide-angle, Macro, Low-angle, High-angle等）",
+            "💡 专业灯光控制（Natural, Studio, Dramatic, Golden Hour等）",
+            "🎭 专业模板选择系统（Portrait, Landscape, Product等）"
+        ],
+        "all_features": [
+            "纯文字转图像生成（Gemini Banana原生）",
+            "图像到图像编辑和变换（Gemini Banana原生）", 
+            "多模态智能分析（Gemini Banana原生）",
+
+            "智能重试机制与错误分类处理",
+            "增强图像处理和格式优化",
+            "自动图像尺寸调整和质量控制",
+            "全面的日志记录和用户友好错误提示",
+            
+            "🚀 超越参考项目的增强功能：",
+            "✨ 智能图像质量增强（锐化、对比度、色彩优化）",
+            "🎨 高级风格模板系统（vivid, natural, artistic, cinematic, photographic）",
+            "🔧 智能尺寸调整和边缘扩展填充技术",
+            "🎯 自定义填充颜色和指令系统",
+            "📏 超高清分辨率支持（1920x1080, 2560x1440, 3840x2160）",
+            "💡 智能提示词增强和风格识别",
+            
+            "🚀 参考项目核心功能完全实现：",
+            "📊 细节等级控制：Basic Detail → Professional Detail → Premium Quality → Masterpiece Level",
+            "📷 相机控制：Wide-angle Lens, Macro Shot, Low-angle Perspective, High-angle Shot, Close-up Shot, Medium Shot",
+            "💡 灯光控制：Natural Light, Studio Lighting, Dramatic Shadows, Soft Glow, Golden Hour, Blue Hour",
+            "🎭 模板选择：Professional Portrait, Cinematic Landscape, Product Photography, Digital Concept Art, Anime Style Art, Photorealistic Render, Classical Oil Painting, Watercolor Painting, Cyberpunk Future, Vintage Film Photography, Architectural Photography, Gourmet Food Photography",
+            "✨ 质量增强开关：Enable Quality Enhancement",
+            "🎨 自定义添加：Custom Additions支持"
+        ],
+        "module_mapping": {
+            "gemini_banana.py": "原生Google GenAI API支持"
+        }
+    }
+}

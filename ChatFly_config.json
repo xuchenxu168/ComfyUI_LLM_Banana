@@ -1,0 +1,23 @@
+{
+    "api_key": "",
+    "base_url": "https://ai.comfly.chat/v1",
+    "model_base_urls": {
+        "gpt-4-v": "https://ai.comfly.chat/v1",
+        "gpt-4o-all": "https://ai.comfly.chat/v1",
+        "gpt-4-all": "https://ai.comfly.chat/v1",
+        "o1-pro-all": "https://ai.comfly.chat/v1",
+        "o1-all": "https://ai.comfly.chat/v1",
+        "o3-mini-all": "https://ai.comfly.chat/v1",
+        "o3-mini-high-all": "https://ai.comfly.chat/v1",
+        "gpt-4o-2024-05-13": "https://ai.comfly.chat/v1",
+        "gpt-4o": "https://ai.comfly.chat/v1",
+        "gpt-4o-mini": "https://ai.comfly.chat/v1",
+        "gpt-4o-mini-2024-07-18": "https://ai.comfly.chat/v1",
+        "gpt-4o-2024-08-06": "https://ai.comfly.chat/v1",
+        "chatgpt-4o-latest": "https://ai.comfly.chat/v1",
+        "claude-sonnet-4-20250514-thinking": "https://ai.comfly.chat/v1",
+        "claude-opus-4-20250514": "https://ai.comfly.chat/v1",
+        "claude-sonnet-4-20250514": "https://ai.comfly.chat/v1",
+        "claude-opus-4-20250514-thinking": "https://ai.comfly.chat/v1"
+    }
+}
