@@ -1,0 +1,145 @@
+{
+    "translation_engines": {
+        "gemini-ai": {
+            "enabled": true,
+            "api_key": "",
+            "base_url": "https://generativelanguage.googleapis.com",
+            "proxy": null,
+            "model": "gemini-2.0-flash-lite",
+            "temperature": 0.3,
+            "max_output_tokens": 4096,
+            "description": "Google Gemini AI翻译服务 - 高质量AI翻译，自动检测代理"
+        },
+        "openai-gpt": {
+            "enabled": false,
+            "api_key": "sk-your-openai-api-key-here",
+            "base_url": "https://api.openai.com/v1",
+            "proxy": null,
+            "model": "gpt-4o-mini",
+            "temperature": 0.3,
+            "max_tokens": 4096,
+            "description": "OpenAI GPT翻译服务 - 专业AI翻译，自动检测代理"
+        },
+        "deepl-api": {
+            "enabled": false,
+            "api_key": "your-deepl-api-key-here",
+            "base_url": "https://api-free.deepl.com/v2/translate",
+            "proxy": null,
+            "description": "DeepL API翻译服务 - 专业翻译质量"
+        },
+        "baidu-api": {
+            "enabled": true,
+            "app_id": "",
+            "api_key": "",
+            "base_url": "https://fanyi-api.baidu.com/api/trans/vip/translate",
+            "proxy": null,
+            "description": "百度翻译API - 通用翻译API，只需APPID和密钥"
+        },
+        "youdao-api": {
+            "enabled": false,
+            "app_key": "your-youdao-app-key",
+            "app_secret": "your-youdao-app-secret",
+            "base_url": "https://openapi.youdao.com/api",
+            "proxy": null,
+            "description": "有道智云翻译API - 专业翻译服务"
+        },
+        "tencent-api": {
+            "enabled": false,
+            "secret_id": "your-tencent-secret-id",
+            "secret_key": "your-tencent-secret-key",
+            "region": "ap-beijing",
+            "base_url": "tmt.tencentcloudapi.com",
+            "proxy": null,
+            "description": "腾讯云翻译API - 企业级翻译服务"
+        }
+    },
+    "default_settings": {
+        "quality_mode": "high",
+        "preserve_formatting": true,
+        "context_aware": true,
+        "timeout": 30,
+        "retry_count": 3,
+        "retry_delay": 1
+    },
+    "language_mappings": {
+        "gemini-ai": {
+            "zh-CN": "Chinese (Simplified)",
+            "zh-TW": "Chinese (Traditional)",
+            "en": "English",
+            "ja": "Japanese",
+            "ko": "Korean",
+            "fr": "French",
+            "de": "German",
+            "es": "Spanish",
+            "it": "Italian",
+            "pt": "Portuguese",
+            "ru": "Russian",
+            "ar": "Arabic"
+        },
+        "openai-gpt": {
+            "zh-CN": "Chinese (Simplified)",
+            "zh-TW": "Chinese (Traditional)",
+            "en": "English",
+            "ja": "Japanese",
+            "ko": "Korean",
+            "fr": "French",
+            "de": "German",
+            "es": "Spanish",
+            "it": "Italian",
+            "pt": "Portuguese",
+            "ru": "Russian",
+            "ar": "Arabic"
+        },
+        "deepl-api": {
+            "zh-CN": "ZH",
+            "zh-TW": "ZH",
+            "en": "EN",
+            "ja": "JA",
+            "ko": "KO",
+            "fr": "FR",
+            "de": "DE",
+            "es": "ES",
+            "it": "IT",
+            "pt": "PT",
+            "ru": "RU"
+        },
+        "baidu-api": {
+            "zh-CN": "zh",
+            "zh-TW": "cht",
+            "en": "en",
+            "ja": "jp",
+            "ko": "kor",
+            "fr": "fra",
+            "de": "de",
+            "es": "spa",
+            "it": "it",
+            "pt": "pt",
+            "ru": "ru",
+            "ar": "ara"
+        },
+        "youdao-api": {
+            "zh-CN": "zh-CHS",
+            "zh-TW": "zh-CHT",
+            "en": "en",
+            "ja": "ja",
+            "ko": "ko",
+            "fr": "fr",
+            "de": "de",
+            "es": "es",
+            "it": "it",
+            "pt": "pt",
+            "ru": "ru",
+            "ar": "ar"
+        }
+    },
+    "prompts": {
+        "gemini-ai": {
+            "system_prompt": "你是一个专业的翻译助手。请将用户提供的文本准确翻译到目标语言。保持原文的语气、风格和格式。如果遇到专业术语或文化特定内容，请提供最合适的翻译。",
+            "user_prompt_template": "请将以下{source_lang}文本翻译成{target_lang}，保持原文的格式和语气：\n\n{text}\n\n请只返回翻译结果，不要添加任何解释。"
+        },
+        "openai-gpt": {
+            "system_prompt": "You are a professional translator. Translate the user's text accurately to the target language while preserving the tone, style, and formatting of the original text.",
+            "user_prompt_template": "Translate the following {source_lang} text to {target_lang}, maintaining the original formatting and tone:\n\n{text}\n\nPlease return only the translation without any explanations."
+        }
+    }
+}

@@ -888,10 +888,19 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
     style_config = style_templates.get(controls['style'], style_templates["natural"])
     
     # 🚀 构建超越参考项目的增强提示词
+    # 🎯 平衡修复：适度的构图控制，避免主体过大或过小
     enhanced_parts = [
         style_config["prefix"],
         prompt.strip(),
-        style_config["suffix"]
+        style_config["suffix"],
+        # 平衡的构图控制指令
+        "Use balanced composition with proper subject-to-background ratio.",
+        "Subject should be clearly visible and well-framed, occupying 40-60% of the image area.",
+        "Include rich background environment and context to create depth and atmosphere.",
+        "Use medium shot framing that shows the subject in their environment with meaningful background.",
+        "Prioritize clear subject visibility while maintaining environmental context.",
+        "Show meaningful background elements and environmental details.",
+        "Avoid extreme close-ups that eliminate all background context."
     ]
     
     # 🎨 添加参考项目的专业控制参数（超越参考项目）
@@ -1003,16 +1012,21 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
     
     if smart_resize:
         enhanced_parts.append("Use intelligent resizing with proper padding and composition.")
-    
+
     if fill_color and fill_color != "255,255,255":
         enhanced_parts.append(f"Use specified fill color: RGB({fill_color}) for padding areas.")
-    
+
     # 🚀 应用参考项目的图形增强技术
     if controls['quality'] == "hd":
         enhanced_parts.append("Generate in high definition with professional detail.")
     elif controls['quality'] == "ultra_hd":
         enhanced_parts.append("Generate in ultra-high definition with exceptional detail and professional quality.")
-    
+
+    # 🚀 添加额外的环境和透视控制
+    enhanced_parts.append("Include rich environmental details and background elements.")
+    enhanced_parts.append("Create depth and layers in the composition with foreground, middle ground, and background.")
+    enhanced_parts.append("Use natural perspective and realistic spatial relationships.")
+
     # 添加尺寸优化提示（仅在不跳过尺寸提示时）
     if not skip_size_hints and controls['size']:
         enhanced_parts.append(f"Optimize composition for {controls['size']} aspect ratio.")
@@ -1020,7 +1034,11 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
     # 添加自定义尺寸处理（仅在不跳过尺寸提示时）
     if not skip_size_hints and controls.get('is_custom_size', False):
         enhanced_parts.append(f"Pay special attention to the custom dimensions: {controls['size']}")
-    
+        enhanced_parts.append("Adjust the composition to fit the custom aspect ratio while maintaining subject integrity.")
+
+    # 🎯 最终平衡提醒：确保主体与环境的平衡
+    enhanced_parts.append("Create a balanced composition with the subject clearly visible in their environment, showing both the subject and meaningful background context.")
+
     return " ".join(enhanced_parts)
 
 

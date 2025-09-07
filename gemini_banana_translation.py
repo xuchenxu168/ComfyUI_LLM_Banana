@@ -9,6 +9,7 @@
 """
 
 import json
+import os
 import random
 import time
 from typing import Dict, List, Optional, Tuple, Union
@@ -50,6 +51,94 @@ except ImportError:
         def _log_warning(msg): print(f"[WARNING] {msg}")
         def _log_error(msg): print(f"[ERROR] {msg}")
 
+# 翻译配置管理
+def get_translation_config():
+    """获取翻译配置"""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(current_dir, "Translation_config.json")
+    try:
+        if os.path.exists(config_path):
+            with open(config_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            _log_warning(f"翻译配置文件不存在: {config_path}")
+            return _get_default_translation_config()
+    except Exception as e:
+        _log_error(f"读取翻译配置文件失败: {e}")
+        return _get_default_translation_config()
+
+def _get_default_translation_config():
+    """获取默认翻译配置"""
+    return {
+        "translation_engines": {
+            "gemini-ai": {
+                "enabled": True,
+                "api_key": "free_service",
+                "model": "gemini-2.0-flash-lite",
+                "temperature": 0.3,
+                "max_output_tokens": 4096
+            }
+        },
+        "default_settings": {
+            "quality_mode": "high",
+            "preserve_formatting": True,
+            "context_aware": True,
+            "timeout": 30
+        }
+    }
+
+def get_engine_config(engine_name: str) -> Optional[Dict]:
+    """获取指定翻译引擎的配置"""
+    config = get_translation_config()
+    engines = config.get("translation_engines", {})
+    return engines.get(engine_name)
+
+def get_system_proxy():
+    """自动获取系统代理设置"""
+    try:
+        import urllib.request
+        import os
+
+        # 方法1: 从环境变量获取
+        http_proxy = os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy')
+        https_proxy = os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
+
+        if http_proxy or https_proxy:
+            proxy = http_proxy or https_proxy
+            _log_info(f"🔗 从环境变量获取代理: {proxy}")
+            return proxy
+
+        # 方法2: 尝试检测常见代理端口
+        common_proxies = [
+            "http://127.0.0.1:7897",  # Clash
+            "http://127.0.0.1:7890",  # Clash
+            "http://127.0.0.1:1080",  # Shadowsocks
+            "http://127.0.0.1:8080",  # 通用代理
+            "http://127.0.0.1:10809", # V2Ray
+        ]
+
+        for proxy in common_proxies:
+            try:
+                import requests
+                # 快速测试代理是否可用
+                response = requests.get(
+                    "http://httpbin.org/ip",
+                    proxies={"http": proxy, "https": proxy},
+                    timeout=3
+                )
+                if response.status_code == 200:
+                    _log_info(f"🔗 自动检测到可用代理: {proxy}")
+                    return proxy
+            except:
+                continue
+
+        _log_info("🔗 未检测到代理，使用直连")
+        return None
+
+    except Exception as e:
+        _log_warning(f"代理检测失败: {e}")
+        return None
+
 
 class KenChenLLMGeminiBananaTextTranslationNode:
     """
@@ -70,10 +159,11 @@ class KenChenLLMGeminiBananaTextTranslationNode:
         translation_engines = [
             "google-translate",    # Google翻译 (免费) ✅ 推荐
             "youdao-translate",    # 有道翻译 (免费) ✅ 可用
-            "libre-translate",     # LibreTranslate (免费开源)
+            "libre-translate",     # LibreTranslate (免费开源) ⚠️ 部分实例不稳定
             "mymemory-translate",  # MyMemory翻译 (免费)
-            "baidu-translate",     # 百度翻译 (免费) ❌ 暂时不可用
-            "bing-translate",      # 必应翻译 (免费) ❌ 暂时不可用
+            # "baidu-translate",     # 百度翻译 (免费) ❌ 已移除，总是失败
+            "baidu-api",           # 百度翻译API (需要API) ✅ 官方API
+            # "bing-translate",      # 必应翻译 (免费) ❌ API已失效，暂时移除
             "deepl-free",          # DeepL免费版
             "gemini-ai",           # Google Gemini AI翻译 (需要API)
             "openai-gpt",          # OpenAI GPT翻译 (需要API)
@@ -173,13 +263,24 @@ class KenChenLLMGeminiBananaTextTranslationNode:
             if translation_engine in api_required_engines:
                 # 需要API密钥的引擎
                 if not api_key or not api_key.strip():
-                    config = get_gemini_banana_config()
-                    auto_api_key = config.get('api_key', '')
-                    if auto_api_key and auto_api_key.strip():
-                        api_key = auto_api_key.strip()
-                        _log_info(f"🔑 自动使用配置文件中的API密钥: {api_key[:8]}...")
+                    # 首先尝试从翻译引擎配置中获取API密钥
+                    engine_config = get_engine_config(translation_engine)
+                    if engine_config and engine_config.get("enabled", False):
+                        auto_api_key = engine_config.get('api_key', '')
+                        if auto_api_key and auto_api_key.strip():
+                            api_key = auto_api_key.strip()
+                            _log_info(f"🔑 自动使用{translation_engine}配置文件中的API密钥: {api_key[:8]}...")
+                        else:
+                            raise ValueError(f"引擎 {translation_engine} 需要API密钥，请在Translation_config.json中设置api_key")
                     else:
-                        raise ValueError(f"引擎 {translation_engine} 需要API密钥，请在配置文件中设置api_key或手动输入")
+                        # 回退到旧的配置方式（兼容性）
+                        config = get_gemini_banana_config()
+                        auto_api_key = config.get('api_key', '')
+                        if auto_api_key and auto_api_key.strip():
+                            api_key = auto_api_key.strip()
+                            _log_info(f"🔑 自动使用Gemini配置文件中的API密钥: {api_key[:8]}...")
+                        else:
+                            raise ValueError(f"引擎 {translation_engine} 需要API密钥，请在Translation_config.json中配置或手动输入")
             else:
                 # 免费引擎不需要API密钥
                 _log_info(f"🆓 使用免费翻译引擎: {translation_engine}")
@@ -202,6 +303,10 @@ class KenChenLLMGeminiBananaTextTranslationNode:
                 )
             elif translation_engine == "baidu-translate":
                 translated_text, detected_lang, info = self._translate_with_baidu_translate(
+                    text, source_language, target_language
+                )
+            elif translation_engine == "baidu-api":
+                translated_text, detected_lang, info = self._translate_with_baidu_api(
                     text, source_language, target_language
                 )
             elif translation_engine == "youdao-translate":
@@ -237,8 +342,8 @@ class KenChenLLMGeminiBananaTextTranslationNode:
                     ("有道翻译", lambda: self._translate_with_youdao_translate(text, source_language, target_language)),
                     ("LibreTranslate", lambda: self._translate_with_libre_translate(text, source_language, target_language)),
                     ("MyMemory翻译", lambda: self._translate_with_mymemory_translate(text, source_language, target_language)),
-                    ("百度翻译", lambda: self._translate_with_baidu_translate(text, source_language, target_language)),
-                    ("必应翻译", lambda: self._translate_with_bing_translate(text, source_language, target_language)),
+                    # ("百度翻译", lambda: self._translate_with_baidu_translate(text, source_language, target_language)),  # 已移除，总是失败
+                    # ("必应翻译", lambda: self._translate_with_bing_translate(text, source_language, target_language)),  # 暂时移除，API已失效
                 ]
 
                 # 如果有API密钥，添加Gemini AI作为最后的回退
@@ -295,6 +400,28 @@ class KenChenLLMGeminiBananaTextTranslationNode:
                               custom_instructions: str) -> Tuple[str, str, str]:
         """使用Gemini AI进行翻译"""
 
+        # 获取Gemini AI配置
+        engine_config = get_engine_config("gemini-ai")
+        if not engine_config or not engine_config.get("enabled", False):
+            raise Exception("Gemini AI翻译引擎未启用或配置不存在，请检查Translation_config.json")
+
+        # 如果API密钥是免费服务标识，使用配置文件中的密钥
+        if api_key == "free_service":
+            api_key = engine_config.get("api_key", "")
+            if not api_key or api_key == "free_service":
+                raise Exception("未配置有效的Gemini API密钥，请在Translation_config.json中配置api_key")
+
+        # 使用配置文件中的参数
+        model = engine_config.get("model", "gemini-2.0-flash-lite")
+        config_temp = engine_config.get("temperature", 0.3)
+        config_max_tokens = engine_config.get("max_output_tokens", 4096)
+
+        # 优先使用用户传入的参数，否则使用配置文件参数
+        final_temperature = temperature if temperature != 0.3 else config_temp
+        final_max_tokens = max_output_tokens if max_output_tokens != 4096 else config_max_tokens
+
+        _log_info(f"🤖 使用Gemini AI翻译: {model} | 温度: {final_temperature} | 最大令牌: {final_max_tokens}")
+
         # 构建翻译提示词
         prompt = self._build_translation_prompt(
             text, source_lang, target_lang, quality_mode, preserve_formatting,
@@ -303,24 +430,30 @@ class KenChenLLMGeminiBananaTextTranslationNode:
 
         # 构建生成配置
         generation_config = {
-            "temperature": temperature,
+            "temperature": final_temperature,
             "topP": 0.95,
             "topK": 40,
-            "maxOutputTokens": max_output_tokens,
+            "maxOutputTokens": final_max_tokens,
             "responseModalities": ["TEXT"]
         }
 
         # 准备内容
         content_parts = [{"text": prompt}]
 
+        # 使用配置的代理和基础URL，如果配置中没有代理则自动检测
+        proxy = engine_config.get("proxy")
+        if proxy is None:
+            proxy = get_system_proxy()
+        base_url = engine_config.get("base_url")
+
         # 使用nano-banana官方调用方式
         response_json = generate_with_priority_api(
             api_key=api_key,
-            model="gemini-2.0-flash-lite",  # 使用快速模型进行翻译
+            model=model,
             content_parts=content_parts,
             generation_config=generation_config,
-            proxy=None,
-            base_url=None
+            proxy=proxy,
+            base_url=base_url
         )
 
         if not response_json:
@@ -334,7 +467,7 @@ class KenChenLLMGeminiBananaTextTranslationNode:
         # 解析翻译结果
         detected_lang, final_translation = self._parse_translation_result(translated_text, source_lang)
 
-        info = f"Gemini AI翻译 | 模型: gemini-2.0-flash-lite | 质量: {quality_mode}"
+        info = f"Gemini AI翻译 | 模型: {model} | 质量: {quality_mode} | 配置文件"
         return (final_translation, detected_lang, info)
 
     def _translate_with_openai(self, api_key: str, text: str, source_lang: str, target_lang: str,
@@ -349,37 +482,76 @@ class KenChenLLMGeminiBananaTextTranslationNode:
             context_aware, context_info, custom_instructions
         )
 
-        # 使用Gemini作为OpenAI的替代（因为我们主要使用Gemini生态）
-        generation_config = {
-            "temperature": temperature,
-            "topP": 0.9,
-            "topK": 40,
-            "maxOutputTokens": max_output_tokens,
-            "responseModalities": ["TEXT"]
-        }
+        # 获取OpenAI配置
+        engine_config = get_engine_config("openai-gpt")
+        if not engine_config or not engine_config.get("enabled", False):
+            raise Exception("OpenAI GPT翻译引擎未启用或配置不存在，请检查Translation_config.json")
 
-        content_parts = [{"text": prompt}]
+        # 如果API密钥是免费服务标识，使用配置文件中的密钥
+        if api_key == "free_service":
+            api_key = engine_config.get("api_key", "")
+            if not api_key or api_key == "free_service":
+                raise Exception("未配置有效的OpenAI API密钥，请在Translation_config.json中配置api_key")
 
-        response_json = generate_with_priority_api(
-            api_key=api_key,
-            model="gemini-2.5-pro-exp-03-25",  # 使用更强的模型
-            content_parts=content_parts,
-            generation_config=generation_config,
-            proxy=None,
-            base_url=None
-        )
+        # 使用配置文件中的参数
+        model = engine_config.get("model", "gpt-4o-mini")
+        config_temp = engine_config.get("temperature", 0.3)
+        config_max_tokens = engine_config.get("max_tokens", 4096)
+        base_url = engine_config.get("base_url", "https://api.openai.com/v1")
+        proxy = engine_config.get("proxy")
+        if proxy is None:
+            proxy = get_system_proxy()
 
-        if not response_json:
-            raise Exception("OpenAI风格API调用失败")
+        # 优先使用用户传入的参数，否则使用配置文件参数
+        final_temperature = temperature if temperature != 0.3 else config_temp
+        final_max_tokens = max_output_tokens if max_output_tokens != 4096 else config_max_tokens
 
-        translated_text = extract_text_from_response(response_json)
-        if not translated_text:
-            raise Exception("未能从API响应中提取翻译结果")
+        _log_info(f"🤖 使用OpenAI GPT翻译: {model} | 温度: {final_temperature} | 最大令牌: {final_max_tokens}")
 
-        detected_lang, final_translation = self._parse_translation_result(translated_text, source_lang)
+        try:
+            import requests
 
-        info = f"OpenAI风格翻译 | 模型: gemini-2.5-pro-exp-03-25 | 质量: {quality_mode}"
-        return (final_translation, detected_lang, info)
+            # 构建消息
+            messages = [
+                {"role": "system", "content": "You are a professional translator. Translate accurately while preserving tone and style."},
+                {"role": "user", "content": prompt}
+            ]
+
+            # 构建请求
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+
+            data = {
+                "model": model,
+                "messages": messages,
+                "temperature": final_temperature,
+                "max_tokens": final_max_tokens
+            }
+
+            # 发送请求
+            response = requests.post(
+                f"{base_url}/chat/completions",
+                headers=headers,
+                json=data,
+                timeout=30,
+                proxies={"http": proxy, "https": proxy} if proxy else None
+            )
+            response.raise_for_status()
+
+            result = response.json()
+            if "choices" in result and result["choices"]:
+                translated_text = result["choices"][0]["message"]["content"].strip()
+                detected_lang, final_translation = self._parse_translation_result(translated_text, source_lang)
+                info = f"OpenAI GPT翻译 | 模型: {model} | 质量: {quality_mode} | 配置文件"
+                return (final_translation, detected_lang, info)
+            else:
+                raise Exception("OpenAI API返回格式错误")
+
+        except Exception as e:
+            _log_error(f"OpenAI GPT翻译失败: {e}")
+            raise Exception(f"OpenAI GPT翻译失败: {e}")
 
     def _translate_with_google_translate(self, text: str, source_lang: str, target_lang: str) -> Tuple[str, str, str]:
         """使用Google免费翻译服务"""
@@ -474,11 +646,91 @@ class KenChenLLMGeminiBananaTextTranslationNode:
                     continue
 
             # 所有接口都失败，抛出异常
-            raise Exception("所有百度翻译接口都无法访问")
+            raise Exception("所有百度翻译接口都无法访问，建议使用baidu-api")
 
         except Exception as e:
             _log_error(f"百度免费翻译失败: {e}")
-            raise Exception(f"百度免费翻译失败: {e}")
+            raise Exception(f"百度免费翻译失败: {e}，建议使用baidu-api或其他翻译引擎")
+
+    def _translate_with_baidu_api(self, text: str, source_lang: str, target_lang: str) -> Tuple[str, str, str]:
+        """使用百度翻译API（官方API）"""
+        try:
+            import requests
+            import hashlib
+            import random
+
+            # 获取百度API配置
+            engine_config = get_engine_config("baidu-api")
+            if not engine_config or not engine_config.get("enabled", False):
+                raise Exception("百度翻译API未启用或配置不存在，请检查Translation_config.json")
+
+            app_id = engine_config.get("app_id", "")
+            api_key = engine_config.get("api_key", "")
+            base_url = engine_config.get("base_url", "https://fanyi-api.baidu.com/api/trans/vip/translate")
+            proxy = engine_config.get("proxy")
+            if proxy is None:
+                proxy = get_system_proxy()
+
+            if not app_id or not api_key:
+                raise Exception("未配置有效的百度翻译API密钥，请在Translation_config.json中配置app_id和api_key")
+
+            _log_info(f"🤖 使用百度翻译API: APPID={app_id[:8]}...")
+
+            # 语言代码转换
+            config = get_translation_config()
+            lang_mappings = config.get("language_mappings", {}).get("baidu-api", {})
+            from_lang = lang_mappings.get(source_lang, source_lang.replace("-", "").lower())
+            to_lang = lang_mappings.get(target_lang, target_lang.replace("-", "").lower())
+
+            # 生成签名
+            salt = str(random.randint(32768, 65536))
+            sign_str = app_id + text + salt + api_key
+            sign = hashlib.md5(sign_str.encode('utf-8')).hexdigest()
+
+            # 构建请求参数
+            params = {
+                'q': text,
+                'from': from_lang,
+                'to': to_lang,
+                'appid': app_id,
+                'salt': salt,
+                'sign': sign
+            }
+
+            headers = {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+
+            # 发送请求
+            response = requests.post(
+                base_url,
+                data=params,
+                headers=headers,
+                timeout=30,
+                proxies={"http": proxy, "https": proxy} if proxy else None
+            )
+            response.raise_for_status()
+
+            result = response.json()
+
+            # 检查错误
+            if 'error_code' in result:
+                error_code = result['error_code']
+                error_msg = result.get('error_msg', f'错误代码: {error_code}')
+                raise Exception(f"百度翻译API错误: {error_msg}")
+
+            # 提取翻译结果
+            if 'trans_result' in result and result['trans_result']:
+                translated_text = result['trans_result'][0]['dst']
+                info = f"百度翻译API | APPID: {app_id[:8]}... | 配置文件"
+                return (translated_text, source_lang, info)
+            else:
+                raise Exception("百度翻译API返回格式错误")
+
+        except Exception as e:
+            _log_error(f"百度翻译API失败: {e}")
+            raise Exception(f"百度翻译API失败: {e}")
 
     def _baidu_method_1(self, text: str, src_lang: str, tgt_lang: str) -> Tuple[str, str]:
         """百度翻译方法1: 新版API"""
@@ -637,14 +889,19 @@ class KenChenLLMGeminiBananaTextTranslationNode:
             src_lang = lang_map.get(source_lang, "auto")
             tgt_lang = lang_map.get(target_lang, "zh")
 
-            # 尝试多个LibreTranslate实例
+            # 尝试多个LibreTranslate实例（更新可用实例列表）
             instances = [
-                "https://libretranslate.de/translate",
-                "https://translate.argosopentech.com/translate",
-                "https://libretranslate.com/translate"
+                # 优先使用稳定的实例
+                ("https://libretranslate.de/translate", "LibreTranslate.de"),
+                ("https://translate.terraprint.co/translate", "TerraPrint"),
+                ("https://translate.fedilab.app/translate", "FediLab"),
+                ("https://translate.astian.org/translate", "Astian"),
+                # 备用实例（可能需要特殊处理）
+                ("https://libretranslate.com/translate", "LibreTranslate.com"),
             ]
 
-            for i, url in enumerate(instances):
+            last_error = None
+            for i, (url, name) in enumerate(instances):
                 try:
                     data = {
                         "q": text,
@@ -655,27 +912,47 @@ class KenChenLLMGeminiBananaTextTranslationNode:
 
                     headers = {
                         "Content-Type": "application/json",
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                     }
 
-                    response = requests.post(url, json=data, headers=headers, timeout=15)
+                    # 对于某些实例，禁用SSL验证以避免SSL错误
+                    verify_ssl = True
+                    if "argosopentech" in url or "libretranslate.com" in url:
+                        verify_ssl = False
+
+                    response = requests.post(
+                        url,
+                        json=data,
+                        headers=headers,
+                        timeout=15,
+                        verify=verify_ssl
+                    )
                     response.raise_for_status()
 
                     result = response.json()
                     if "translatedText" in result:
                         translated_text = result["translatedText"]
-                        info = f"LibreTranslate开源翻译服务 (实例{i+1})"
+                        info = f"LibreTranslate开源翻译服务 ({name})"
+                        _log_info(f"✅ LibreTranslate成功使用: {name}")
                         return (translated_text, src_lang, info)
 
                 except Exception as e:
-                    _log_warning(f"LibreTranslate实例{i+1}失败: {e}")
+                    last_error = e
+                    _log_warning(f"LibreTranslate实例 {name} 失败: {e}")
                     continue
 
-            raise Exception("所有LibreTranslate实例都无法访问")
+            # 如果所有实例都失败，提供更友好的错误信息
+            error_msg = f"所有LibreTranslate实例都无法访问，最后错误: {last_error}"
+            if "SSL" in str(last_error):
+                error_msg += "。建议使用其他翻译引擎如Google翻译或有道翻译。"
+            raise Exception(error_msg)
 
         except Exception as e:
-            _log_error(f"LibreTranslate翻译失败: {e}")
-            raise Exception(f"LibreTranslate翻译失败: {e}")
+            error_msg = f"LibreTranslate翻译失败: {e}"
+            if "所有LibreTranslate实例都无法访问" in str(e):
+                error_msg += "，如果确实不能用，就将它从列表中清除"
+            _log_error(error_msg)
+            raise Exception(error_msg)
 
     def _translate_with_mymemory_translate(self, text: str, source_lang: str, target_lang: str) -> Tuple[str, str, str]:
         """使用MyMemory免费翻译服务"""
@@ -838,140 +1115,15 @@ class KenChenLLMGeminiBananaTextTranslationNode:
             raise Exception(f"有道免费翻译失败: {e}")
 
     def _translate_with_bing_translate(self, text: str, source_lang: str, target_lang: str) -> Tuple[str, str, str]:
-        """使用必应免费翻译服务（改进版）"""
-        try:
-            import requests
-            import json
-            import re
-            import time
+        """使用必应免费翻译服务（已废弃）"""
+        _log_warning("⚠️ 必应翻译API已失效，建议使用其他翻译引擎")
+        raise Exception("必应翻译API已失效，请使用Google翻译、有道翻译或自动最佳模式")
 
-            _log_info("🌐 使用必应免费翻译服务...")
 
-            # 语言代码转换
-            lang_map = {
-                "zh-CN": "zh-Hans", "zh-TW": "zh-Hant", "auto": "auto-detect",
-                "en": "en", "ja": "ja", "ko": "ko", "fr": "fr", "de": "de",
-                "es": "es", "it": "it", "pt": "pt", "ru": "ru"
-            }
-            src_lang = lang_map.get(source_lang, source_lang)
-            tgt_lang = lang_map.get(target_lang, target_lang)
 
-            # 尝试多种必应翻译方式
-            methods = [
-                self._bing_method_1,
-                self._bing_method_2,
-                self._bing_method_3
-            ]
 
-            for i, method in enumerate(methods):
-                try:
-                    result = method(text, src_lang, tgt_lang)
-                    if result:
-                        translated_text, detected_lang = result
-                        info = f"必应免费翻译服务 (方法{i+1})"
-                        return (translated_text, detected_lang, info)
-                except Exception as e:
-                    _log_warning(f"必应翻译方法{i+1}失败: {e}")
-                    continue
 
-            raise Exception("所有必应翻译方法都失败")
 
-        except Exception as e:
-            _log_error(f"必应免费翻译失败: {e}")
-            raise Exception(f"必应免费翻译失败: {e}")
-
-    def _bing_method_1(self, text: str, src_lang: str, tgt_lang: str) -> Tuple[str, str]:
-        """必应翻译方法1: 标准API"""
-        import requests
-
-        url = "https://www.bing.com/ttranslatev3"
-        data = {
-            "fromLang": src_lang,
-            "toLang": tgt_lang,
-            "text": text
-        }
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": "https://www.bing.com/translator",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "*/*",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
-        }
-
-        response = requests.post(url, data=data, headers=headers, timeout=15)
-        response.raise_for_status()
-
-        result = response.json()
-        if result and len(result) > 0 and "translations" in result[0]:
-            translated_text = result[0]["translations"][0]["text"]
-            detected_lang = result[0].get("detectedLanguage", {}).get("language", src_lang)
-            return (translated_text, detected_lang)
-
-        raise Exception("方法1响应格式错误")
-
-    def _bing_method_2(self, text: str, src_lang: str, tgt_lang: str) -> Tuple[str, str]:
-        """必应翻译方法2: 备用接口"""
-        import requests
-
-        url = "https://www.bing.com/translator/api/translate/web"
-        data = {
-            "from": src_lang,
-            "to": tgt_lang,
-            "text": text
-        }
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Referer": "https://www.bing.com/translator",
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
-
-        response = requests.post(url, data=data, headers=headers, timeout=15)
-        response.raise_for_status()
-
-        result = response.json()
-        if "translations" in result and result["translations"]:
-            translated_text = result["translations"][0]["text"]
-            detected_lang = result.get("detectedLanguage", src_lang)
-            return (translated_text, detected_lang)
-
-        raise Exception("方法2响应格式错误")
-
-    def _bing_method_3(self, text: str, src_lang: str, tgt_lang: str) -> Tuple[str, str]:
-        """必应翻译方法3: 简化接口"""
-        import requests
-        import urllib.parse
-
-        # 使用GET方式的简化接口
-        encoded_text = urllib.parse.quote(text)
-        url = f"https://www.bing.com/translator/api/translate?from={src_lang}&to={tgt_lang}&text={encoded_text}"
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Referer": "https://www.bing.com/translator"
-        }
-
-        response = requests.get(url, headers=headers, timeout=15)
-        response.raise_for_status()
-
-        # 尝试解析JSON响应
-        try:
-            result = response.json()
-            if isinstance(result, dict) and "translation" in result:
-                translated_text = result["translation"]
-                detected_lang = result.get("detectedLanguage", src_lang)
-                return (translated_text, detected_lang)
-        except:
-            # 如果不是JSON，尝试从HTML中提取
-            import re
-            html_content = response.text
-            # 查找翻译结果的模式
-            pattern = r'"translation":"([^"]+)"'
-            match = re.search(pattern, html_content)
-            if match:
-                translated_text = match.group(1)
-                return (translated_text, src_lang)
-
-        raise Exception("方法3无法解析响应")
 
     def _translate_with_deepl_free(self, text: str, source_lang: str, target_lang: str) -> Tuple[str, str, str]:
         """使用DeepL免费翻译服务（改进版）"""

@@ -1,6 +1,6 @@
 {
-    "api_key": "",
-    "multimodal_api_key": "",
+    "api_key": "AIzaSyDmatBo7DB5WA0NUnNuAFt2AgQPgOYWZwg",
+    "multimodal_api_key": "AIzaSyB520RJ5-62BNePGpVwp_HzrbLLMVsG-80",
     "base_url": "https://generativelanguage.googleapis.com",
     "proxy": "None",
     "default_model": {
@@ -26,7 +26,7 @@
     "mirror_sites": {
         "nano-banana官方": {
             "url": "https://generativelanguage.googleapis.com",
-            "api_key": "",
+            "api_key": "AIzaSyCz-djNQfjoE-nU_F9eqBCPvvC2MpeSrh4",
             "api_format": "gemini",
             "models": [
                 "gemini-2.0-flash-lite",
@@ -46,25 +46,25 @@
         },
         "comfly": {
             "url": "https://ai.comfly.chat/v1",
-            "api_key": ""
+            "api_key": "sk-bXnweb9SnAddPUpI828280750b054b1cB6FbE0378544320e"
         },
         "T8的贞贞的AI工坊": {
             "url": "https://ai.t8star.cn",
-            "api_key": "",
+            "api_key": "sk-hBhFzjZ6L2V6HKasOcwGLu6bTupl86mzan1Ki1q5TzpJPJeC",
             "api_format": "openai",
             "models": ["gemini-2.5-flash-image-preview"],
             "description": "T8贞贞的AI工坊镜像站，支持Gemini 2.5 Flash Image Preview模型，使用OpenAI兼容的API格式"
         },
         "API4GPT": {
             "url": "https://www.api4gpt.com",
-            "api_key": "",
+            "api_key": "sk-7vQ50rx6H3nYp5g0lBK81oJNZCcqAnJeNgOI6AEUEZncsOGB",
             "api_format": "gemini",
             "models": ["gemini-2.5-flash-image-preview", "gemini-2.5-flash-image-hd", "gemini-2.5-flash-image-preview-hd"],
             "description": "API4GPT镜像站，支持直接调用Gemini模型（经济方案）和多种图像服务"
         },
         "OpenRouter": {
             "url": "https://openrouter.ai/api/v1",
-            "api_key": "",
+            "api_key": "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",
             "api_format": "openrouter",
             "models": ["gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation", "google/gemini-2.5-flash-image-preview:free", "google/gemini-2.5-flash-image-preview"],
             "description": "OpenRouter镜像站，支持多种AI模型和图像生成服务"
@@ -109,11 +109,15 @@
         ],
         "image_gen_models": [
             "gemini-2.5-flash-image-preview",
-            "gemini-2.0-flash"
+            "gemini-2.0-flash",
+            "fal-ai/nano-banana",
+            "nano-banana"
         ],
         "image_edit_models": [
             "gemini-2.5-flash-image-preview",
-            "gemini-2.0-flash"
+            "gemini-2.0-flash",
+            "fal-ai/nano-banana/edit",
+            "nano-banana/edit"
         ],
         "enhanced_image_models": [
             "gemini-2.5-flash-image-preview",

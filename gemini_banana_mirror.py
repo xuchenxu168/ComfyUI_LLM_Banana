@@ -15,6 +15,10 @@ import random
 from typing import Optional, Tuple, Dict, Any
 import re
 import os
+import urllib3
+
+# 禁用SSL警告
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 try:
     from server import PromptServer
 except ImportError:
@@ -162,6 +166,7 @@ def detect_image_foreground_subject(image):
         print(f"🔍 图像尺寸: {width}x{height}")
 
         # 🎯 方法1：全图人脸检测（最优先）
+        print(f"🔍 [DEBUG] 开始尝试人脸检测方法...")
         try:
             face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
             gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
@@ -173,31 +178,63 @@ def detect_image_foreground_subject(image):
                 x, y, w, h = largest_face
 
                 # 🚀 关键修复：以人脸为中心，扩展到合理的人物区域
-                # 人脸通常占人物高度的1/8到1/6
-                estimated_person_height = h * 6  # 假设人脸是人物高度的1/6
-                estimated_person_width = w * 3   # 假设人物宽度是人脸宽度的3倍
+                # 根据人脸大小动态调整扩展系数
+                face_ratio = (w * h) / (width * height)
+                print(f"🔍 人脸占比: {face_ratio:.1%}, 人脸尺寸: {w}x{h}")
+
+                if face_ratio > 0.05:  # 如果人脸超过5%，使用极小扩展
+                    estimated_person_height = h * 2.5  # 极小扩展：2.5倍（显示上半身）
+                    estimated_person_width = w * 1.8   # 极小扩展：1.8倍
+                    print(f"🔍 检测到大人脸，使用极小扩展系数")
+                else:
+                    estimated_person_height = h * 3.0  # 小扩展：3.0倍（显示半身多一点）
+                    estimated_person_width = w * 2.0   # 小扩展：2.0倍
 
                 # 计算人物区域（以人脸中心为基准）
                 face_center_x = x + w // 2
                 face_center_y = y + h // 2
 
-                # 人物区域的左上角（人脸通常在人物上部1/4处）
+                # 人物区域的左上角（人脸通常在人物上部1/6处，显示全身）
                 person_x = max(0, face_center_x - estimated_person_width // 2)
-                person_y = max(0, face_center_y - estimated_person_height // 4)
+                person_y = max(0, face_center_y - estimated_person_height // 6)
 
                 # 确保不超出图像边界
                 person_w = min(estimated_person_width, width - person_x)
                 person_h = min(estimated_person_height, height - person_y)
 
+                # 🚀 新增：主体尺寸验证，确保合理范围
+                person_ratio = (person_w * person_h) / (width * height)
+                if person_ratio > 0.15:  # 超过15%就调整（适中控制）
+                    print(f"⚠️ 人脸检测主体过大(占比{person_ratio:.1%})，调整尺寸...")
+                    scale_factor = (0.12 / person_ratio) ** 0.5  # 调整到12%
+                    person_w = int(person_w * scale_factor)
+                    person_h = int(person_h * scale_factor)
+                    # 重新计算位置，保持中心不变
+                    person_x = max(0, face_center_x - person_w // 2)
+                    person_y = max(0, face_center_y - person_h // 6)  # 修正Y轴位置
+                elif person_ratio < 0.03:  # 如果主体太小（<3%），进行放大
+                    print(f"⚠️ 人脸检测主体过小(占比{person_ratio:.1%})，放大尺寸...")
+                    scale_factor = (0.08 / person_ratio) ** 0.5  # 放大到8%
+                    person_w = int(person_w * scale_factor)
+                    person_h = int(person_h * scale_factor)
+                    # 重新计算位置，保持中心不变
+                    person_x = max(0, face_center_x - person_w // 2)
+                    person_y = max(0, face_center_y - person_h // 6)  # 修正Y轴位置
+                    # 确保不超出边界
+                    person_x = min(person_x, width - person_w)
+                    person_y = min(person_y, height - person_h)
+
                 subject_center_x = person_x + person_w // 2
                 subject_center_y = person_y + person_h // 2
 
                 print(f"🎯 人脸检测识别到主体: 人脸({x}, {y}, {w}x{h}), 人物区域({person_x}, {person_y}, {person_w}x{person_h}), 中心({subject_center_x}, {subject_center_y})")
+                print(f"🔍 主体占比: {(person_w * person_h) / (width * height):.1%}")
                 return (person_x, person_y, person_w, person_h), (subject_center_x, subject_center_y)
         except Exception as e:
             print(f"⚠️ 人脸检测失败: {e}")
 
         # 🎯 方法2：全图肤色检测（改进版）
+        print(f"🔍 [DEBUG] 开始尝试肤色检测方法...")
         try:
             hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
 
@@ -231,10 +268,10 @@ def detect_image_foreground_subject(image):
                     largest_contour = max(valid_contours, key=cv2.contourArea)
                     x, y, w, h = cv2.boundingRect(largest_contour)
 
-                    # 🚀 关键修复：合理扩展边界框
-                    # 肤色区域通常只是人物的一部分，需要适当扩展
-                    expand_factor_w = 1.5  # 宽度扩展系数
-                    expand_factor_h = 1.8  # 高度扩展系数
+                    # 🚀 关键修复：极保守扩展边界框，避免主体过大
+                    # 肤色区域通常只是人物的一部分，使用最小扩展系数
+                    expand_factor_w = 1.1  # 进一步减少宽度扩展系数
+                    expand_factor_h = 1.2  # 进一步减少高度扩展系数
 
                     expanded_w = int(w * expand_factor_w)
                     expanded_h = int(h * expand_factor_h)
@@ -247,16 +284,29 @@ def detect_image_foreground_subject(image):
                     expanded_w = min(expanded_w, width - expanded_x)
                     expanded_h = min(expanded_h, height - expanded_y)
 
+                    # 🚀 新增：主体尺寸验证，确保不会过大
+                    expanded_ratio = (expanded_w * expanded_h) / (width * height)
+                    if expanded_ratio > 0.35:  # 如果主体超过35%，进行调整
+                        print(f"⚠️ 肤色检测主体过大(占比{expanded_ratio:.1%})，调整尺寸...")
+                        scale_factor = (0.35 / expanded_ratio) ** 0.5
+                        expanded_w = int(expanded_w * scale_factor)
+                        expanded_h = int(expanded_h * scale_factor)
+                        # 重新计算位置，保持中心不变
+                        expanded_x = max(0, x + w//2 - expanded_w // 2)
+                        expanded_y = max(0, y + h//2 - expanded_h // 2)
+
                     subject_center_x = expanded_x + expanded_w // 2
                     subject_center_y = expanded_y + expanded_h // 2
 
                     print(f"🎯 肤色检测识别到主体: 原始({x}, {y}, {w}x{h}), 扩展后({expanded_x}, {expanded_y}, {expanded_w}x{expanded_h}), 中心({subject_center_x}, {subject_center_y})")
+                    print(f"🔍 主体占比: {(expanded_w * expanded_h) / (width * height):.1%}")
                     return (expanded_x, expanded_y, expanded_w, expanded_h), (subject_center_x, subject_center_y)
 
         except Exception as e:
             print(f"⚠️ 肤色检测失败: {e}")
         
         # 🎯 方法3：改进的边缘检测（专注于人物轮廓）
+        print(f"🔍 [DEBUG] 开始尝试边缘检测方法...")
         try:
             # 转换为灰度图
             gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
@@ -287,16 +337,30 @@ def detect_image_foreground_subject(image):
                     # 🚀 关键修复：确保检测到的是合理的人物区域
                     aspect_ratio = w / h
                     if 0.3 <= aspect_ratio <= 2.0:  # 人物的宽高比通常在这个范围内
+                        # 🚀 新增：主体尺寸验证，确保不会过大
+                        edge_ratio = (w * h) / (width * height)
+                        if edge_ratio > 0.35:  # 如果主体超过35%，进行调整
+                            print(f"⚠️ 边缘检测主体过大(占比{edge_ratio:.1%})，调整尺寸...")
+                            scale_factor = (0.35 / edge_ratio) ** 0.5
+                            new_w = int(w * scale_factor)
+                            new_h = int(h * scale_factor)
+                            # 重新计算位置，保持中心不变
+                            x = max(0, x + w//2 - new_w // 2)
+                            y = max(0, y + h//2 - new_h // 2)
+                            w, h = new_w, new_h
+
                         subject_center_x = x + w // 2
                         subject_center_y = y + h // 2
 
                         print(f"🎯 边缘检测识别到前景主体: 位置({x}, {y}), 尺寸({w}x{h}), 中心({subject_center_x}, {subject_center_y})")
+                        print(f"🔍 主体占比: {(w * h) / (width * height):.1%}")
                         return (x, y, w, h), (subject_center_x, subject_center_y)
 
         except Exception as e:
             print(f"⚠️ 边缘检测算法失败: {e}")
 
         # 🎯 方法4：安全的保守策略（确保主体不丢失）
+        print(f"🔍 [DEBUG] 开始尝试方差分析方法...")
         try:
             print(f"🔍 使用安全保守策略...")
 
@@ -327,24 +391,70 @@ def detect_image_foreground_subject(image):
 
             if best_region:
                 x, y, w, h = best_region
+
+                # 🚀 关键修复：方差分析返回的是1/3尺寸，需要调整为更合理的主体尺寸
+                # 原始的w_step和h_step是width//3和height//3，太大了
+                if width > height:
+                    # 横向图像：使用更小的主体尺寸
+                    w = int(width * 0.2)   # 20%宽度
+                    h = int(height * 0.3)  # 30%高度
+                else:
+                    # 纵向图像：使用更小的主体尺寸
+                    w = int(width * 0.3)   # 30%宽度
+                    h = int(height * 0.2)  # 20%高度
+
+                # 确保主体不会太小
+                w = max(w, width // 10)
+                h = max(h, height // 10)
+
+                # 确保主体不会太大（不超过35%）
+                w = min(w, int(width * 0.35))
+                h = min(h, int(height * 0.35))
+
+                # 重新计算位置，保持在最佳方差区域的中心
+                original_center_x = x + best_region[2] // 2
+                original_center_y = y + best_region[3] // 2
+
+                x = max(0, original_center_x - w // 2)
+                y = max(0, original_center_y - h // 2)
+
+                # 确保不超出图像边界
+                x = min(x, width - w)
+                y = min(y, height - h)
+
                 subject_center_x = x + w // 2
                 subject_center_y = y + h // 2
 
                 print(f"🎯 方差分析识别到主体区域: 位置({x}, {y}), 尺寸({w}x{h}), 中心({subject_center_x}, {subject_center_y})")
+                print(f"🔍 主体占比: {(w * h) / (width * height):.1%}")
                 return (x, y, w, h), (subject_center_x, subject_center_y)
 
         except Exception as e:
             print(f"⚠️ 方差分析失败: {e}")
 
         # 🎯 最终安全策略：基于图像中心的保守估计
+        print(f"🔍 [DEBUG] 使用最终安全策略：图像中心区域...")
         print(f"🔍 使用最终安全策略：图像中心区域...")
 
-        # 🚀 关键修复：使用图像中心区域作为主体位置
-        # 这样可以确保主体不会完全丢失
-        safe_x = width // 4
-        safe_y = height // 4
-        safe_w = width // 2
-        safe_h = height // 2
+        # 🚀 关键修复：使用极保守的主体尺寸，确保主体完整显示
+        # 这样可以确保主体不会完全丢失，同时避免主体过大
+        if width > height:
+            safe_w = int(width * 0.2)   # 横向图像：20%宽度
+            safe_h = int(height * 0.3)  # 30%高度
+        else:
+            safe_w = int(width * 0.3)   # 纵向图像：30%宽度
+            safe_h = int(height * 0.2)  # 20%高度
+
+        # 确保主体不会太小
+        safe_w = max(safe_w, width // 10)
+        safe_h = max(safe_h, height // 10)
+
+        # 确保主体不会太大（不超过35%）
+        safe_w = min(safe_w, int(width * 0.35))
+        safe_h = min(safe_h, int(height * 0.35))
+
+        safe_x = (width - safe_w) // 2   # 居中
+        safe_y = (height - safe_h) // 2  # 居中
 
         safe_center_x = safe_x + safe_w // 2  # 图像中心
         safe_center_y = safe_y + safe_h // 2  # 图像中心
@@ -358,11 +468,25 @@ def detect_image_foreground_subject(image):
         width, height = image.size
         safe_center_x = width // 2   # 图像中心
         safe_center_y = height // 2  # 图像中心
-        safe_w = width // 2
-        safe_h = height // 2
-        safe_x = width // 4
-        safe_y = height // 4
+
+        # 🚀 修复：使用极保守的主体尺寸，确保主体完整显示
+        if width > height:
+            safe_w = int(width * 0.2)
+            safe_h = int(height * 0.3)
+        else:
+            safe_w = int(width * 0.3)
+            safe_h = int(height * 0.2)
+
+        safe_w = max(safe_w, width // 10)
+        safe_h = max(safe_h, height // 10)
+        safe_w = min(safe_w, int(width * 0.35))
+        safe_h = min(safe_h, int(height * 0.35))
+
+        safe_x = safe_center_x - safe_w // 2
+        safe_y = safe_center_y - safe_h // 2
+
         print(f"🎯 默认安全位置: ({safe_x}, {safe_y}), 尺寸({safe_w}x{safe_h}), 中心({safe_center_x}, {safe_center_y})")
+        print(f"🔍 主体占比: 宽度{safe_w/width:.1%}, 高度{safe_h/height:.1%}")
         return (safe_x, safe_y, safe_w, safe_h), (safe_center_x, safe_center_y)
     except Exception as e:
         print(f"❌ 智能主体检测失败: {e}")
@@ -370,11 +494,25 @@ def detect_image_foreground_subject(image):
         width, height = image.size
         safe_center_x = width // 2   # 图像中心
         safe_center_y = height // 2  # 图像中心
-        safe_w = width // 2
-        safe_h = height // 2
-        safe_x = width // 4
-        safe_y = height // 4
+
+        # 🚀 修复：使用极保守的主体尺寸，确保主体完整显示
+        if width > height:
+            safe_w = int(width * 0.2)
+            safe_h = int(height * 0.3)
+        else:
+            safe_w = int(width * 0.3)
+            safe_h = int(height * 0.2)
+
+        safe_w = max(safe_w, width // 10)
+        safe_h = max(safe_h, height // 10)
+        safe_w = min(safe_w, int(width * 0.35))
+        safe_h = min(safe_h, int(height * 0.35))
+
+        safe_x = safe_center_x - safe_w // 2
+        safe_y = safe_center_y - safe_h // 2
+
         print(f"🎯 异常处理安全位置: ({safe_x}, {safe_y}), 尺寸({safe_w}x{safe_h}), 中心({safe_center_x}, {safe_center_y})")
+        print(f"🔍 主体占比: 宽度{safe_w/width:.1%}, 高度{safe_h/height:.1%}")
         return (safe_x, safe_y, safe_w, safe_h), (safe_center_x, safe_center_y)
 
 def _log_info(message):
@@ -1023,10 +1161,57 @@ def _try_codeformer_restoration(image: Image.Image) -> Optional[Image.Image]:
 
             if codeformer_path:
                 print(f"🚀 找到CodeFormer模型: {codeformer_path}")
-                # 这里可以集成实际的CodeFormer调用
-                # 由于需要特定的依赖和实现，暂时跳过
-                print(f"🔍 CodeFormer集成需要额外依赖，跳过")
-                return None
+
+                # 尝试实际调用CodeFormer
+                try:
+                    import cv2
+                    from basicsr.utils import imwrite
+                    from codeformer import CodeFormer
+                    import torch
+
+                    print(f"✅ CodeFormer依赖检查通过，开始人脸修复...")
+
+                    # 转换PIL图像为OpenCV格式
+                    img_array = np.array(image)
+                    if img_array.shape[2] == 3:  # RGB
+                        img_cv = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+                    else:  # RGBA
+                        img_cv = cv2.cvtColor(img_array, cv2.COLOR_RGBA2BGR)
+
+                    # 初始化CodeFormer
+                    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                    codeformer = CodeFormer(dim_embd=512, codebook_size=1024, n_head=8, n_layers=9,
+                                          connect_list=['32', '64', '128', '256']).to(device)
+
+                    # 加载模型权重
+                    checkpoint = torch.load(codeformer_path, map_location=device)
+                    codeformer.load_state_dict(checkpoint['params_ema'])
+                    codeformer.eval()
+
+                    # 预处理图像
+                    img_tensor = torch.from_numpy(img_cv).float().permute(2, 0, 1).unsqueeze(0) / 255.0
+                    img_tensor = img_tensor.to(device)
+
+                    # 执行修复
+                    with torch.no_grad():
+                        output = codeformer(img_tensor, w=0.5, adain=True)[0]
+                        output = output.squeeze(0).permute(1, 2, 0).cpu().numpy()
+                        output = (output * 255).astype(np.uint8)
+
+                    # 转换回PIL格式
+                    output_rgb = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
+                    result_image = Image.fromarray(output_rgb)
+
+                    print(f"✅ CodeFormer人脸修复完成")
+                    return result_image
+
+                except ImportError as e:
+                    print(f"🔍 CodeFormer依赖缺失: {e}")
+                    print(f"💡 请安装: pip install -r requirements_face_restore.txt")
+                    return None
+                except Exception as e:
+                    print(f"❌ CodeFormer执行失败: {e}")
+                    return None
             else:
                 print(f"🔍 CodeFormer模型未找到")
                 return None
@@ -1066,10 +1251,61 @@ def _try_gfpgan_restoration(image: Image.Image) -> Optional[Image.Image]:
 
             if gfpgan_path:
                 print(f"🚀 找到GFPGAN模型: {gfpgan_path}")
-                # 这里可以集成实际的GFPGAN调用
-                # 由于需要特定的依赖和实现，暂时跳过
-                print(f"🔍 GFPGAN集成需要额外依赖，跳过")
-                return None
+
+                # 尝试实际调用GFPGAN
+                try:
+                    import cv2
+                    from gfpgan import GFPGANer
+                    import torch
+
+                    print(f"✅ GFPGAN依赖检查通过，开始人脸修复...")
+
+                    # 转换PIL图像为OpenCV格式
+                    img_array = np.array(image)
+                    if img_array.shape[2] == 3:  # RGB
+                        img_cv = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+                    else:  # RGBA
+                        img_cv = cv2.cvtColor(img_array, cv2.COLOR_RGBA2BGR)
+
+                    # 初始化GFPGAN
+                    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+                    # 创建GFPGAN实例
+                    restorer = GFPGANer(
+                        model_path=gfpgan_path,
+                        upscale=1,  # 不放大，只修复
+                        arch='clean',
+                        channel_multiplier=2,
+                        bg_upsampler=None,
+                        device=device
+                    )
+
+                    # 执行修复
+                    cropped_faces, restored_faces, restored_img = restorer.enhance(
+                        img_cv,
+                        has_aligned=False,
+                        only_center_face=False,
+                        paste_back=True,
+                        weight=0.5
+                    )
+
+                    # 转换回PIL格式
+                    if restored_img is not None:
+                        output_rgb = cv2.cvtColor(restored_img, cv2.COLOR_BGR2RGB)
+                        result_image = Image.fromarray(output_rgb)
+                        print(f"✅ GFPGAN人脸修复完成")
+                        return result_image
+                    else:
+                        print(f"⚠️ GFPGAN未检测到人脸或修复失败")
+                        return None
+
+                except ImportError as e:
+                    print(f"🔍 GFPGAN依赖缺失: {e}")
+                    print(f"💡 请安装: pip install -r requirements_face_restore.txt")
+                    return None
+                except Exception as e:
+                    print(f"❌ GFPGAN执行失败: {e}")
+                    return None
             else:
                 print(f"🔍 GFPGAN模型未找到")
                 return None
@@ -1152,11 +1388,34 @@ def _apply_full_enhancements(base_image: Image.Image, target_size_str: str, qual
 
     image = base_image
     try:
-        if 'x' in target_size_str:
+        if 'x' in target_size_str and target_size_str != "Original size":
             target_width, target_height = map(int, target_size_str.split('x'))
-        else:
+            print(f"🔧 目标尺寸: {target_width}x{target_height} (来自参数: {target_size_str})")
+        elif target_size_str == "Original size":
             target_width, target_height = image.size
-        print(f"🔧 目标尺寸: {target_width}x{target_height}")
+            print(f"🔧 目标尺寸: {target_width}x{target_height} (保持原始尺寸)")
+        else:
+            # 🚀 修复：如果参数无法解析，尝试从常见预设中匹配
+            print(f"⚠️ 无法解析目标尺寸参数: {target_size_str}")
+
+            # 检查是否是常见的尺寸预设
+            common_sizes = {
+                "512x512": (512, 512),
+                "768x768": (768, 768),
+                "1024x1024": (1024, 1024),
+                "1024x1792": (1024, 1792),
+                "1792x1024": (1792, 1024),
+                "1920x1080": (1920, 1080),
+                "2560x1440": (2560, 1440),
+                "3840x2160": (3840, 2160)
+            }
+
+            if target_size_str in common_sizes:
+                target_width, target_height = common_sizes[target_size_str]
+                print(f"🔧 目标尺寸: {target_width}x{target_height} (从预设匹配: {target_size_str})")
+            else:
+                target_width, target_height = image.size
+                print(f"🔧 目标尺寸: {target_width}x{target_height} (回退到原始尺寸)")
     except Exception as e:
         target_width, target_height = image.size
         print(f"⚠️ 解析目标尺寸失败，使用原始尺寸: {e}")
@@ -1180,12 +1439,20 @@ def _apply_full_enhancements(base_image: Image.Image, target_size_str: str, qual
                 print(f"✅ 温和调整完成: {image.size}")
             elif image.size[0] / image.size[1] != target_width / target_height:
                 print(f"🎯 检测到宽高比不匹配，启用智能主体检测...")
-                scale_x = target_width / image.size[0]
-                scale_y = target_height / image.size[1]
-                scale = max(scale_x, scale_y)
-                enlarged_w = max(1, int(image.size[0] * scale))
-                enlarged_h = max(1, int(image.size[1] * scale))
-                print(f"🎯 放大到: {enlarged_w}x{enlarged_h}")
+
+                # 🚀 智能分析放大需求
+                original_width, original_height = image.size
+                width_ratio = target_width / original_width
+                height_ratio = target_height / original_height
+
+                print(f"📊 原始尺寸: {original_width}x{original_height}")
+                print(f"📊 目标尺寸: {target_width}x{target_height}")
+                print(f"📊 宽度比例: {width_ratio:.3f}, 高度比例: {height_ratio:.3f}")
+
+                scale = max(width_ratio, height_ratio)
+                enlarged_w = max(1, int(original_width * scale))
+                enlarged_h = max(1, int(original_height * scale))
+                print(f"🎯 智能放大到: {enlarged_w}x{enlarged_h} (按{'高度' if height_ratio > width_ratio else '宽度'}需求)")
 
                 try:
                     print(f"🚀 尝试AI智能放大...")
@@ -1215,14 +1482,21 @@ def _apply_full_enhancements(base_image: Image.Image, target_size_str: str, qual
 
                     print(f"🔍 主体区域检查: 主体({subject_x}, {subject_y}, {subject_w}x{subject_h}), 占比{subject_ratio:.3f}")
 
-                    # 🚀 关键修复：如果主体占比过大，说明AI已经生成了合适的构图，使用温和策略
-                    if subject_ratio > 0.6:
-                        print(f"🎯 主体占比较大({subject_ratio:.3f})，AI构图良好，使用温和裁剪策略")
-                        # 使用图像中心进行温和裁剪
-                        crop_x = max(0, (enlarged.width - target_width) // 2)
-                        crop_y = max(0, (enlarged.height - target_height) // 2)
-                        image = enlarged.crop((crop_x, crop_y, crop_x + target_width, crop_y + target_height))
-                        print(f"✅ 温和裁剪完成: ({crop_x}, {crop_y})")
+                    # 📊 主体信息记录（仅供参考，不做调整）
+                    print(f"📊 主体信息: 位置({subject_x}, {subject_y}), 尺寸({subject_w}x{subject_h}), 占比{subject_ratio:.3f}")
+
+                    # 🎯 简化策略：直接使用中心裁剪，保持主体居中
+                    print(f"🎯 使用中心裁剪策略，保持主体居中")
+
+                    # 使用图像中心进行裁剪
+                    crop_x = max(0, (enlarged.width - target_width) // 2)
+                    crop_y = max(0, (enlarged.height - target_height) // 2)
+                    image = enlarged.crop((crop_x, crop_y, crop_x + target_width, crop_y + target_height))
+                    print(f"✅ 中心裁剪完成: ({crop_x}, {crop_y})")
+
+                    # 保留原有的小主体检测逻辑
+                    if subject_ratio > 0.2:
+                        print(f"📊 主体占比信息: {subject_ratio:.3f} (仅供参考)")
                     elif subject_ratio < 0.01:
                         print(f"⚠️ 主体占比过小({subject_ratio:.3f})，检测可能有误，使用中心裁剪")
                         # 使用图像中心作为裁剪中心
@@ -1706,7 +1980,8 @@ def _comfly_nano_banana_generate(api_url: str, api_key: str, model: str, prompt:
                 pass
             if response.status_code != 200:
                 try:
-                    print(f"[ComflyNanoBananaMirror] Error body: {response.text[:500]}")
+                    # print(f"[ComflyNanoBananaMirror] Error body: {response.text[:500]}")  # 注释掉冗长的调试信息
+                    print(f"[ComflyNanoBananaMirror] Error status: {response.status_code}")
                 except Exception:
                     pass
             response.raise_for_status()
@@ -1856,7 +2131,18 @@ def _comfly_nano_banana_edit(api_url: str, api_key: str, model: str, prompt: str
     try:
         print(f"[ComflyNanoBananaMirror] Building payload: model={model}, max_tokens={max_tokens}, seed={seed}")
         print(f"[ComflyNanoBananaMirror] Payload keys: {list(payload.keys())}")
-        print(f"[ComflyNanoBananaMirror] Messages structure: {payload.get('messages', 'MISSING')}")
+        # print(f"[ComflyNanoBananaMirror] Messages structure: {payload.get('messages', 'MISSING')}")  # 注释掉可能包含base64数据的输出
+        messages = payload.get('messages', [])
+        if messages:
+            print(f"[ComflyNanoBananaMirror] Messages count: {len(messages)}")
+            for i, msg in enumerate(messages):
+                if 'content' in msg and isinstance(msg['content'], list):
+                    content_types = [item.get('type', 'unknown') for item in msg['content']]
+                    print(f"[ComflyNanoBananaMirror] Message {i+1} content types: {content_types}")
+                else:
+                    print(f"[ComflyNanoBananaMirror] Message {i+1} type: {type(msg.get('content', 'unknown'))}")
+        else:
+            print(f"[ComflyNanoBananaMirror] No messages found")
     except Exception:
         pass
 
@@ -1894,7 +2180,8 @@ def _comfly_nano_banana_edit(api_url: str, api_key: str, model: str, prompt: str
             # 若非200，打印返回体帮助定位422原因
             if response.status_code != 200:
                 try:
-                    print(f"[ComflyNanoBananaMirror] Error body: {response.text[:500]}")
+                    # print(f"[ComflyNanoBananaMirror] Error body: {response.text[:500]}")  # 注释掉冗长的调试信息
+                    print(f"[ComflyNanoBananaMirror] Error status: {response.status_code}")
                 except Exception:
                     pass
             response.raise_for_status()
@@ -2111,6 +2398,272 @@ def _comfly_falai_edit(api_url: str, api_key: str, model: str, prompt: str, pil_
     r.raise_for_status()
     return r.json()
 
+def _comfly_fal_ai_nano_banana(api_url: str, api_key: str, model: str, prompt: str, images: list = None, num_images: int = 1, seed: int = 0, image_way: str = "image_url") -> dict:
+    """Call Comfly's fal-ai/nano-banana endpoint for image generation and editing."""
+    import requests, io, base64, time
+    from PIL import Image
+
+    # 确定是编辑模式还是生成模式
+    is_edit_mode = model.endswith("/edit") or (images and len(images) > 0)
+
+    # 构建API端点 - 处理模型名称，避免重复的fal-ai前缀
+    clean_model = model
+    if model.startswith("fal-ai/"):
+        clean_model = model[7:]  # 移除 "fal-ai/" 前缀
+
+    if is_edit_mode and not clean_model.endswith("/edit"):
+        clean_model = f"{clean_model}/edit"
+
+    # 构建正确的API端点 - 区分Comfly和T8镜像站
+    base_url = api_url.rstrip('/')
+
+    # 检查是否是T8镜像站
+    if "t8star.cn" in api_url or "ai.t8star.cn" in api_url:
+        # T8镜像站使用fal-ai端点，格式：https://ai.t8star.cn/fal-ai/{model}
+        if base_url.endswith('/v1/chat/completions'):
+            base_url = base_url[:-20]  # 移除/v1/chat/completions后缀
+        elif base_url.endswith('/v1'):
+            base_url = base_url[:-3]  # 移除/v1后缀
+        api_endpoint = f"{base_url}/fal-ai/{clean_model}"
+    else:
+        # Comfly镜像站使用专门的fal-ai端点
+        if base_url.endswith('/v1'):
+            base_url = base_url[:-3]  # 移除/v1后缀
+        api_endpoint = f"{base_url}/fal-ai/{clean_model}"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+
+    # 准备payload - T8和Comfly镜像站都使用相同的fal-ai格式
+    payload = {
+        "prompt": prompt,
+        "num_images": num_images
+    }
+
+    if seed > 0:
+        payload["seed"] = seed
+
+    # 处理输入图像 - T8和Comfly都使用相同的处理方式
+    if images and len(images) > 0:
+        image_urls = []
+
+        if image_way == "image":
+            # 使用base64编码
+            for img in images:
+                if isinstance(img, Image.Image):
+                    buffered = io.BytesIO()
+                    img.save(buffered, format="PNG")
+                    base64_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                    image_urls.append(f"data:image/png;base64,{base64_str}")
+        else:
+            # 上传图像获取URL
+            for img in images:
+                if isinstance(img, Image.Image):
+                    try:
+                        buffered = io.BytesIO()
+                        img.save(buffered, format="PNG")
+                        file_content = buffered.getvalue()
+
+                        files = {'file': ('image.png', file_content, 'image/png')}
+                        upload_headers = {"Authorization": f"Bearer {api_key}"}
+
+                        # 构建正确的上传URL
+                        base_url = api_url.rstrip('/')
+                        if base_url.endswith('/v1'):
+                            upload_url = f"{base_url}/files"
+                        else:
+                            upload_url = f"{base_url}/v1/files"
+
+                        print(f"📤 上传图像到: {upload_url}")
+                        upload_response = requests.post(
+                            upload_url,
+                            headers=upload_headers,
+                            files=files,
+                            timeout=60,
+                            verify=False
+                        )
+
+                        print(f"📡 上传响应状态码: {upload_response.status_code}")
+                        if upload_response.status_code == 200:
+                            upload_result = upload_response.json()
+                            print(f"📋 上传响应: {upload_result}")
+                            if 'url' in upload_result:
+                                image_urls.append(upload_result['url'])
+                                print(f"✅ 图像上传成功: {upload_result['url']}")
+                            else:
+                                print(f"❌ 上传响应中没有URL字段: {upload_result}")
+                        else:
+                            print(f"❌ 图像上传失败: {upload_response.status_code} - {upload_response.text}")
+                    except Exception as e:
+                        print(f"❌ 图像上传异常: {e}")
+
+        if image_urls:
+            payload["image_urls"] = image_urls
+            print(f"✅ 成功准备了{len(image_urls)}个图像URL")
+        elif images and len(images) > 0 and is_edit_mode:
+            # 如果是编辑模式但没有成功上传图像，使用base64作为备用方案
+            print("⚠️ 图像上传失败，使用base64编码作为备用方案")
+            image_urls = []
+            for img in images:
+                if isinstance(img, Image.Image):
+                    buffered = io.BytesIO()
+                    img.save(buffered, format="PNG")
+                    base64_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                    image_urls.append(f"data:image/png;base64,{base64_str}")
+
+            if image_urls:
+                payload["image_urls"] = image_urls
+                print(f"✅ 使用base64准备了{len(image_urls)}个图像")
+            else:
+                raise Exception("编辑模式需要提供图像，但图像处理失败")
+
+    # 发送请求
+    print(f"🚀 发送fal-ai请求到: {api_endpoint}")
+    # print(f"📦 请求payload: {str(payload)[:300]}...")  # 注释掉可能包含base64数据的输出
+    print(f"📦 请求payload结构: {list(payload.keys())}")  # 只显示payload的键名
+
+    response = requests.post(api_endpoint, headers=headers, json=payload, timeout=300)
+
+    print(f"📡 响应状态码: {response.status_code}")
+    if response.status_code != 200:
+        print(f"❌ 请求失败: {response.text}")
+        response.raise_for_status()
+
+    result = response.json()
+    # print(f"📋 初始响应: {str(result)[:300]}...")  # 注释掉可能包含base64数据的冗长输出
+    print(f"📋 初始响应结构: {list(result.keys())}")  # 只显示响应的键名
+
+    # T8和Comfly镜像站都使用相同的fal-ai响应处理逻辑
+    # 检查是否有request_id，需要轮询结果
+    if "request_id" in result:
+        request_id = result["request_id"]
+        response_url = result.get("response_url", "")
+        print(f"🆔 获得request_id: {request_id}")
+        print(f"🔗 原始response_url: {response_url}")
+
+        # 修正response_url
+        if "queue.fal.run" in response_url:
+            response_url = response_url.replace("https://queue.fal.run", "https://ai.comfly.chat")
+
+        if not response_url:
+            # 构建正确的轮询URL
+            base_url = api_url.rstrip('/')
+            if base_url.endswith('/v1'):
+                base_url = base_url[:-3]  # 移除/v1后缀
+            response_url = f"{base_url}/fal-ai/{clean_model}/requests/{request_id}"
+
+        # 轮询结果
+        max_retries = 30  # 30次轮询，约1分钟
+        retry_count = 0
+        result_data = None
+        print(f"🔄 开始轮询结果，URL: {response_url}")
+
+        while retry_count < max_retries:
+            retry_count += 1
+
+            try:
+                result_response = requests.get(response_url, headers=headers, timeout=60)
+
+                if result_response.status_code != 200:
+                    time.sleep(1)
+                    continue
+
+                result_data = result_response.json()
+                # print(f"🔍 轮询响应 #{retry_count}: {str(result_data)[:200]}...")  # 注释掉可能包含base64数据的输出
+                print(f"🔍 轮询响应 #{retry_count}: {list(result_data.keys())}")  # 只显示响应的键名
+
+                # 检查多种可能的响应格式
+                images_found = False
+                images_data = []
+
+                # 格式1: 标准的images字段
+                if "images" in result_data and result_data["images"]:
+                    print("📸 检测到标准images字段")
+                    for img_data in result_data["images"]:
+                        if "url" in img_data:
+                            img_url = img_data["url"]
+                            if "queue.fal.run" in img_url:
+                                img_url = img_url.replace("https://queue.fal.run", "https://ai.comfly.chat")
+
+                            try:
+                                img_response = requests.get(img_url, timeout=60)
+                                if img_response.status_code == 200:
+                                    img_base64 = base64.b64encode(img_response.content).decode('utf-8')
+                                    images_data.append({
+                                        "b64_json": img_base64,
+                                        "url": img_url
+                                    })
+                                    images_found = True
+                            except Exception as e:
+                                print(f"Error downloading image: {e}")
+
+                # 格式2: 检查data字段
+                elif "data" in result_data and result_data["data"]:
+                    print("📸 检测到data字段")
+                    data = result_data["data"]
+                    if isinstance(data, list) and len(data) > 0:
+                        for item in data:
+                            if isinstance(item, dict) and "url" in item:
+                                img_url = item["url"]
+                                if "queue.fal.run" in img_url:
+                                    img_url = img_url.replace("https://queue.fal.run", "https://ai.comfly.chat")
+
+                                try:
+                                    img_response = requests.get(img_url, timeout=60)
+                                    if img_response.status_code == 200:
+                                        img_base64 = base64.b64encode(img_response.content).decode('utf-8')
+                                        images_data.append({
+                                            "b64_json": img_base64,
+                                            "url": img_url
+                                        })
+                                        images_found = True
+                                except Exception as e:
+                                    print(f"Error downloading image: {e}")
+
+                # 格式3: 直接检查url字段
+                elif "url" in result_data:
+                    print("📸 检测到直接url字段")
+                    img_url = result_data["url"]
+                    if "queue.fal.run" in img_url:
+                        img_url = img_url.replace("https://queue.fal.run", "https://ai.comfly.chat")
+
+                    try:
+                        img_response = requests.get(img_url, timeout=60)
+                        if img_response.status_code == 200:
+                            img_base64 = base64.b64encode(img_response.content).decode('utf-8')
+                            images_data.append({
+                                "b64_json": img_base64,
+                                "url": img_url
+                            })
+                            images_found = True
+                    except Exception as e:
+                        print(f"Error downloading image: {e}")
+
+                if images_found and images_data:
+                    print(f"✅ 成功获取{len(images_data)}张图像")
+                    return {
+                        "data": images_data,
+                        "response_text": f"Successfully generated {len(images_data)} images using fal-ai/{model}"
+                    }
+
+                time.sleep(1)
+
+            except Exception as e:
+                print(f"Error fetching result: {e}")
+                time.sleep(1)
+
+        # 如果轮询结束仍未获得结果
+        if result_data is None:
+            raise Exception("Failed to retrieve results after multiple attempts")
+        else:
+            raise Exception("No images in response: " + str(result_data))
+
+    # 直接返回结果的情况
+    return result
+
+
 def get_mirror_site_config(mirror_site_name: str) -> Dict[str, str]:
     """根据镜像站名称获取对应的配置"""
     try:
@@ -2220,7 +2773,8 @@ def process_openrouter_stream(response) -> str:
                                 print(f"🖼️ 检测到OpenRouter images字段！")
                                 images_data = delta['images']
                                 print(f"🔍 Images字段类型: {type(images_data)}")
-                                print(f"🔍 Images字段内容: {str(images_data)[:200]}...")
+                                # print(f"🔍 Images字段内容: {str(images_data)[:200]}...")  # 注释掉可能包含base64数据的输出
+                                print(f"🔍 Images字段长度: {len(str(images_data))} 字符")
                                 
                                 # 使用参考项目的方法：直接搜索data:image/字符串
                                 import re
@@ -2300,7 +2854,8 @@ def process_openrouter_stream(response) -> str:
         print(f"   📏 总内容长度: {len(accumulated_content)}")
         
         if accumulated_content:
-            print(f"   🔍 内容预览: {accumulated_content[:200]}{'...' if len(accumulated_content) > 200 else ''}")
+            # print(f"   🔍 内容预览: {accumulated_content[:200]}{'...' if len(accumulated_content) > 200 else ''}")  # 注释掉可能包含base64数据的输出
+            print(f"   🔍 内容类型: {'包含图像数据' if 'data:image/' in accumulated_content else '纯文本内容'}")
             if last_content_chunk > 0:
                 print(f"   📍 最后一个内容块位置: 第{last_content_chunk}块")
         else:
@@ -2429,7 +2984,7 @@ def call_t8_api(url, api_key, request_data, timeout=300):
     }
     
     try:
-        response = requests.post(url, headers=headers, json=request_data, timeout=timeout)
+        response = requests.post(url, headers=headers, json=request_data, timeout=timeout, verify=False)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -2888,16 +3443,26 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
             return resized_img
 
         # 使用裁剪模式：高清无损放大到最大边，然后智能裁剪
-        print(f"🎯 裁剪模式：高清无损放大到最大边，然后智能裁剪")
+        print(f"🎯 裁剪模式：智能高清无损放大到最大边，然后智能裁剪")
 
-        # 计算最佳缩放比例
-        scale_x = target_width / img_width
-        scale_y = target_height / img_height
-        scale = max(scale_x, scale_y)  # 使用较大的缩放比例，确保完全覆盖
+        # 🚀 智能分析放大需求
+        width_ratio = target_width / img_width   # 宽度需要的放大比例
+        height_ratio = target_height / img_height # 高度需要的放大比例
+
+        print(f"📊 原始尺寸: {img_width}x{img_height}")
+        print(f"📊 目标尺寸: {target_width}x{target_height}")
+        print(f"📊 宽度比例: {width_ratio:.3f} ({'需要放大' if width_ratio > 1 else '需要缩小' if width_ratio < 1 else '无需调整'})")
+        print(f"📊 高度比例: {height_ratio:.3f} ({'需要放大' if height_ratio > 1 else '需要缩小' if height_ratio < 1 else '无需调整'})")
+
+        # 使用较大的缩放比例，确保完全覆盖
+        scale = max(width_ratio, height_ratio)
 
         # 计算放大后的尺寸
         enlarged_width = int(img_width * scale)
         enlarged_height = int(img_height * scale)
+
+        print(f"🔧 智能放大: {img_width}x{img_height} -> {enlarged_width}x{enlarged_height}")
+        print(f"🔧 最终缩放比例: {scale:.3f} (按{'高度' if height_ratio > width_ratio else '宽度'}需求放大)")
 
         print(f"🔧 高清无损放大: {img_width}x{img_height} -> {enlarged_width}x{enlarged_height}")
         print(f"🔧 缩放比例: {scale:.3f}")
@@ -3002,7 +3567,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 }),
                 "prompt": ("STRING", {"default": "A beautiful mountain landscape at sunset", "multiline": True}),
                 # 支持多种AI模型和图像生成服务: nano-banana支持Comfly和T8镜像站
-                "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation", "fal-ai/nano-banana [Comfly-T8]", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
+                "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "fal-ai/nano-banana [Comfly-T8]", "fal-ai/nano-banana/edit [Comfly-T8]", "gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
                 "size": (size_presets, {"default": image_settings.get('default_size', "1024x1024")}),
                 "quality": (quality_presets, {"default": image_settings.get('default_quality', "hd")}),
@@ -3086,14 +3651,17 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             print(f"[LLM Agent Assistant] Chat push failed: {e}")
             pass
     
-    def generate_image(self, mirror_site: str, api_key: str, prompt: str, model: str, 
-                      proxy: str, size: str, quality: str, style: str, detail_level: str, camera_control: str, 
-                      lighting_control: str, template_selection: str, quality_enhancement: bool, enhance_quality: bool, 
-                      smart_resize: bool, fill_color: str, temperature: float, top_p: float, top_k: int, 
-                      max_output_tokens: int, seed: int, custom_size: str = "", api4gpt_service: str = "nano-banana", 
+    def generate_image(self, mirror_site: str, api_key: str, prompt: str, model: str,
+                      proxy: str, size: str, quality: str, style: str, detail_level: str, camera_control: str,
+                      lighting_control: str, template_selection: str, quality_enhancement: bool, enhance_quality: bool,
+                      smart_resize: bool, fill_color: str, temperature: float, top_p: float, top_k: int,
+                      max_output_tokens: int, seed: int, custom_size: str = "", api4gpt_service: str = "nano-banana",
                       custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API生成图片"""
-        
+
+        # 🔧 确保requests模块可用
+        import requests
+
         # 🚀 立即规范化模型名称，去除UI标识
         model = _normalize_model_name(model)
         
@@ -3125,8 +3693,16 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
         except ImportError:
             from gemini_banana import process_image_controls, enhance_prompt_with_controls
         controls = process_image_controls(size, quality, style, custom_size)
-        # 对于nano-banana模型，跳过尺寸提示，让模型自由生成
-        skip_size_hints = model in ["nano-banana", "nano-banana-hd"]
+
+        # 🚀 调试：显示参数传递过程
+        print(f"🔍 参数传递调试:")
+        print(f"  - 节点size参数: {size}")
+        print(f"  - 节点custom_size参数: {custom_size}")
+        print(f"  - 处理后controls['size']: {controls['size']}")
+        print(f"  - 是否自定义尺寸: {controls.get('is_custom_size', False)}")
+
+        # 对于原生nano-banana模型跳过尺寸提示，但fal-ai模型需要精确的构图控制
+        skip_size_hints = model in ["nano-banana", "nano-banana-hd"] and not (model.startswith("fal-ai/") or model.endswith("/edit"))
         enhanced_prompt = enhance_prompt_with_controls(
             prompt.strip(), controls, detail_level, camera_control, lighting_control,
             template_selection, quality_enhancement, enhance_quality, smart_resize, fill_color,
@@ -3247,64 +3823,64 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
         elif is_comfly_mirror:
             print("🔗 检测到Comfly镜像站，使用Comfly API格式")
 
-            if model in ["nano-banana", "nano-banana-hd"]:
-                # Comfly nano-banana 直连（生成）
-                try:
-                    result = _comfly_nano_banana_generate(api_url, api_key, model, enhanced_prompt, controls['size'], temperature, top_p, max_output_tokens, seed)
-                    # print(f"[DEBUG] result type: {type(result)}")
-                    # print(f"[DEBUG] result keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
-                    # print(f"[DEBUG] result content: {str(result)[:500]}...")
+            if model in ["nano-banana", "nano-banana-hd", "fal-ai/nano-banana", "nano-banana/edit", "fal-ai/nano-banana/edit"]:
+                # 检查是否是fal-ai模型
+                if model.startswith("fal-ai/") or model.endswith("/edit"):
+                    # 检查是否是编辑模型但在生成节点中使用
+                    if model.endswith("/edit"):
+                        print("⚠️ 检测到编辑模型在图像生成节点中使用，自动切换到生成模型")
+                        # 将编辑模型转换为生成模型
+                        generation_model = model.replace("/edit", "")
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, generation_model, enhanced_prompt, None, 1, seed, "image_url")
+                    else:
+                        # 使用fal-ai端点
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, model, enhanced_prompt, None, 1, seed, "image_url")
+
+                    # print(f"🔍 Comfly fal-ai函数返回结果: {str(result)[:200]}...")  # 注释掉可能包含base64数据的输出
+                    print(f"🔍 Comfly fal-ai函数返回结果类型: {type(result)}")
                     generated_image = None
                     response_text = ""
-                    
+
                     if isinstance(result, dict) and 'data' in result:
-                        if not result['data']:
-                            # 如果data为空，说明没有生成图像
-                            response_text = result.get('response_text', '')
-                            print(f"⚠️ Comfly nano-banana 没有返回图像数据")
-                            print(f"📝 响应文本: {response_text[:200]}...")
-                            raise Exception(f"Comfly nano-banana 服务没有返回图像数据，响应: {response_text[:100]}...")
+                            if not result['data']:
+                                response_text = result.get('response_text', '')
+                                print(f"⚠️ Comfly fal-ai/nano-banana 没有返回图像数据")
+                                # print(f"📝 响应文本: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
+                                print(f"📝 响应文本长度: {len(response_text)} 字符")
+                                raise Exception(f"Comfly fal-ai/nano-banana 服务没有返回图像数据，响应: {response_text[:100]}...")
 
-                        # 如果data不为空，继续处理
-                        if result['data']:
-                            b64 = result['data'][0].get('b64_json')
-                            image_url = result['data'][0].get('url', '')
-                            response_text = result.get('response_text', "")
+                            if result['data']:
+                                b64 = result['data'][0].get('b64_json')
+                                image_url = result['data'][0].get('url', '')
+                                response_text = result.get('response_text', "")
 
-                            # 确保图像URL信息显示在响应中
-                            if image_url and image_url not in response_text:
-                                response_text += f"\n图像URL: {image_url}"
+                                if image_url and image_url not in response_text:
+                                    response_text += f"\n图像URL: {image_url}"
 
-                            # print(f"[DEBUG] 图像URL: {image_url}")
-                            # print(f"[DEBUG] 响应文本: {response_text}")
-
-                            if b64:
-                                from base64 import b64decode
-                                import io
-                                try:
-                                    # 修复base64填充问题
-                                    b64_fixed = b64 + '=' * (4 - len(b64) % 4)
-                                    img = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
-                                except Exception as decode_error:
-                                    print(f"⚠️ base64解码失败: {decode_error}")
-                                    # 尝试直接解码
-                                    try:
-                                        img = Image.open(io.BytesIO(b64decode(b64))).convert('RGB')
-                                    except Exception as e2:
-                                        print(f"⚠️ 直接解码也失败: {e2}")
-                                        img = None
-                                generated_image = img
-                            else:
-                                # 如果没有base64数据，尝试从响应文本中提取图像
-                                import re
-                                base64_pattern = r'data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)'
-                                matches = re.findall(base64_pattern, response_text)
-                                if matches:
+                                if b64:
                                     from base64 import b64decode
                                     import io
-                                    img = Image.open(io.BytesIO(b64decode(matches[0]))).convert('RGB')
+                                    try:
+                                        b64_fixed = b64 + '=' * (4 - len(b64) % 4)
+                                        img = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
+                                    except Exception as decode_error:
+                                        print(f"⚠️ base64解码失败: {decode_error}")
+                                        try:
+                                            img = Image.open(io.BytesIO(b64decode(b64))).convert('RGB')
+                                        except Exception as e2:
+                                            print(f"⚠️ 直接解码也失败: {e2}")
+                                            img = None
                                     generated_image = img
-                    
+                                else:
+                                    import re
+                                    base64_pattern = r'data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)'
+                                    matches = re.findall(base64_pattern, response_text)
+                                    if matches:
+                                        from base64 import b64decode
+                                        import io
+                                        img = Image.open(io.BytesIO(b64decode(matches[0]))).convert('RGB')
+                                        generated_image = img
+
                     # 如果成功处理，应用尺寸与质量增强后再返回
                     if generated_image:
                         # 全量增强
@@ -3324,13 +3900,97 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                             pass
 
                         image_tensor = pil_to_tensor(generated_image)
-                        print("✅ 图片生成完成（Comfly nano-banana）")
+                        print("✅ 图片生成完成（Comfly fal-ai/nano-banana）")
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
                         return (image_tensor, response_text)
-                        
-                except Exception as e:
-                    print(f"❌ Comfly(nano-banana) 生成失败: {e}")
-                    raise e
+                    else:
+                        print(f"⚠️ API响应格式异常: {result}")
+                        raise Exception(f"API响应格式异常: {result}")
+                else:
+                    # 使用原有的nano-banana端点
+                    try:
+                        result = _comfly_nano_banana_generate(api_url, api_key, model, enhanced_prompt, controls['size'], temperature, top_p, max_output_tokens, seed)
+                        # print(f"[DEBUG] result type: {type(result)}")
+                        # print(f"[DEBUG] result keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+                        # print(f"[DEBUG] result content: {str(result)[:500]}...")
+                        generated_image = None
+                        response_text = ""
+
+                        if isinstance(result, dict) and 'data' in result:
+                            if not result['data']:
+                                # 如果data为空，说明没有生成图像
+                                response_text = result.get('response_text', '')
+                                print(f"⚠️ Comfly nano-banana 没有返回图像数据")
+                                # print(f"📝 响应文本: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
+                                print(f"📝 响应文本长度: {len(response_text)} 字符")
+                                raise Exception(f"Comfly nano-banana 服务没有返回图像数据，响应: {response_text[:100]}...")
+
+                            # 如果data不为空，继续处理
+                            if result['data']:
+                                b64 = result['data'][0].get('b64_json')
+                                image_url = result['data'][0].get('url', '')
+                                response_text = result.get('response_text', "")
+
+                                # 确保图像URL信息显示在响应中
+                                if image_url and image_url not in response_text:
+                                    response_text += f"\n图像URL: {image_url}"
+
+                                # print(f"[DEBUG] 图像URL: {image_url}")
+                                # print(f"[DEBUG] 响应文本: {response_text}")
+
+                                if b64:
+                                    from base64 import b64decode
+                                    import io
+                                    try:
+                                        # 修复base64填充问题
+                                        b64_fixed = b64 + '=' * (4 - len(b64) % 4)
+                                        img = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
+                                    except Exception as decode_error:
+                                        print(f"⚠️ base64解码失败: {decode_error}")
+                                        # 尝试直接解码
+                                        try:
+                                            img = Image.open(io.BytesIO(b64decode(b64))).convert('RGB')
+                                        except Exception as e2:
+                                            print(f"⚠️ 直接解码也失败: {e2}")
+                                            img = None
+                                    generated_image = img
+                                else:
+                                    # 如果没有base64数据，尝试从响应文本中提取图像
+                                    import re
+                                    base64_pattern = r'data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)'
+                                    matches = re.findall(base64_pattern, response_text)
+                                    if matches:
+                                        from base64 import b64decode
+                                        import io
+                                        img = Image.open(io.BytesIO(b64decode(matches[0]))).convert('RGB')
+                                        generated_image = img
+
+                        # 如果成功处理，应用尺寸与质量增强后再返回
+                        if generated_image:
+                            # 全量增强
+                            try:
+                                generated_image = _apply_full_enhancements(
+                                    generated_image,
+                                    controls['size'],
+                                    quality,
+                                    enhance_quality,
+                                    smart_resize
+                                )
+                                try:
+                                    print(f"🔧 Final output size: {generated_image.size[0]}x{generated_image.size[1]}")
+                                except Exception:
+                                    pass
+                            except Exception:
+                                pass
+
+                            image_tensor = pil_to_tensor(generated_image)
+                            print("✅ 图片生成完成（Comfly nano-banana）")
+                            self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
+                            return (image_tensor, response_text)
+
+                    except Exception as e:
+                        print(f"❌ Comfly(nano-banana) 生成失败: {e}")
+                        raise e
             else:
                 # 非nano-banana模型使用Gemini API格式
                 request_data = {
@@ -3359,9 +4019,94 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
 
         # 3. T8镜像站处理
         elif is_t8_mirror:
-            # T8镜像站也支持 nano-banana，调用方式与 Comfly 一致
-            print("🔗 检测到T8镜像站，使用chat/completions端点 (nano-banana 直连)")
-            if _normalize_model_name(model) in ["nano-banana", "nano-banana-hd"]:
+            print("🔗 检测到T8镜像站，使用T8 API格式")
+
+            if model in ["nano-banana", "nano-banana-hd", "fal-ai/nano-banana", "nano-banana/edit", "fal-ai/nano-banana/edit"]:
+                # 检查是否是fal-ai模型
+                if model.startswith("fal-ai/") or model.endswith("/edit"):
+                    # 检查是否是编辑模型但在生成节点中使用
+                    if model.endswith("/edit"):
+                        print("⚠️ 检测到编辑模型在图像生成节点中使用，自动切换到生成模型")
+                        # 将编辑模型转换为生成模型
+                        generation_model = model.replace("/edit", "")
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, generation_model, enhanced_prompt, None, 1, seed, "image_url")
+                    else:
+                        # T8镜像站使用与Comfly相同的fal-ai端点调用方式
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, model, enhanced_prompt, None, 1, seed, "image_url")
+
+                    generated_image = None
+                    response_text = ""
+
+                    if isinstance(result, dict) and 'data' in result:
+                            if not result['data']:
+                                response_text = result.get('response_text', '')
+                                print(f"⚠️ T8 fal-ai/nano-banana 没有返回图像数据")
+                                # print(f"📝 响应文本: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
+                                print(f"📝 响应文本长度: {len(response_text)} 字符")
+                                raise Exception(f"T8 fal-ai/nano-banana 服务没有返回图像数据，响应: {response_text[:100]}...")
+
+                            # 处理返回的图像数据
+                            b64 = result['data'][0].get('b64_json')
+                            image_url = result['data'][0].get('url', '')
+                            response_text = result.get('response_text', "")
+
+                            # 确保图像URL信息显示在响应中
+                            if image_url and image_url not in response_text:
+                                response_text += f"\n🔗 图像URL: {image_url}"
+
+                            if b64:
+                                from base64 import b64decode
+                                import io
+                                try:
+                                    b64_fixed = b64 + '=' * (4 - len(b64) % 4)
+                                    generated_image = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
+                                except Exception as e:
+                                    print(f"⚠️ base64解码失败: {e}")
+                                    # 尝试从URL下载
+                                    if image_url:
+                                        try:
+                                            import requests
+                                            response = requests.get(image_url, timeout=30)
+                                            if response.status_code == 200:
+                                                generated_image = Image.open(io.BytesIO(response.content)).convert('RGB')
+                                                print("✅ 成功从URL下载图像")
+                                            else:
+                                                print(f"⚠️ 图像下载失败，状态码: {response.status_code}")
+                                        except Exception as e:
+                                            print(f"⚠️ 图像下载失败: {e}")
+
+                    if generated_image:
+                        # 应用全量增强（包括智能主体检测和居中技术）
+                        try:
+                            print("🚀 开始应用T8 fal-ai图像增强技术...")
+                            enhanced_image = _apply_full_enhancements(
+                                generated_image,
+                                controls['size'],
+                                quality,
+                                enhance_quality,
+                                smart_resize
+                            )
+                            if enhanced_image:
+                                generated_image = enhanced_image
+                                print(f"✅ T8 fal-ai图像增强完成")
+                                try:
+                                    print(f"🔧 Final output size: {generated_image.size[0]}x{generated_image.size[1]}")
+                                except Exception:
+                                    pass
+                            else:
+                                print("⚠️ T8 fal-ai图像增强返回空结果，使用原始图像")
+                        except Exception as e:
+                            print(f"⚠️ T8 fal-ai图像增强失败: {e}")
+                            print("⚠️ 使用原始图像继续处理")
+
+                        print("✅ T8 fal-ai图片生成完成")
+                        return (pil_to_tensor(generated_image), response_text)
+                    else:
+                        raise Exception("T8 fal-ai/nano-banana 未能生成有效图像")
+
+                # 原生nano-banana模型处理
+                elif _normalize_model_name(model) in ["nano-banana", "nano-banana-hd"]:
+                    print("🔗 T8镜像站使用chat/completions端点 (nano-banana 直连)")
                 try:
                     result = _comfly_nano_banana_generate(api_url, api_key, _normalize_model_name(model), enhanced_prompt, controls['size'], temperature, top_p, max_output_tokens, seed)
                     # 🔍 调试：打印T8返回的结果格式 - 已关闭
@@ -3395,19 +4140,26 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     if generated_image:
                         # 应用全量增强（包括智能主体检测和居中技术）
                         try:
-                            generated_image = _apply_full_enhancements(
+                            print("🚀 开始应用T8 fal-ai图像增强技术...")
+                            enhanced_image = _apply_full_enhancements(
                                 generated_image,
                                 controls['size'],
                                 quality,
                                 enhance_quality,
                                 smart_resize
                             )
-                            try:
-                                print(f"🔧 Final output size: {generated_image.size[0]}x{generated_image.size[1]}")
-                            except Exception:
-                                pass
-                        except Exception:
-                            pass
+                            if enhanced_image:
+                                generated_image = enhanced_image
+                                print(f"✅ T8 fal-ai图像增强完成")
+                                try:
+                                    print(f"🔧 Final output size: {generated_image.size[0]}x{generated_image.size[1]}")
+                                except Exception:
+                                    pass
+                            else:
+                                print("⚠️ T8 fal-ai图像增强返回空结果，使用原始图像")
+                        except Exception as e:
+                            print(f"⚠️ T8 fal-ai图像增强失败: {e}")
+                            print("⚠️ 使用原始图像继续处理")
                         print("✅ 图片生成完成（T8 nano-banana）")
                         return (pil_to_tensor(generated_image), response_text)
                 except Exception as e:
@@ -3480,19 +4232,35 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                                     if generated_image.size[0]/generated_image.size[1] != target_width/target_height:
                                         print(f"📐 检测到比例变化，使用高清无损放大 + 智能裁剪方法")
                                         
-                                        # 🎯 高清无损放大（保持原始比例，不拉伸变形）
-                                        # 计算最佳缩放比例，使用max确保完全覆盖目标区域
-                                        scale_x = target_width / generated_image.size[0]      # 宽度比例
-                                        scale_y = target_height / generated_image.size[1]    # 高度比例
-                                        scale = max(scale_x, scale_y)  # 使用较大的缩放比例，确保完全覆盖
-                                        
+                                        # 🎯 智能高清无损放大（按需放大，避免过度放大）
+                                        original_width, original_height = generated_image.size
+
+                                        print(f"📊 原始尺寸: {original_width}x{original_height}")
+                                        print(f"📊 目标尺寸: {target_width}x{target_height}")
+
+                                        # 🚀 新方法：分析哪个维度需要放大
+                                        width_ratio = target_width / original_width   # 宽度需要的放大比例
+                                        height_ratio = target_height / original_height # 高度需要的放大比例
+
+                                        print(f"📊 宽度比例: {width_ratio:.3f} ({'需要放大' if width_ratio > 1 else '需要缩小' if width_ratio < 1 else '无需调整'})")
+                                        print(f"📊 高度比例: {height_ratio:.3f} ({'需要放大' if height_ratio > 1 else '需要缩小' if height_ratio < 1 else '无需调整'})")
+
+                                        # 使用较大的比例确保完全覆盖目标区域
+                                        scale = max(width_ratio, height_ratio)
+
+                                        # 🚀 优化：如果缩放比例接近1，可以考虑更精确的处理
+                                        if 0.9 <= scale <= 1.1:
+                                            print(f"🎯 检测到轻微尺寸差异(缩放比例{scale:.3f})，使用精确调整")
+                                        elif scale > 2.0:
+                                            print(f"⚠️ 检测到大幅放大需求(缩放比例{scale:.3f})，建议检查原始尺寸设置")
+
                                         # 计算放大后的尺寸（保持原始比例，确保覆盖目标区域）
-                                        enlarged_width = int(generated_image.size[0] * scale)
-                                        enlarged_height = int(generated_image.size[1] * scale)
-                                        
-                                        print(f"🔧 高清无损放大: {generated_image.size[0]}x{generated_image.size[1]} -> {enlarged_width}x{enlarged_height}")
-                                        print(f"🔧 缩放比例: {scale:.3f} (使用max确保完全覆盖，然后智能裁剪)")
-                                        print(f"🔧 关键：直接放大到最大边，保持图像清晰度和比例")
+                                        enlarged_width = int(original_width * scale)
+                                        enlarged_height = int(original_height * scale)
+
+                                        print(f"🔧 智能高清放大: {original_width}x{original_height} -> {enlarged_width}x{enlarged_height}")
+                                        print(f"🔧 最终缩放比例: {scale:.3f} (按{'高度' if height_ratio > width_ratio else '宽度'}需求放大)")
+                                        print(f"🔧 优势：只在需要的维度放大，避免过度放大导致的质量损失")
                                         
                                         # 🎯 使用AI放大模型进行高清无损放大（保持比例）
                                         # 优先使用AI模型，回退到高质量重采样
@@ -3529,21 +4297,24 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                                                 subject_bbox, subject_center = detect_image_foreground_subject(enlarged_image)
                                                 subject_x, subject_y, subject_w, subject_h = subject_bbox
                                                 subject_center_x, subject_center_y = subject_center
-                                                
+
                                                 print(f"🎯 检测到主体: 位置({subject_x}, {subject_y}), 尺寸({subject_w}x{subject_h})")
                                                 print(f"🎯 主体中心: ({subject_center_x}, {subject_center_y})")
-                                                
-                                                # 🎯 智能裁剪策略：确保主体在裁剪后图像的中心
-                                                # 计算主体中心应该在新图像中的位置
-                                                target_center_x = target_width // 2
-                                                target_center_y = target_height // 2
-                                                
-                                                # 计算裁剪起始位置，使主体中心对齐到目标中心
-                                                crop_x = subject_center_x - target_center_x
-                                                crop_y = subject_center_y - target_center_y
-                                                
-                                                print(f"🔧 智能计算裁剪位置: 主体中心({subject_center_x}, {subject_center_y}) -> 目标中心({target_center_x}, {target_center_y})")
-                                                print(f"🔧 理论裁剪位置: ({crop_x}, {crop_y})")
+
+                                                # 🚀 修复：检查主体尺寸是否合理
+                                                enlarged_area = enlarged_image.width * enlarged_image.height
+                                                subject_area = subject_w * subject_h
+                                                subject_ratio = subject_area / enlarged_area
+
+                                                print(f"🔍 主体区域检查: 占比{subject_ratio:.3f}")
+
+                                                # 🎯 简化策略：直接使用中心裁剪，保持主体居中
+                                                print(f"🎯 使用中心裁剪策略，保持主体居中")
+                                                crop_x = (enlarged_width - target_width) // 2
+                                                crop_y = (enlarged_height - target_height) // 2
+
+                                                print(f"🔧 智能计算裁剪位置: 主体({subject_x}, {subject_y}, {subject_w}x{subject_h})")
+                                                print(f"🔧 计算得出裁剪位置: ({crop_x}, {crop_y})")
                                                 
                                                 # 🎯 边界检查和调整
                                                 # 确保裁剪区域不超出图像边界
@@ -3774,156 +4545,158 @@ Execute the image generation/editing task now and return the generated image."""
                 "Authorization": f"Bearer {api_key.strip()}"
             }
         
-        # 智能重试机制 - 完全移植参考项目
-        max_retries = 5
-        timeout = 120
-        
-        # OpenRouter专用重试策略
-        if is_openrouter_mirror:
-            print("🔄 使用OpenRouter专用重试策略")
-            # OpenRouter可能需要更长的超时时间
-            timeout = 180
-        
-        for attempt in range(max_retries):
-            try:
-                print(f"🎨 正在生成图片... (尝试 {attempt + 1}/{max_retries})")
-                print(f"📝 提示词: {enhanced_prompt[:100]}...")
-                print(f"🔗 镜像站: {api_url}")
-                
-                # 发送请求
-                response = requests.post(full_url, headers=headers, json=request_data, timeout=timeout, stream=True)
-                
-                # 检查响应状态
-                print(f"📡 HTTP状态码: {response.status_code}")
-                print(f"📡 响应头: {dict(response.headers)}")
-                
-                # OpenRouter专用错误处理
-                if is_openrouter_mirror and response.status_code != 200:
-                    if response.status_code == 401:
-                        raise ValueError("OpenRouter API密钥无效或已过期")
-                    elif response.status_code == 403:
-                        raise ValueError("OpenRouter API访问被拒绝，请检查账户权限")
-                    elif response.status_code == 429:
-                        raise ValueError("OpenRouter API请求过于频繁，请稍后重试")
-                    elif response.status_code == 500:
-                        raise ValueError("OpenRouter服务器内部错误，请稍后重试")
-                    else:
-                        raise ValueError(f"OpenRouter API错误: HTTP {response.status_code}")
-                
-                # 成功响应
-                if response.status_code == 200:
-                    # 提取文本响应和图片
-                    response_text = ""
-                    generated_image = None
-                    
-                    if is_api4gpt_mirror:
-                        # API4GPT镜像站响应处理
-                        print("🔗 处理API4GPT镜像站响应")
-                        
-                        try:
-                            # 尝试解析JSON响应
-                            result = response.json()
-                            print(f"📋 API4GPT响应结构: {list(result.keys())}")
-                            
-                            if api4gpt_service == "nano-banana":
-                                # nano-banana使用OpenAI兼容格式
-                                response_text, generated_image = parse_openai_compatible_response(result)
-                            else:
-                                # 其他服务使用原有的解析逻辑
-                                response_text, generated_image = parse_api4gpt_response(result, api4gpt_service)
-                            
-                            if generated_image:
-                                print(f"✅ 成功提取API4GPT生成的图像")
-                            else:
-                                print("⚠️ API4GPT未返回图像，创建占位符")
+        # 智能重试机制 - 只适用于需要重试的镜像站类型
+        # 注意：Comfly、T8、nano-banana官方等已经在上面处理并返回了
+        if is_openrouter_mirror or is_openai_mirror or (not is_comfly_mirror and not is_t8_mirror and not is_nano_banana_official and not is_api4gpt_mirror):
+            max_retries = 5
+            timeout = 120
+
+            # OpenRouter专用重试策略
+            if is_openrouter_mirror:
+                print("🔄 使用OpenRouter专用重试策略")
+                # OpenRouter可能需要更长的超时时间
+                timeout = 180
+
+            for attempt in range(max_retries):
+                try:
+                    print(f"🎨 正在生成图片... (尝试 {attempt + 1}/{max_retries})")
+                    print(f"📝 提示词: {enhanced_prompt[:100]}...")
+                    print(f"🔗 镜像站: {api_url}")
+
+                    # 发送请求 - 添加SSL配置以解决连接问题
+                    response = requests.post(full_url, headers=headers, json=request_data, timeout=timeout, stream=True, verify=False)
+
+                    # 检查响应状态
+                    print(f"📡 HTTP状态码: {response.status_code}")
+                    print(f"📡 响应头: {dict(response.headers)}")
+
+                    # OpenRouter专用错误处理
+                    if is_openrouter_mirror and response.status_code != 200:
+                        if response.status_code == 401:
+                            raise ValueError("OpenRouter API密钥无效或已过期")
+                        elif response.status_code == 403:
+                            raise ValueError("OpenRouter API访问被拒绝，请检查账户权限")
+                        elif response.status_code == 429:
+                            raise ValueError("OpenRouter API请求过于频繁，请稍后重试")
+                        elif response.status_code == 500:
+                            raise ValueError("OpenRouter服务器内部错误，请稍后重试")
+                        else:
+                            raise ValueError(f"OpenRouter API错误: HTTP {response.status_code}")
+
+                    # 成功响应
+                    if response.status_code == 200:
+                        # 提取文本响应和图片
+                        response_text = ""
+                        generated_image = None
+
+                        if is_api4gpt_mirror:
+                            # API4GPT镜像站响应处理
+                            print("🔗 处理API4GPT镜像站响应")
+
+                            try:
+                                # 尝试解析JSON响应
+                                result = response.json()
+                                print(f"📋 API4GPT响应结构: {list(result.keys())}")
+
+                                if api4gpt_service == "nano-banana":
+                                    # nano-banana使用OpenAI兼容格式
+                                    response_text, generated_image = parse_openai_compatible_response(result)
+                                else:
+                                    # 其他服务使用原有的解析逻辑
+                                    response_text, generated_image = parse_api4gpt_response(result, api4gpt_service)
+
+                                if generated_image:
+                                    print(f"✅ 成功提取API4GPT生成的图像")
+                                else:
+                                    print("⚠️ API4GPT未返回图像，创建占位符")
+                                    generated_image = Image.new('RGB', (512, 512), color='lightgray')
+                                    if not response_text:
+                                        response_text = f"API4GPT {api4gpt_service} 服务响应完成，但未返回图像数据"
+                            except Exception as json_error:
+                                print(f"⚠️ API4GPT JSON解析失败: {json_error}")
+                                # print(f"📋 原始响应内容: {response.text[:500]}...")  # 注释掉冗长的调试信息
+                                generated_image = Image.new('RGB', (512, 512), color='lightgray')
+                                response_text = f"API4GPT响应解析失败: {json_error}"
+                        elif is_openrouter_mirror:
+                            # OpenRouter镜像站响应处理 - 使用流式响应
+                            print("🔗 处理OpenRouter镜像站流式响应")
+
+                            # 处理流式响应
+                            response_text = process_openrouter_stream(response)
+
+                            # 检查响应文本中是否包含图像数据
+                            if "data:image/" in response_text:
+                                print("🖼️ 检测到OpenRouter返回的图像数据")
+                                try:
+                                    # 使用正确的正则表达式提取base64图像数据
+                                    import re
+                                    base64_pattern = r'data:image/[^;]+;base64,[A-Za-z0-9+/=]+'
+                                    image_matches = re.findall(base64_pattern, response_text)
+                                    if image_matches:
+                                        # 取第一个匹配的图像数据
+                                        image_url = image_matches[0]
+                                        print(f"🎯 成功匹配OpenRouter图像数据，长度: {len(image_url)}字符")
+
+                                        # 提取base64部分
+                                        if ';base64,' in image_url:
+                                            import io
+                                            base64_data = image_url.split(';base64,', 1)[1]
+                                            image_bytes = base64.b64decode(base64_data)
+                                            generated_image = Image.open(io.BytesIO(image_bytes))
+                                            print(f"✅ 成功提取OpenRouter生成的图像: {generated_image.size}")
+
+                                            # 清理响应文本，移除base64数据
+                                            response_text = re.sub(base64_pattern, '[图像已生成]', response_text)
+                                        else:
+                                            print(f"⚠️ 图像数据格式不正确: {image_url[:100]}...")
+                                            generated_image = Image.new('RGB', (512, 512), color='lightgray')
+                                            response_text = f"OpenRouter图像生成完成，但数据格式不正确"
+                                    else:
+                                        print(f"⚠️ 正则表达式未找到匹配的图像数据")
+                                        generated_image = Image.new('RGB', (512, 512), color='lightgray')
+                                        response_text = f"OpenRouter图像生成完成，但未找到图像数据"
+                                except Exception as e:
+                                    print(f"⚠️ OpenRouter图像数据解析失败: {e}")
+                                    generated_image = Image.new('RGB', (512, 512), color='lightgray')
+                                    response_text = f"OpenRouter图像生成完成，但解析失败: {e}"
+
+                            # 如果没有成功提取图像，创建占位符
+                            if not generated_image:
+                                print("⚠️ OpenRouter未返回图像数据，创建占位符")
                                 generated_image = Image.new('RGB', (512, 512), color='lightgray')
                                 if not response_text:
-                                    response_text = f"API4GPT {api4gpt_service} 服务响应完成，但未返回图像数据"
-                        except Exception as json_error:
-                            print(f"⚠️ API4GPT JSON解析失败: {json_error}")
-                            print(f"📋 原始响应内容: {response.text[:500]}...")
-                            generated_image = Image.new('RGB', (512, 512), color='lightgray')
-                            response_text = f"API4GPT响应解析失败: {json_error}"
-                    elif is_openrouter_mirror:
-                        # OpenRouter镜像站响应处理 - 使用流式响应
-                        print("🔗 处理OpenRouter镜像站流式响应")
-                        
-                        # 处理流式响应
-                        response_text = process_openrouter_stream(response)
-                        
-                        # 检查响应文本中是否包含图像数据
-                        if "data:image/" in response_text:
-                            print("🖼️ 检测到OpenRouter返回的图像数据")
+                                    response_text = "OpenRouter图像生成完成，但未返回图像数据"
+                        elif is_t8_mirror:
+                            # T8镜像站OpenAI格式响应处理
+                            print("🔗 处理T8镜像站OpenAI格式响应")
+
                             try:
-                                # 使用正确的正则表达式提取base64图像数据
-                                import re
-                                base64_pattern = r'data:image/[^;]+;base64,[A-Za-z0-9+/=]+'
-                                image_matches = re.findall(base64_pattern, response_text)
-                                if image_matches:
-                                    # 取第一个匹配的图像数据
-                                    image_url = image_matches[0]
-                                    print(f"🎯 成功匹配OpenRouter图像数据，长度: {len(image_url)}字符")
-                                    
-                                    # 提取base64部分
-                                    if ';base64,' in image_url:
-                                        import io
-                                        base64_data = image_url.split(';base64,', 1)[1]
-                                        image_bytes = base64.b64decode(base64_data)
-                                        generated_image = Image.open(io.BytesIO(image_bytes))
-                                        print(f"✅ 成功提取OpenRouter生成的图像: {generated_image.size}")
-                                        
-                                        # 清理响应文本，移除base64数据
-                                        response_text = re.sub(base64_pattern, '[图像已生成]', response_text)
-                                    else:
-                                        print(f"⚠️ 图像数据格式不正确: {image_url[:100]}...")
-                                        generated_image = Image.new('RGB', (512, 512), color='lightgray')
-                                        response_text = f"OpenRouter图像生成完成，但数据格式不正确"
-                                else:
-                                    print(f"⚠️ 正则表达式未找到匹配的图像数据")
-                                    generated_image = Image.new('RGB', (512, 512), color='lightgray')
-                                    response_text = f"OpenRouter图像生成完成，但未找到图像数据"
-                            except Exception as e:
-                                print(f"⚠️ OpenRouter图像数据解析失败: {e}")
-                                generated_image = Image.new('RGB', (512, 512), color='lightgray')
-                                response_text = f"OpenRouter图像生成完成，但解析失败: {e}"
-                        
-                        # 如果没有成功提取图像，创建占位符
-                        if not generated_image:
-                            print("⚠️ OpenRouter未返回图像数据，创建占位符")
-                            generated_image = Image.new('RGB', (512, 512), color='lightgray')
-                            if not response_text:
-                                response_text = "OpenRouter图像生成完成，但未返回图像数据"
-                    elif is_t8_mirror:
-                        # T8镜像站OpenAI格式响应处理
-                        print("🔗 处理T8镜像站OpenAI格式响应")
-                        
-                        try:
-                            # 尝试解析JSON响应
-                            result = response.json()
-                            print(f"📋 T8镜像站响应结构: {list(result.keys())}")
-                            
-                            if "choices" in result and result["choices"]:
-                                choice = result["choices"][0]
-                                if "message" in choice and "content" in choice["message"]:
-                                    content = choice["message"]["content"]
-                                    if isinstance(content, str):
-                                        response_text = content
-                                        # 检查是否包含base64图像数据
-                                        if "![image](data:image/" in content:
-                                            print("🖼️ 检测到T8镜像站返回的图像数据")
-                                            try:
-                                                # 提取base64图像数据
-                                                import re, io, io
-                                                image_match = re.search(r'!\[image\]\(data:image/\w+;base64,([^)]+)\)', content)
-                                                if image_match:
-                                                    image_data = image_match.group(1)
-                                                    image_bytes = base64.b64decode(image_data)
-                                                    generated_image = Image.open(io.BytesIO(image_bytes))
-                                                    print("✅ 成功提取T8镜像站生成的图像")
-                                                    # 清理响应文本，移除base64数据
-                                                    response_text = re.sub(r'!\[image\]\(data:image/\w+;base64,[^)]+\)', '[图像已生成]', content)
-                                            except Exception as e:
-                                                print(f"⚠️ T8镜像站图像数据解析失败: {e}")
+                                # 尝试解析JSON响应
+                                result = response.json()
+                                print(f"📋 T8镜像站响应结构: {list(result.keys())}")
+
+                                if "choices" in result and result["choices"]:
+                                    choice = result["choices"][0]
+                                    if "message" in choice and "content" in choice["message"]:
+                                        content = choice["message"]["content"]
+                                        if isinstance(content, str):
+                                            response_text = content
+                                            # 检查是否包含base64图像数据
+                                            if "![image](data:image/" in content:
+                                                print("🖼️ 检测到T8镜像站返回的图像数据")
+                                                try:
+                                                    # 提取base64图像数据
+                                                    import re, io
+                                                    image_match = re.search(r'!\[image\]\(data:image/\w+;base64,([^)]+)\)', content)
+                                                    if image_match:
+                                                        image_data = image_match.group(1)
+                                                        image_bytes = base64.b64decode(image_data)
+                                                        generated_image = Image.open(io.BytesIO(image_bytes))
+                                                        print("✅ 成功提取T8镜像站生成的图像")
+                                                        # 清理响应文本，移除base64数据
+                                                        response_text = re.sub(r'!\[image\]\(data:image/\w+;base64,[^)]+\)', '[图像已生成]', content)
+                                                except Exception as e:
+                                                    print(f"⚠️ T8镜像站图像数据解析失败: {e}")
                                     elif isinstance(content, list):
                                         # 处理多模态内容
                                         for item in content:
@@ -3932,18 +4705,18 @@ Execute the image generation/editing task now and return the generated image."""
                                             elif item.get("type") == "image_url":
                                                 # 处理图像URL（如果有的话）
                                                 print("🖼️ 检测到图像URL响应")
-                            
-                            # 如果没有成功提取图像，再检查其他可能的位置
-                            if not generated_image:
-                                print("⚠️ T8镜像站暂不支持图像生成，创建占位符")
+
+                                # 如果没有成功提取图像，再检查其他可能的位置
+                                if not generated_image:
+                                    print("⚠️ T8镜像站暂不支持图像生成，创建占位符")
+                                    generated_image = Image.new('RGB', (512, 512), color='lightgray')
+                                    if not response_text:
+                                        response_text = "T8镜像站文本生成完成，但暂不支持图像生成功能"
+                            except Exception as json_error:
+                                print(f"⚠️ T8镜像站 JSON解析失败: {json_error}")
+                                # print(f"📋 原始响应内容: {response.text[:500]}...")  # 注释掉冗长的调试信息
                                 generated_image = Image.new('RGB', (512, 512), color='lightgray')
-                                if not response_text:
-                                    response_text = "T8镜像站文本生成完成，但暂不支持图像生成功能"
-                        except Exception as json_error:
-                            print(f"⚠️ T8镜像站 JSON解析失败: {json_error}")
-                            print(f"📋 原始响应内容: {response.text[:500]}...")
-                            generated_image = Image.new('RGB', (512, 512), color='lightgray')
-                            response_text = f"T8镜像站响应解析失败: {json_error}"
+                                response_text = f"T8镜像站响应解析失败: {json_error}"
                             
                     elif is_openai_mirror:
                         # OpenAI镜像站
@@ -4024,19 +4797,27 @@ Execute the image generation/editing task now and return the generated image."""
                             if current_width/current_height != target_width/target_height:
                                 print(f"📐 检测到比例变化，使用高清无损放大 + 智能裁剪方法")
                                 
-                                # 🎯 高清无损放大（保持原始比例，不拉伸变形）
-                                # 计算最佳缩放比例，使用max确保完全覆盖目标区域
-                                scale_x = target_width / current_width      # 宽度比例
-                                scale_y = target_height / current_height    # 高度比例
-                                scale = max(scale_x, scale_y)  # 使用较大的缩放比例，确保完全覆盖
-                                
+                                # 🎯 智能高清无损放大（按需放大，避免过度放大）
+                                print(f"📊 当前尺寸: {current_width}x{current_height}")
+                                print(f"📊 目标尺寸: {target_width}x{target_height}")
+
+                                # 🚀 新方法：分析哪个维度需要放大
+                                width_ratio = target_width / current_width   # 宽度需要的放大比例
+                                height_ratio = target_height / current_height # 高度需要的放大比例
+
+                                print(f"📊 宽度比例: {width_ratio:.3f} ({'需要放大' if width_ratio > 1 else '需要缩小' if width_ratio < 1 else '无需调整'})")
+                                print(f"📊 高度比例: {height_ratio:.3f} ({'需要放大' if height_ratio > 1 else '需要缩小' if height_ratio < 1 else '无需调整'})")
+
+                                # 使用较大的比例确保完全覆盖目标区域
+                                scale = max(width_ratio, height_ratio)
+
                                 # 计算放大后的尺寸（保持原始比例，确保覆盖目标区域）
                                 enlarged_width = int(current_width * scale)
                                 enlarged_height = int(current_height * scale)
-                                
-                                print(f"🔧 高清无损放大: {current_width}x{current_height} -> {enlarged_width}x{enlarged_height}")
-                                print(f"🔧 缩放比例: {scale:.3f} (使用max确保完全覆盖，然后智能裁剪)")
-                                print(f"🔧 关键：直接放大到最大边，保持图像清晰度和比例")
+
+                                print(f"🔧 智能高清放大: {current_width}x{current_height} -> {enlarged_width}x{enlarged_height}")
+                                print(f"🔧 最终缩放比例: {scale:.3f} (按{'高度' if height_ratio > width_ratio else '宽度'}需求放大)")
+                                print(f"🔧 优势：只在需要的维度放大，避免过度放大导致的质量损失")
                                 
                                 # 🎯 使用AI放大模型进行高清无损放大（保持比例）
                                 # 优先使用AI模型，回退到高质量重采样
@@ -4135,41 +4916,71 @@ Execute the image generation/editing task now and return the generated image."""
                     else:
                         print(f"✅ 图片生成完成（{mirror_site}）")
 
-                    self._push_chat(enhanced_prompt, response_text or "", unique_id)
-                    return (image_tensor, response_text)
-                
-                # 处理错误响应
-                else:
-                    print(f"❌ HTTP状态码: {response.status_code}")
-                    try:
-                        error_detail = response.json()
-                        print(f"❌ 错误详情: {json.dumps(error_detail, indent=2, ensure_ascii=False)}")
-                    except:
-                        print(f"❌ 错误文本: {response.text}")
-                    
-                    # 如果是最后一次尝试，抛出异常
+                        # 应用图像增强
+                        if generated_image and (enhance_quality or smart_resize):
+                            try:
+                                print("🚀 开始应用图像增强技术...")
+                                enhanced_image = _apply_full_enhancements(
+                                    generated_image,
+                                    controls['size'],
+                                    quality,
+                                    enhance_quality,
+                                    smart_resize
+                                )
+                                if enhanced_image:
+                                    generated_image = enhanced_image
+                                    print(f"✅ 图像增强完成")
+                                else:
+                                    print("⚠️ 图像增强返回None，使用原始图像")
+                            except Exception as e:
+                                print(f"❌ 图像增强失败: {e}")
+
+                        # 转换为tensor
+                        if generated_image:
+                            image_tensor = pil_to_tensor(generated_image)
+                        else:
+                            # 创建默认图像
+                            default_image = Image.new('RGB', (1024, 1024), color='black')
+                            image_tensor = pil_to_tensor(default_image)
+
+                        self._push_chat(enhanced_prompt, response_text or "", unique_id)
+                        return (image_tensor, response_text)
+
+                    # 处理错误响应
+                    if response.status_code != 200:
+                        print(f"❌ HTTP状态码: {response.status_code}")
+                        try:
+                            error_detail = response.json()
+                            print(f"❌ 错误详情: {json.dumps(error_detail, indent=2, ensure_ascii=False)}")
+                        except:
+                            print(f"❌ 错误文本: {response.text}")
+
+                        # 如果是最后一次尝试，抛出异常
+                        if attempt == max_retries - 1:
+                            response.raise_for_status()
+
+                        # 智能等待
+                        delay = smart_retry_delay(attempt, response.status_code)
+                        print(f"🔄 等待 {delay:.1f} 秒后重试...")
+                        time.sleep(delay)
+
+                except requests.exceptions.RequestException as e:
+                    error_msg = format_error_message(e)
+                    print(f"❌ 请求失败: {error_msg}")
                     if attempt == max_retries - 1:
-                        response.raise_for_status()
-                    
-                    # 智能等待
-                    delay = smart_retry_delay(attempt, response.status_code)
-                    print(f"🔄 等待 {delay:.1f} 秒后重试...")
-                    time.sleep(delay)
-                    
-            except requests.exceptions.RequestException as e:
-                error_msg = format_error_message(e)
-                print(f"❌ 请求失败: {error_msg}")
-                if attempt == max_retries - 1:
-                    raise ValueError(f"API请求失败: {error_msg}")
-                else:
-                    delay = smart_retry_delay(attempt)
-                    print(f"🔄 等待 {delay:.1f} 秒后重试...")
-                    time.sleep(delay)
-                    
-            except Exception as e:
-                error_msg = format_error_message(e)
-                print(f"❌ 处理失败: {error_msg}")
-                raise ValueError(f"图片生成失败: {error_msg}")
+                        raise ValueError(f"API请求失败: {error_msg}")
+                    else:
+                        delay = smart_retry_delay(attempt)
+                        print(f"🔄 等待 {delay:.1f} 秒后重试...")
+                        time.sleep(delay)
+
+                except Exception as e:
+                    error_msg = format_error_message(e)
+                    print(f"❌ 处理失败: {error_msg}")
+                    raise ValueError(f"图片生成失败: {error_msg}")
+        else:
+            # 如果没有匹配任何镜像站类型，抛出错误
+            raise ValueError(f"不支持的镜像站类型: {mirror_site}")
 
 
 
@@ -4249,7 +5060,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 "image": ("IMAGE",),
                 "prompt": ("STRING", {"default": "Can you add a llama next to me?", "multiline": True}),
                 # 支持多种AI模型和图像编辑服务: nano-banana支持Comfly和T8镜像站, OpenRouter模型: google/gemini-2.5-flash-image-preview (付费)
-                "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation", "fal-ai/nano-banana/edit [Comfly-T8]", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
+                "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "fal-ai/nano-banana [Comfly-T8]", "fal-ai/nano-banana/edit [Comfly-T8]", "gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
                 "size": (size_presets, {"default": image_settings.get('default_size', "1024x1024")}),
                 "quality": (quality_presets, {"default": image_settings.get('default_quality', "hd")}),
@@ -4334,11 +5145,14 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             pass
     
     def edit_image(self, mirror_site: str, api_key: str, image: torch.Tensor, prompt: str, model: str,
-                    proxy: str, size: str, quality: str, style: str, detail_level: str, camera_control: str, lighting_control: str, 
-                    template_selection: str, quality_enhancement: bool, enhance_quality: bool, smart_resize: bool, 
-                    fill_color: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int, 
+                    proxy: str, size: str, quality: str, style: str, detail_level: str, camera_control: str, lighting_control: str,
+                    template_selection: str, quality_enhancement: bool, enhance_quality: bool, smart_resize: bool,
+                    fill_color: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
                     custom_size: str = "", api4gpt_service: str = "nano-banana", custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API编辑图片"""
+
+        # 🔧 确保requests模块可用
+        import requests
         
         # 🚀 立即规范化模型名称，去除UI标识
         model = _normalize_model_name(model)
@@ -4370,8 +5184,16 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
         except ImportError:
             from gemini_banana import process_image_controls, enhance_prompt_with_controls
         controls = process_image_controls(size, quality, style, custom_size)
-        # 对于nano-banana模型，跳过尺寸提示，让模型自由生成
-        skip_size_hints = model in ["nano-banana", "nano-banana-hd"]
+
+        # 🚀 调试：显示参数传递过程
+        print(f"🔍 参数传递调试:")
+        print(f"  - 节点size参数: {size}")
+        print(f"  - 节点custom_size参数: {custom_size}")
+        print(f"  - 处理后controls['size']: {controls['size']}")
+        print(f"  - 是否自定义尺寸: {controls.get('is_custom_size', False)}")
+
+        # 对于原生nano-banana模型跳过尺寸提示，但fal-ai模型需要精确的构图控制
+        skip_size_hints = model in ["nano-banana", "nano-banana-hd"] and not (model.startswith("fal-ai/") or model.endswith("/edit"))
         enhanced_prompt = enhance_prompt_with_controls(
             prompt.strip(), controls, detail_level, camera_control, lighting_control,
             template_selection, quality_enhancement, enhance_quality, smart_resize, fill_color,
@@ -4502,70 +5324,152 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
         elif is_comfly_mirror:
             print("🔗 检测到Comfly镜像站，使用Comfly API格式")
             
-            if model in ["nano-banana", "nano-banana-hd"] and pil_image is not None:
-                # Comfly nano-banana 直连（编辑）
-                try:
-                    result = _comfly_nano_banana_edit(api_url, api_key, model, enhanced_prompt, [pil_image], controls['size'], temperature, top_p, max_output_tokens, seed)
-                    edited_image = None
-                    response_text = ""
-                    
-                    if isinstance(result, dict) and 'data' in result and result['data']:
-                        b64 = result['data'][0].get('b64_json')
-                        response_text = result.get('response_text', "")
-                        
-                        if b64:
-                            from base64 import b64decode
-                            import io
-                            try:
-                                # 修复base64填充问题
-                                b64_fixed = b64 + '=' * (4 - len(b64) % 4)
-                                img = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
-                            except Exception as decode_error:
-                                print(f"⚠️ base64解码失败: {decode_error}")
-                                # 尝试直接解码
-                                try:
-                                    img = Image.open(io.BytesIO(b64decode(b64))).convert('RGB')
-                                except Exception as e2:
-                                    print(f"⚠️ 直接解码也失败: {e2}")
-                                    img = None
-                            edited_image = img
+            if model in ["nano-banana", "nano-banana-hd", "fal-ai/nano-banana", "nano-banana/edit", "fal-ai/nano-banana/edit"] and pil_image is not None:
+                # 检查是否是fal-ai模型
+                if model.startswith("fal-ai/") or model.endswith("/edit"):
+                    # 使用fal-ai端点进行编辑
+                    try:
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, model, enhanced_prompt, [pil_image], 1, seed, "image_url")
+                        edited_image = None
+                        response_text = ""
+
+                        if isinstance(result, dict) and 'data' in result:
+                            if not result['data']:
+                                response_text = result.get('response_text', '')
+                                print(f"⚠️ Comfly fal-ai/nano-banana 编辑没有返回图像数据")
+                                # print(f"📝 响应文本: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
+                                print(f"📝 响应文本长度: {len(response_text)} 字符")
+                                raise Exception(f"Comfly fal-ai/nano-banana 编辑服务没有返回图像数据，响应: {response_text[:100]}...")
+
+                            if result['data']:
+                                b64 = result['data'][0].get('b64_json')
+                                image_url = result['data'][0].get('url', '')
+                                response_text = result.get('response_text', "")
+
+                                if image_url and image_url not in response_text:
+                                    response_text += f"\n图像URL: {image_url}"
+
+                                if b64:
+                                    from base64 import b64decode
+                                    import io
+                                    try:
+                                        b64_fixed = b64 + '=' * (4 - len(b64) % 4)
+                                        edited_image = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
+                                    except Exception as decode_error:
+                                        print(f"⚠️ base64解码失败: {decode_error}")
+                                        try:
+                                            edited_image = Image.open(io.BytesIO(b64decode(b64))).convert('RGB')
+                                        except Exception as e2:
+                                            print(f"⚠️ 直接解码也失败: {e2}")
+                                            edited_image = None
+                                else:
+                                    import re
+                                    base64_pattern = r'data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)'
+                                    matches = re.findall(base64_pattern, response_text)
+                                    if matches:
+                                        from base64 import b64decode
+                                        import io
+                                        edited_image = Image.open(io.BytesIO(b64decode(matches[0]))).convert('RGB')
                         else:
-                            # 如果没有base64数据，尝试从响应文本中提取图像
-                            import re
-                            base64_pattern = r'data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)'
-                            matches = re.findall(base64_pattern, response_text)
-                            if matches:
+                            print(f"⚠️ API响应格式异常: {result}")
+                            raise Exception(f"API响应格式异常: {result}")
+
+                        # 如果成功编辑，应用尺寸与质量增强后再返回
+                        if edited_image:
+                            try:
+                                edited_image = _apply_full_enhancements(
+                                    edited_image,
+                                    controls['size'],
+                                    quality,
+                                    enhance_quality,
+                                    smart_resize
+                                )
+                                image_tensor = pil_to_tensor(edited_image)
+                                print("✅ 图片编辑完成（Comfly fal-ai/nano-banana）")
+                                self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
+                                return (image_tensor, response_text)
+                            except Exception as enhance_error:
+                                print(f"⚠️ 图像增强失败: {enhance_error}")
+                                image_tensor = pil_to_tensor(edited_image)
+                                return (image_tensor, response_text)
+                        else:
+                            print("⚠️ fal-ai/nano-banana编辑后未获得有效图像")
+                            return (image, response_text)
+
+                    except Exception as e:
+                        print(f"❌ Comfly fal-ai/nano-banana 编辑失败: {e}")
+                        raise e
+                else:
+                    # 使用原有的nano-banana端点进行编辑
+                    try:
+                        result = _comfly_nano_banana_edit(api_url, api_key, model, enhanced_prompt, [pil_image], controls['size'], temperature, top_p, max_output_tokens, seed)
+                        edited_image = None
+                        response_text = ""
+
+                        if isinstance(result, dict) and 'data' in result and result['data']:
+                            b64 = result['data'][0].get('b64_json')
+                            response_text = result.get('response_text', "")
+
+                            if b64:
                                 from base64 import b64decode
                                 import io
-                                img = Image.open(io.BytesIO(b64decode(matches[0]))).convert('RGB')
+                                try:
+                                    # 修复base64填充问题
+                                    b64_fixed = b64 + '=' * (4 - len(b64) % 4)
+                                    img = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
+                                except Exception as decode_error:
+                                    print(f"⚠️ base64解码失败: {decode_error}")
+                                    # 尝试直接解码
+                                    try:
+                                        img = Image.open(io.BytesIO(b64decode(b64))).convert('RGB')
+                                    except Exception as e2:
+                                        print(f"⚠️ 直接解码也失败: {e2}")
+                                        img = None
                                 edited_image = img
-                    
-                    # 如果成功处理，应用尺寸与质量增强后再返回
-                    if edited_image:
-                        # 全量增强
-                        try:
-                            edited_image = _apply_full_enhancements(
-                                edited_image,
-                                controls['size'],
-                                quality,
-                                enhance_quality,
-                                smart_resize
-                            )
-                            try:
-                                print(f"🔧 Final output size: {edited_image.size[0]}x{edited_image.size[1]}")
-                            except Exception:
-                                pass
-                        except Exception:
-                            pass
+                            else:
+                                # 如果没有base64数据，尝试从响应文本中提取图像
+                                import re
+                                base64_pattern = r'data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)'
+                                matches = re.findall(base64_pattern, response_text)
+                                if matches:
+                                    from base64 import b64decode
+                                    import io
+                                    img = Image.open(io.BytesIO(b64decode(matches[0]))).convert('RGB')
+                                    edited_image = img
 
-                        image_tensor = pil_to_tensor(edited_image)
-                        print("✅ 图片编辑完成（Comfly nano-banana）")
-                        self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
-                        return (image_tensor, response_text)
-                        
-                except Exception as e:
-                    print(f"❌ Comfly(nano-banana) 编辑失败: {e}")
-                    raise e
+                        # 如果成功处理，应用尺寸与质量增强后再返回
+                        if edited_image:
+                            # 全量增强
+                            try:
+                                print("🚀 开始应用T8 fal-ai图像编辑增强技术...")
+                                enhanced_image = _apply_full_enhancements(
+                                    edited_image,
+                                    controls['size'],
+                                    quality,
+                                    enhance_quality,
+                                    smart_resize
+                                )
+                                if enhanced_image:
+                                    edited_image = enhanced_image
+                                    print(f"✅ T8 fal-ai图像编辑增强完成")
+                                    try:
+                                        print(f"🔧 Final output size: {edited_image.size[0]}x{edited_image.size[1]}")
+                                    except Exception:
+                                        pass
+                                else:
+                                    print("⚠️ T8 fal-ai图像编辑增强返回空结果，使用原始图像")
+                            except Exception as e:
+                                print(f"⚠️ T8 fal-ai图像编辑增强失败: {e}")
+                                print("⚠️ 使用原始图像继续处理")
+
+                            image_tensor = pil_to_tensor(edited_image)
+                            print("✅ 图片编辑完成（Comfly nano-banana）")
+                            self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
+                            return (image_tensor, response_text)
+
+                    except Exception as e:
+                        print(f"❌ Comfly(nano-banana) 编辑失败: {e}")
+                        raise e
             request_data = {
                 "model": model,  # 🔧 修复：添加缺失的model字段
                 "contents": [{
@@ -4600,9 +5504,91 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 
         # 3. T8镜像站处理
         elif is_t8_mirror:
-            # T8镜像站也支持 nano-banana，调用方式与 Comfly 一致
-            print("🔗 检测到T8镜像站，使用chat/completions端点 (nano-banana 直连)")
-            if _normalize_model_name(model) in ["nano-banana", "nano-banana-hd"] and pil_image is not None:
+            print("🔗 检测到T8镜像站，使用T8 API格式")
+
+            if model in ["nano-banana", "nano-banana-hd", "fal-ai/nano-banana", "nano-banana/edit", "fal-ai/nano-banana/edit"] and pil_image is not None:
+                # 检查是否是fal-ai模型
+                if model.startswith("fal-ai/") or model.endswith("/edit"):
+                    # T8镜像站使用与Comfly相同的fal-ai端点调用方式
+                    try:
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, model, enhanced_prompt, [pil_image], 1, seed, "image_url")
+                        edited_image = None
+                        response_text = ""
+
+                        if isinstance(result, dict) and 'data' in result:
+                            if not result['data']:
+                                response_text = result.get('response_text', '')
+                                print(f"⚠️ T8 fal-ai/nano-banana 编辑没有返回图像数据")
+                                # print(f"📝 响应文本: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
+                                print(f"📝 响应文本长度: {len(response_text)} 字符")
+                                raise Exception(f"T8 fal-ai/nano-banana 编辑服务没有返回图像数据，响应: {response_text[:100]}...")
+
+                            # 处理返回的图像数据
+                            b64 = result['data'][0].get('b64_json')
+                            image_url = result['data'][0].get('url', '')
+                            response_text = result.get('response_text', "")
+
+                            # 确保图像URL信息显示在响应中
+                            if image_url and image_url not in response_text:
+                                response_text += f"\n🔗 图像URL: {image_url}"
+
+                            if b64:
+                                from base64 import b64decode
+                                import io
+                                try:
+                                    b64_fixed = b64 + '=' * (4 - len(b64) % 4)
+                                    edited_image = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
+                                except Exception as e:
+                                    print(f"⚠️ base64解码失败: {e}")
+                                    # 尝试从URL下载
+                                    if image_url:
+                                        try:
+                                            import requests
+                                            response = requests.get(image_url, timeout=30)
+                                            if response.status_code == 200:
+                                                edited_image = Image.open(io.BytesIO(response.content)).convert('RGB')
+                                                print("✅ 成功从URL下载编辑后图像")
+                                            else:
+                                                print(f"⚠️ 图像下载失败，状态码: {response.status_code}")
+                                        except Exception as e:
+                                            print(f"⚠️ 图像下载失败: {e}")
+
+                        if edited_image:
+                            # 应用全量增强（包括智能主体检测和居中技术）
+                            try:
+                                print("🚀 开始应用T8 fal-ai图像编辑增强技术...")
+                                enhanced_image = _apply_full_enhancements(
+                                    edited_image,
+                                    controls['size'],
+                                    quality,
+                                    enhance_quality,
+                                    smart_resize
+                                )
+                                if enhanced_image:
+                                    edited_image = enhanced_image
+                                    print(f"✅ T8 fal-ai图像编辑增强完成")
+                                    try:
+                                        print(f"🔧 Final output size: {edited_image.size[0]}x{edited_image.size[1]}")
+                                    except Exception:
+                                        pass
+                                else:
+                                    print("⚠️ T8 fal-ai图像编辑增强返回空结果，使用原始图像")
+                            except Exception as e:
+                                print(f"⚠️ T8 fal-ai图像编辑增强失败: {e}")
+                                print("⚠️ 使用原始图像继续处理")
+
+                            print("✅ T8 fal-ai图片编辑完成")
+                            return (pil_to_tensor(edited_image), response_text)
+                        else:
+                            raise Exception("T8 fal-ai/nano-banana 未能编辑图像")
+
+                    except Exception as e:
+                        print(f"❌ T8 fal-ai/nano-banana 编辑失败: {e}")
+                        raise e
+
+                # 原生nano-banana模型处理
+                elif _normalize_model_name(model) in ["nano-banana", "nano-banana-hd"]:
+                    print("🔗 T8镜像站使用chat/completions端点 (nano-banana 直连)")
                 try:
                     result = _comfly_nano_banana_edit(full_url, api_key, _normalize_model_name(model), enhanced_prompt, [pil_image], controls['size'], temperature, top_p, max_output_tokens, seed)
                     edited_image = None
@@ -4626,19 +5612,26 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     if edited_image:
                         # 全量增强
                         try:
-                            edited_image = _apply_full_enhancements(
+                            print("🚀 开始应用T8 nano-banana图像编辑增强技术...")
+                            enhanced_image = _apply_full_enhancements(
                                 edited_image,
                                 controls['size'],
                                 quality,
                                 enhance_quality,
                                 smart_resize
                             )
-                            try:
-                                print(f"🔧 Final output size: {edited_image.size[0]}x{edited_image.size[1]}")
-                            except Exception:
-                                pass
-                        except Exception:
-                            pass
+                            if enhanced_image:
+                                edited_image = enhanced_image
+                                print(f"✅ T8 nano-banana图像编辑增强完成")
+                                try:
+                                    print(f"🔧 Final output size: {edited_image.size[0]}x{edited_image.size[1]}")
+                                except Exception:
+                                    pass
+                            else:
+                                print("⚠️ T8 nano-banana图像编辑增强返回空结果，使用原始图像")
+                        except Exception as e:
+                            print(f"⚠️ T8 nano-banana图像编辑增强失败: {e}")
+                            print("⚠️ 使用原始图像继续处理")
 
                         image_tensor = pil_to_tensor(edited_image)
                         print("✅ 图片编辑完成（T8 nano-banana）")
@@ -4719,19 +5712,29 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                                     if edited_image.size[0]/edited_image.size[1] != target_width/target_height:
                                         print(f"📐 检测到比例变化，使用高清无损放大 + 智能裁剪方法")
                                         
-                                        # 🎯 高清无损放大（保持原始比例，不拉伸变形）
-                                        # 计算最佳缩放比例，使用max确保完全覆盖目标区域
-                                        scale_x = target_width / edited_image.size[0]      # 宽度比例
-                                        scale_y = target_height / edited_image.size[1]    # 高度比例
-                                        scale = max(scale_x, scale_y)  # 使用较大的缩放比例，确保完全覆盖
-                                        
+                                        # 🎯 智能高清无损放大（按需放大，避免过度放大）
+                                        original_width, original_height = edited_image.size
+
+                                        print(f"📊 编辑后尺寸: {original_width}x{original_height}")
+                                        print(f"📊 目标尺寸: {target_width}x{target_height}")
+
+                                        # 🚀 新方法：分析哪个维度需要放大
+                                        width_ratio = target_width / original_width   # 宽度需要的放大比例
+                                        height_ratio = target_height / original_height # 高度需要的放大比例
+
+                                        print(f"📊 宽度比例: {width_ratio:.3f} ({'需要放大' if width_ratio > 1 else '需要缩小' if width_ratio < 1 else '无需调整'})")
+                                        print(f"📊 高度比例: {height_ratio:.3f} ({'需要放大' if height_ratio > 1 else '需要缩小' if height_ratio < 1 else '无需调整'})")
+
+                                        # 使用较大的比例确保完全覆盖目标区域
+                                        scale = max(width_ratio, height_ratio)
+
                                         # 计算放大后的尺寸（保持原始比例，确保覆盖目标区域）
-                                        enlarged_width = int(edited_image.size[0] * scale)
-                                        enlarged_height = int(edited_image.size[1] * scale)
-                                        
-                                        print(f"🔧 高清无损放大: {edited_image.size[0]}x{edited_image.size[1]} -> {enlarged_width}x{enlarged_height}")
-                                        print(f"🔧 缩放比例: {scale:.3f} (使用max确保完全覆盖，然后智能裁剪)")
-                                        print(f"🔧 关键：直接放大到最大边，保持图像清晰度和比例")
+                                        enlarged_width = int(original_width * scale)
+                                        enlarged_height = int(original_height * scale)
+
+                                        print(f"🔧 智能高清放大: {original_width}x{original_height} -> {enlarged_width}x{enlarged_height}")
+                                        print(f"🔧 最终缩放比例: {scale:.3f} (按{'高度' if height_ratio > width_ratio else '宽度'}需求放大)")
+                                        print(f"🔧 优势：只在需要的维度放大，避免过度放大导致的质量损失")
                                         
                                         # 🎯 使用AI放大模型进行高清无损放大（保持比例）
                                         # 优先使用AI模型，回退到高质量重采样
@@ -4959,8 +5962,8 @@ Execute the image editing task now and return the edited image."""
                 print(f"📝 编辑指令: {enhanced_prompt[:100]}...") # 使用增强后的提示词
                 print(f"🔗 镜像站: {api_url}")
                 
-                # 发送请求
-                response = requests.post(full_url, headers=headers, json=request_data, timeout=timeout, stream=True)
+                # 发送请求 - 添加SSL配置以解决连接问题
+                response = requests.post(full_url, headers=headers, json=request_data, timeout=timeout, stream=True, verify=False)
                 
                 # 检查响应状态
                 print(f"📡 HTTP状态码: {response.status_code}")
@@ -5023,7 +6026,7 @@ Execute the image editing task now and return the edited image."""
                                     response_text = f"API4GPT {api4gpt_service} 服务响应完成，但未返回编辑后的图像数据"
                         except Exception as json_error:
                             print(f"⚠️ API4GPT JSON解析失败: {json_error}")
-                            print(f"📋 原始响应内容: {response.text[:500]}...")
+                            # print(f"📋 原始响应内容: {response.text[:500]}...")  # 注释掉冗长的调试信息
                             edited_image = pil_image
                             response_text = f"API4GPT响应解析失败: {json_error}"
                     elif is_openrouter_mirror:
@@ -5204,7 +6207,8 @@ Execute the image editing task now and return the edited image."""
                     
                     print("✅ 图片编辑完成")
                     print(f"📝 响应文本长度: {len(response_text)}")
-                    print(f"📝 响应文本内容: {response_text[:200]}...")
+                    # print(f"📝 响应文本内容: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
+                    print(f"📝 响应文本类型: {'包含图像数据' if 'data:image/' in response_text else '纯文本内容'}")
                     self._push_chat(enhanced_prompt, response_text or "", unique_id) # 使用增强后的提示词
                     return (image_tensor, response_text)
                 
@@ -5329,7 +6333,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 }),
                 "prompt": ("STRING", {"default": "请根据这些图片进行专业的图像编辑", "multiline": True}),
                 # 支持多种AI模型和多图像编辑服务: nano-banana支持Comfly和T8镜像站, OpenRouter模型: google/gemini-2.5-flash-image-preview (付费)
-                "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "gemini-2.5-flash-image-preview", "gemini-2.0-flash", "fal-ai/nano-banana/edit [Comfly-T8]", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
+                "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "fal-ai/nano-banana [Comfly-T8]", "fal-ai/nano-banana/edit [Comfly-T8]", "gemini-2.5-flash-image-preview", "gemini-2.0-flash", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
                 "size": (size_presets, {"default": image_settings.get('default_size', "1024x1024")}),
                 "quality": (quality_presets, {"default": image_settings.get('default_quality', "hd")}),
@@ -5409,11 +6413,14 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             pass
 
     def edit_multiple_images(self, mirror_site: str, api_key: str, prompt: str, model: str,
-                           proxy: str, size: str, quality: str, style: str, detail_level: str, camera_control: str, lighting_control: str, 
-                           template_selection: str, quality_enhancement: bool, enhance_quality: bool, smart_resize: bool, 
-                           fill_color: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int, 
+                           proxy: str, size: str, quality: str, style: str, detail_level: str, camera_control: str, lighting_control: str,
+                           template_selection: str, quality_enhancement: bool, enhance_quality: bool, smart_resize: bool,
+                           fill_color: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
                            custom_size: str = "", api4gpt_service: str = "nano-banana", image1=None, image2=None, image3=None, image4=None, custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API进行多图像编辑"""
+
+        # 🔧 确保requests模块可用
+        import requests
         
         # 🚀 立即规范化模型名称，去除UI标识
         model = _normalize_model_name(model)
@@ -5445,8 +6452,16 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
         except ImportError:
             from gemini_banana import process_image_controls, enhance_prompt_with_controls
         controls = process_image_controls(size, quality, style, custom_size)
-        # 对于nano-banana模型，跳过尺寸提示，让模型自由生成
-        skip_size_hints = model in ["nano-banana", "nano-banana-hd"]
+
+        # 🚀 调试：显示参数传递过程
+        print(f"🔍 参数传递调试:")
+        print(f"  - 节点size参数: {size}")
+        print(f"  - 节点custom_size参数: {custom_size}")
+        print(f"  - 处理后controls['size']: {controls['size']}")
+        print(f"  - 是否自定义尺寸: {controls.get('is_custom_size', False)}")
+
+        # 对于原生nano-banana模型跳过尺寸提示，但fal-ai模型需要精确的构图控制
+        skip_size_hints = model in ["nano-banana", "nano-banana-hd"] and not (model.startswith("fal-ai/") or model.endswith("/edit"))
         enhanced_prompt = enhance_prompt_with_controls(
             prompt.strip(), controls, detail_level, camera_control, lighting_control,
             template_selection, quality_enhancement, enhance_quality, smart_resize, fill_color,
@@ -5688,55 +6703,134 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
         elif is_comfly_mirror:
             print("🔗 检测到Comfly镜像站，使用Comfly API格式")
             
-            if model in ["nano-banana", "nano-banana-hd"] and all_input_pils:
-                # Comfly nano-banana 多图像编辑
-                try:
-                    # 使用所有输入图像
-                    result = _comfly_nano_banana_edit(api_url, api_key, model, enhanced_prompt, all_input_pils, controls['size'], temperature, top_p, max_output_tokens, seed)
-                    edited_image = None
-                    response_text = ""
-                    
-                    if isinstance(result, dict) and 'data' in result and result['data']:
-                        b64 = result['data'][0].get('b64_json')
-                        response_text = result.get('response_text', "")
-                        
-                        if b64:
-                            from base64 import b64decode
-                            import io
-                            try:
-                                # 修复base64填充问题
-                                b64_fixed = b64 + '=' * (4 - len(b64) % 4)
-                                img = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
-                            except Exception as decode_error:
-                                print(f"⚠️ base64解码失败: {decode_error}")
-                                # 尝试直接解码
-                                try:
-                                    img = Image.open(io.BytesIO(b64decode(b64))).convert('RGB')
-                                except Exception as e2:
-                                    print(f"⚠️ 直接解码也失败: {e2}")
-                                    img = None
-                            edited_image = img
+            if model in ["nano-banana", "nano-banana-hd", "fal-ai/nano-banana", "nano-banana/edit", "fal-ai/nano-banana/edit"] and all_input_pils:
+                # 检查是否是fal-ai模型
+                if model.startswith("fal-ai/") or model.endswith("/edit"):
+                    # 使用fal-ai端点进行多图编辑
+                    try:
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, model, enhanced_prompt, all_input_pils, 1, seed, "image_url")
+                        edited_image = None
+                        response_text = ""
+
+                        if isinstance(result, dict) and 'data' in result:
+                            if not result['data']:
+                                response_text = result.get('response_text', '')
+                                print(f"⚠️ Comfly fal-ai/nano-banana 多图编辑没有返回图像数据")
+                                # print(f"📝 响应文本: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
+                                print(f"📝 响应文本长度: {len(response_text)} 字符")
+                                raise Exception(f"Comfly fal-ai/nano-banana 多图编辑服务没有返回图像数据，响应: {response_text[:100]}...")
+
+                            if result['data']:
+                                b64 = result['data'][0].get('b64_json')
+                                image_url = result['data'][0].get('url', '')
+                                response_text = result.get('response_text', "")
+
+                                if image_url and image_url not in response_text:
+                                    response_text += f"\n图像URL: {image_url}"
+
+                                if b64:
+                                    from base64 import b64decode
+                                    import io
+                                    try:
+                                        b64_fixed = b64 + '=' * (4 - len(b64) % 4)
+                                        edited_image = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
+                                    except Exception as decode_error:
+                                        print(f"⚠️ base64解码失败: {decode_error}")
+                                        try:
+                                            edited_image = Image.open(io.BytesIO(b64decode(b64))).convert('RGB')
+                                        except Exception as e2:
+                                            print(f"⚠️ 直接解码也失败: {e2}")
+                                            edited_image = None
+                                else:
+                                    import re
+                                    base64_pattern = r'data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)'
+                                    matches = re.findall(base64_pattern, response_text)
+                                    if matches:
+                                        from base64 import b64decode
+                                        import io
+                                        edited_image = Image.open(io.BytesIO(b64decode(matches[0]))).convert('RGB')
                         else:
-                            # 如果没有base64数据，尝试从响应文本中提取图像
-                            import re
-                            base64_pattern = r'data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)'
-                            matches = re.findall(base64_pattern, response_text)
-                            if matches:
+                            print(f"⚠️ API响应格式异常: {result}")
+                            raise Exception(f"API响应格式异常: {result}")
+
+                        # 如果成功编辑，应用尺寸与质量增强后再返回
+                        if edited_image:
+                            try:
+                                edited_image = _apply_full_enhancements(
+                                    edited_image,
+                                    controls['size'],
+                                    quality,
+                                    enhance_quality,
+                                    smart_resize
+                                )
+                                image_tensor = pil_to_tensor(edited_image)
+                                print("✅ 多图像编辑完成（Comfly fal-ai/nano-banana）")
+                                self._push_chat(enhanced_prompt, response_text or "", unique_id)
+                                return (image_tensor, response_text)
+                            except Exception as enhance_error:
+                                print(f"⚠️ 图像增强失败: {enhance_error}")
+                                image_tensor = pil_to_tensor(edited_image)
+                                return (image_tensor, response_text)
+                        else:
+                            print("⚠️ fal-ai/nano-banana多图编辑后未获得有效图像")
+                            if all_input_pils:
+                                return (pil_to_tensor(all_input_pils[0]), response_text)
+                            else:
+                                dummy_image = Image.new('RGB', (512, 512), color='white')
+                                return (pil_to_tensor(dummy_image), response_text)
+
+                    except Exception as e:
+                        print(f"❌ Comfly fal-ai/nano-banana 多图编辑失败: {e}")
+                        raise e
+                else:
+                    # 使用原有的nano-banana端点进行多图编辑
+                    try:
+                        # 使用所有输入图像
+                        result = _comfly_nano_banana_edit(api_url, api_key, model, enhanced_prompt, all_input_pils, controls['size'], temperature, top_p, max_output_tokens, seed)
+                        edited_image = None
+                        response_text = ""
+
+                        if isinstance(result, dict) and 'data' in result and result['data']:
+                            b64 = result['data'][0].get('b64_json')
+                            response_text = result.get('response_text', "")
+
+                            if b64:
                                 from base64 import b64decode
                                 import io
-                                img = Image.open(io.BytesIO(b64decode(matches[0]))).convert('RGB')
+                                try:
+                                    # 修复base64填充问题
+                                    b64_fixed = b64 + '=' * (4 - len(b64) % 4)
+                                    img = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
+                                except Exception as decode_error:
+                                    print(f"⚠️ base64解码失败: {decode_error}")
+                                    # 尝试直接解码
+                                    try:
+                                        img = Image.open(io.BytesIO(b64decode(b64))).convert('RGB')
+                                    except Exception as e2:
+                                        print(f"⚠️ 直接解码也失败: {e2}")
+                                        img = None
                                 edited_image = img
-                    
-                    # 如果成功处理，直接返回结果
-                    if edited_image:
-                        image_tensor = pil_to_tensor(edited_image)
-                        print("✅ 图片编辑完成（Comfly nano-banana）")
-                        self._push_chat(enhanced_prompt, response_text or "", unique_id)
-                        return (image_tensor, response_text)
-                        
-                except Exception as e:
-                    print(f"❌ Comfly(nano-banana) 多图像编辑失败: {e}")
-                    raise e
+                            else:
+                                # 如果没有base64数据，尝试从响应文本中提取图像
+                                import re
+                                base64_pattern = r'data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)'
+                                matches = re.findall(base64_pattern, response_text)
+                                if matches:
+                                    from base64 import b64decode
+                                    import io
+                                    img = Image.open(io.BytesIO(b64decode(matches[0]))).convert('RGB')
+                                    edited_image = img
+
+                        # 如果成功处理，直接返回结果
+                        if edited_image:
+                            image_tensor = pil_to_tensor(edited_image)
+                            print("✅ 图片编辑完成（Comfly nano-banana）")
+                            self._push_chat(enhanced_prompt, response_text or "", unique_id)
+                            return (image_tensor, response_text)
+
+                    except Exception as e:
+                        print(f"❌ Comfly(nano-banana) 多图像编辑失败: {e}")
+                        raise e
             request_data = {
                 "contents": [{
                     "parts": [
@@ -5764,9 +6858,87 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 
         # 3. T8镜像站处理
         elif is_t8_mirror:
-            # T8镜像站也支持 nano-banana，调用方式与 Comfly 一致
-            print("🔗 检测到T8镜像站，使用chat/completions端点 (nano-banana 直连)")
-            if _normalize_model_name(model) in ["nano-banana", "nano-banana-hd"] and all_input_pils:
+            print("🔗 检测到T8镜像站，使用T8 API格式")
+
+            if model in ["nano-banana", "nano-banana-hd", "fal-ai/nano-banana", "nano-banana/edit", "fal-ai/nano-banana/edit"] and all_input_pils:
+                # 检查是否是fal-ai模型
+                if model.startswith("fal-ai/") or model.endswith("/edit"):
+                    # T8镜像站使用与Comfly相同的fal-ai端点调用方式
+                    try:
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, model, enhanced_prompt, all_input_pils, 1, seed, "image_url")
+                        edited_image = None
+                        response_text = ""
+
+                        if isinstance(result, dict) and 'data' in result:
+                            if not result['data']:
+                                response_text = result.get('response_text', '')
+                                print(f"⚠️ T8 fal-ai/nano-banana 多图编辑没有返回图像数据")
+                                # print(f"📝 响应文本: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
+                                print(f"📝 响应文本长度: {len(response_text)} 字符")
+                                raise Exception(f"T8 fal-ai/nano-banana 多图编辑服务没有返回图像数据，响应: {response_text[:100]}...")
+
+                            # 处理返回的图像数据
+                            b64 = result['data'][0].get('b64_json')
+                            image_url = result['data'][0].get('url', '')
+                            response_text = result.get('response_text', "")
+
+                            # 确保图像URL信息显示在响应中
+                            if image_url and image_url not in response_text:
+                                response_text += f"\n🔗 图像URL: {image_url}"
+
+                            if b64:
+                                from base64 import b64decode
+                                import io
+                                try:
+                                    b64_fixed = b64 + '=' * (4 - len(b64) % 4)
+                                    edited_image = Image.open(io.BytesIO(b64decode(b64_fixed))).convert('RGB')
+                                except Exception as e:
+                                    print(f"⚠️ base64解码失败: {e}")
+                                    # 尝试从URL下载
+                                    if image_url:
+                                        try:
+                                            import requests
+                                            response = requests.get(image_url, timeout=30)
+                                            if response.status_code == 200:
+                                                edited_image = Image.open(io.BytesIO(response.content)).convert('RGB')
+                                                print("✅ 成功从URL下载多图编辑后图像")
+                                            else:
+                                                print(f"⚠️ 图像下载失败，状态码: {response.status_code}")
+                                        except Exception as e:
+                                            print(f"⚠️ 图像下载失败: {e}")
+
+                        # 如果成功处理，应用全量增强后再返回
+                        if edited_image:
+                            # 应用全量增强（包括智能主体检测和居中技术）
+                            try:
+                                edited_image = _apply_full_enhancements(
+                                    edited_image,
+                                    controls['size'],
+                                    quality,
+                                    enhance_quality,
+                                    smart_resize
+                                )
+                                try:
+                                    print(f"🔧 Final output size: {edited_image.size[0]}x{edited_image.size[1]}")
+                                except Exception:
+                                    pass
+                            except Exception:
+                                pass
+
+                            image_tensor = pil_to_tensor(edited_image)
+                            print("✅ T8 fal-ai多图编辑完成")
+                            self._push_chat(enhanced_prompt, response_text or "", unique_id)
+                            return (image_tensor, response_text)
+                        else:
+                            raise Exception("T8 fal-ai/nano-banana 未能编辑多图")
+
+                    except Exception as e:
+                        print(f"❌ T8 fal-ai/nano-banana 多图编辑失败: {e}")
+                        raise e
+
+                # 原生nano-banana模型处理
+                elif _normalize_model_name(model) in ["nano-banana", "nano-banana-hd"]:
+                    print("🔗 T8镜像站使用chat/completions端点 (nano-banana 直连)")
                 try:
                     # 使用所有输入图像
                     result = _comfly_nano_banana_edit(full_url, api_key, _normalize_model_name(model), enhanced_prompt, all_input_pils, controls['size'], temperature, top_p, max_output_tokens, seed)
@@ -5791,19 +6963,26 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     if edited_image:
                         # 应用全量增强（包括智能主体检测和居中技术）
                         try:
-                            edited_image = _apply_full_enhancements(
+                            print("🚀 开始应用T8 fal-ai多图编辑增强技术...")
+                            enhanced_image = _apply_full_enhancements(
                                 edited_image,
                                 controls['size'],
                                 quality,
                                 enhance_quality,
                                 smart_resize
                             )
-                            try:
-                                print(f"🔧 Final output size: {edited_image.size[0]}x{edited_image.size[1]}")
-                            except Exception:
-                                pass
-                        except Exception:
-                            pass
+                            if enhanced_image:
+                                edited_image = enhanced_image
+                                print(f"✅ T8 fal-ai多图编辑增强完成")
+                                try:
+                                    print(f"🔧 Final output size: {edited_image.size[0]}x{edited_image.size[1]}")
+                                except Exception:
+                                    pass
+                            else:
+                                print("⚠️ T8 fal-ai多图编辑增强返回空结果，使用原始图像")
+                        except Exception as e:
+                            print(f"⚠️ T8 fal-ai多图编辑增强失败: {e}")
+                            print("⚠️ 使用原始图像继续处理")
 
                         image_tensor = pil_to_tensor(edited_image)
                         print("✅ 图片编辑完成（T8 nano-banana）")
@@ -5929,7 +7108,8 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                         
                         print("✅ 多图像编辑完成（API4GPT）")
                         print(f"📝 响应文本长度: {len(response_text)}")
-                        print(f"📝 响应文本内容: {response_text[:200]}...")
+                        # print(f"📝 响应文本内容: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
+                        print(f"📝 响应文本类型: {'包含图像数据' if 'data:image/' in response_text else '纯文本内容'}")
                         self._push_chat(enhanced_prompt, response_text or "", unique_id)
                         return (image_tensor, response_text)
                         
@@ -6098,8 +7278,8 @@ Execute the multi-image editing task now and return the edited image."""
                 print(f"📝 编辑指令: {enhanced_prompt[:100]}...")
                 print(f"🔗 镜像站: {api_url}")
                 
-                # 发送请求
-                response = requests.post(full_url, headers=headers, json=request_data, timeout=timeout)
+                # 发送请求 - 添加SSL配置以解决连接问题
+                response = requests.post(full_url, headers=headers, json=request_data, timeout=timeout, verify=False)
                 
                 # 检查响应状态和内容
                 print(f"📡 HTTP状态码: {response.status_code}")
@@ -6168,7 +7348,7 @@ Execute the multi-image editing task now and return the edited image."""
                                     response_text = f"API4GPT {api4gpt_service} 服务响应完成，但未返回编辑后的图像数据"
                         except Exception as json_error:
                             print(f"⚠️ API4GPT JSON解析失败: {json_error}")
-                            print(f"📋 原始响应内容: {response.text[:500]}...")
+                            # print(f"📋 原始响应内容: {response.text[:500]}...")  # 注释掉冗长的调试信息
                             raise ValueError(f"API4GPT响应不是有效的JSON格式: {json_error}")
                             
                     elif is_openrouter_mirror:
@@ -6349,7 +7529,8 @@ Execute the multi-image editing task now and return the edited image."""
                     
                     print("✅ 多图像编辑完成")
                     print(f"📝 响应文本长度: {len(response_text)}")
-                    print(f"📝 响应文本内容: {response_text[:200]}...")
+                    # print(f"📝 响应文本内容: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
+                    print(f"📝 响应文本类型: {'包含图像数据' if 'data:image/' in response_text else '纯文本内容'}")
                     self._push_chat(enhanced_prompt, response_text or "", unique_id)
                     return (image_tensor, response_text)
                 

@@ -1,0 +1,48 @@
+# 人脸修复功能的额外依赖
+# Face restoration additional dependencies
+
+# CodeFormer 相关依赖
+# CodeFormer dependencies
+codeformer>=0.1.0
+basicsr>=1.4.2
+facexlib>=0.3.0
+
+# GFPGAN 相关依赖  
+# GFPGAN dependencies
+gfpgan>=1.3.8
+
+# 共同依赖
+# Common dependencies
+opencv-python>=4.5.0
+opencv-contrib-python>=4.5.0
+dlib>=19.24.0
+mediapipe>=0.8.0
+torch>=1.9.0
+torchvision>=0.10.0
+numpy>=1.21.0
+Pillow>=8.3.0
+scipy>=1.7.0
+tqdm>=4.62.0
+lpips>=0.1.4
+
+# 可选的GPU加速依赖
+# Optional GPU acceleration dependencies
+# torch-audio  # 如果需要音频处理
+# xformers     # 如果需要更快的transformer计算
+
+# 安装说明：
+# Installation instructions:
+# 1. 基础安装：pip install -r requirements_face_restore.txt
+# 2. GPU版本：确保先安装对应的PyTorch GPU版本
+# 3. 如果遇到dlib安装问题，可以使用：
+#    conda install -c conda-forge dlib
+# 4. 某些系统可能需要额外的系统依赖：
+#    Ubuntu: sudo apt-get install cmake libopenblas-dev liblapack-dev
+#    CentOS: sudo yum install cmake openblas-devel lapack-devel
+
+# 注意事项：
+# Notes:
+# - 这些依赖主要用于人脸修复功能
+# - 如果不需要人脸修复，可以跳过这些依赖
+# - 某些依赖可能需要编译，安装时间较长
+# - 建议在虚拟环境中安装以避免冲突

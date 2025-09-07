@@ -95,8 +95,42 @@ def detect_image_foreground_subject(image):
                 x, y, w, h = cv2.boundingRect(best_contour)
                 subject_center_x = x + w // 2
                 subject_center_y = y + h // 2
-                
+
+                # 🚀 关键修复：检查检测到的主体是否过大
+                detected_area = w * h
+                image_area = width * height
+                detected_ratio = detected_area / image_area
+
                 print(f"🎯 多区域GrabCut检测到主体: 区域{best_region}, 位置({x}, {y}), 尺寸({w}x{h}), 中心({subject_center_x}, {subject_center_y})")
+                print(f"🔍 检测主体占比: {detected_ratio:.3f}")
+
+                # 如果检测到的主体过大（超过35%），调整主体尺寸
+                if detected_ratio > 0.35:
+                    print(f"⚠️ 检测到的主体过大(占比{detected_ratio:.1%})，调整主体尺寸...")
+
+                    # 重新计算合理的主体尺寸
+                    if width > height:
+                        new_w = int(width * 0.2)
+                        new_h = int(height * 0.3)
+                    else:
+                        new_w = int(width * 0.3)
+                        new_h = int(height * 0.2)
+
+                    # 确保主体不会太小
+                    new_w = max(new_w, width // 10)
+                    new_h = max(new_h, height // 10)
+
+                    # 重新计算主体位置，保持中心不变
+                    new_x = subject_center_x - new_w // 2
+                    new_y = subject_center_y - new_h // 2
+
+                    # 确保主体在图像范围内
+                    new_x = max(0, min(new_x, width - new_w))
+                    new_y = max(0, min(new_y, height - new_h))
+
+                    print(f"🔧 调整后主体: ({new_x}, {new_y}, {new_w}x{new_h}), 新占比{(new_w*new_h)/image_area:.3f}")
+                    return (new_x, new_y, new_w, new_h), (subject_center_x, subject_center_y)
+
                 return (x, y, w, h), (subject_center_x, subject_center_y)
         
         except Exception as e:
@@ -135,8 +169,42 @@ def detect_image_foreground_subject(image):
                     x, y, w, h = cv2.boundingRect(largest_contour)
                     subject_center_x = x + w // 2
                     subject_center_y = y + h // 2
-                    
+
+                    # 🚀 关键修复：检查检测到的主体是否过大
+                    detected_area = w * h
+                    image_area = width * height
+                    detected_ratio = detected_area / image_area
+
                     print(f"🎯 边缘密度检测到主体: 位置({x}, {y}), 尺寸({w}x{h}), 中心({subject_center_x}, {subject_center_y})")
+                    print(f"🔍 检测主体占比: {detected_ratio:.3f}")
+
+                    # 如果检测到的主体过大（超过35%），调整主体尺寸
+                    if detected_ratio > 0.35:
+                        print(f"⚠️ 检测到的主体过大(占比{detected_ratio:.1%})，调整主体尺寸...")
+
+                        # 重新计算合理的主体尺寸
+                        if width > height:
+                            new_w = int(width * 0.2)
+                            new_h = int(height * 0.3)
+                        else:
+                            new_w = int(width * 0.3)
+                            new_h = int(height * 0.2)
+
+                        # 确保主体不会太小
+                        new_w = max(new_w, width // 10)
+                        new_h = max(new_h, height // 10)
+
+                        # 重新计算主体位置，保持中心不变
+                        new_x = subject_center_x - new_w // 2
+                        new_y = subject_center_y - new_h // 2
+
+                        # 确保主体在图像范围内
+                        new_x = max(0, min(new_x, width - new_w))
+                        new_y = max(0, min(new_y, height - new_h))
+
+                        print(f"🔧 调整后主体: ({new_x}, {new_y}, {new_w}x{new_h}), 新占比{(new_w*new_h)/image_area:.3f}")
+                        return (new_x, new_y, new_w, new_h), (subject_center_x, subject_center_y)
+
                     return (x, y, w, h), (subject_center_x, subject_center_y)
         
         except Exception as e:
@@ -195,8 +263,42 @@ def detect_image_foreground_subject(image):
                     
                     subject_center_x = x + w // 2
                     subject_center_y = y + h // 2
-                    
+
+                    # 🚀 关键修复：检查检测到的主体是否过大
+                    detected_area = w * h
+                    image_area = width * height
+                    detected_ratio = detected_area / image_area
+
                     print(f"🎯 智能网格分析检测到主体: 位置({x}, {y}), 尺寸({w}x{h}), 中心({subject_center_x}, {subject_center_y})")
+                    print(f"🔍 检测主体占比: {detected_ratio:.3f}")
+
+                    # 如果检测到的主体过大（超过35%），调整主体尺寸
+                    if detected_ratio > 0.35:
+                        print(f"⚠️ 检测到的主体过大(占比{detected_ratio:.1%})，调整主体尺寸...")
+
+                        # 重新计算合理的主体尺寸
+                        if width > height:
+                            new_w = int(width * 0.2)
+                            new_h = int(height * 0.3)
+                        else:
+                            new_w = int(width * 0.3)
+                            new_h = int(height * 0.2)
+
+                        # 确保主体不会太小
+                        new_w = max(new_w, width // 10)
+                        new_h = max(new_h, height // 10)
+
+                        # 重新计算主体位置，保持中心不变
+                        new_x = subject_center_x - new_w // 2
+                        new_y = subject_center_y - new_h // 2
+
+                        # 确保主体在图像范围内
+                        new_x = max(0, min(new_x, width - new_w))
+                        new_y = max(0, min(new_y, height - new_h))
+
+                        print(f"🔧 调整后主体: ({new_x}, {new_y}, {new_w}x{new_h}), 新占比{(new_w*new_h)/image_area:.3f}")
+                        return (new_x, new_y, new_w, new_h), (subject_center_x, subject_center_y)
+
                     return (x, y, w, h), (subject_center_x, subject_center_y)
         
         except Exception as e:
@@ -205,17 +307,35 @@ def detect_image_foreground_subject(image):
         # 🎯 备用策略：基于图像中心的主体位置估计
         try:
             print(f"🔍 使用备用策略：基于图像中心的主体位置估计...")
-            
+
             # 分析图像中心区域的特征
             center_x = width // 2
             center_y = height // 2
-            estimated_w = width // 3
-            estimated_h = height // 3
-            
+
+            # 🚀 修复：使用极保守的主体尺寸估计，确保主体完整显示
+            # 根据图像尺寸动态调整主体大小，确保主体不会占满整个画面
+            if width > height:
+                # 横向图像：主体宽度为图像宽度的20%，高度为图像高度的30%
+                estimated_w = int(width * 0.2)
+                estimated_h = int(height * 0.3)
+            else:
+                # 纵向图像：主体宽度为图像宽度的30%，高度为图像高度的20%
+                estimated_w = int(width * 0.3)
+                estimated_h = int(height * 0.2)
+
+            # 确保主体尺寸不会太小
+            estimated_w = max(estimated_w, width // 10)
+            estimated_h = max(estimated_h, height // 10)
+
+            # 确保主体尺寸不会太大（不超过图像的35%）
+            estimated_w = min(estimated_w, int(width * 0.35))
+            estimated_h = min(estimated_h, int(height * 0.35))
+
             estimated_center_x = center_x
             estimated_center_y = center_y
-            
+
             print(f"🎯 备用策略估计主体位置: 中心({estimated_center_x}, {estimated_center_y}), 尺寸({estimated_w}x{estimated_h})")
+            print(f"🔍 主体占比: 宽度{estimated_w/width:.1%}, 高度{estimated_h/height:.1%}")
             return (center_x - estimated_w//2, center_y - estimated_h//2, estimated_w, estimated_h), (estimated_center_x, estimated_center_y)
         
         except Exception as e:
@@ -224,8 +344,26 @@ def detect_image_foreground_subject(image):
         # 如果所有方法都失败，返回图像中心作为默认主体位置
         default_center_x = width // 2
         default_center_y = height // 2
+
+        # 🚀 修复：使用极保守的默认主体尺寸
+        if width > height:
+            default_w = int(width * 0.2)
+            default_h = int(height * 0.3)
+        else:
+            default_w = int(width * 0.3)
+            default_h = int(height * 0.2)
+
+        default_w = max(default_w, width // 10)
+        default_h = max(default_h, height // 10)
+        default_w = min(default_w, int(width * 0.35))
+        default_h = min(default_h, int(height * 0.35))
+
+        default_x = default_center_x - default_w // 2
+        default_y = default_center_y - default_h // 2
+
         print(f"⚠️ 所有检测方法失败，使用图像中心作为默认主体位置: ({default_center_x}, {default_center_y})")
-        return (width//4, height//4, width//2, height//2), (default_center_x, default_center_y)
+        print(f"🔍 默认主体尺寸: {default_w}x{default_h}, 占比: 宽度{default_w/width:.1%}, 高度{default_h/height:.1%}")
+        return (default_x, default_y, default_w, default_h), (default_center_x, default_center_y)
         
     except ImportError:
         print("⚠️ OpenCV未安装，无法进行智能主体检测")
@@ -233,14 +371,50 @@ def detect_image_foreground_subject(image):
         width, height = image.size
         default_center_x = width // 2
         default_center_y = height // 2
-        return (width//4, height//4, width//2, height//2), (default_center_x, default_center_y)
+
+        # 🚀 修复：使用极保守的默认主体尺寸
+        if width > height:
+            default_w = int(width * 0.2)
+            default_h = int(height * 0.3)
+        else:
+            default_w = int(width * 0.3)
+            default_h = int(height * 0.2)
+
+        default_w = max(default_w, width // 10)
+        default_h = max(default_h, height // 10)
+        default_w = min(default_w, int(width * 0.35))
+        default_h = min(default_h, int(height * 0.35))
+
+        default_x = default_center_x - default_w // 2
+        default_y = default_center_y - default_h // 2
+
+        print(f"🔍 OpenCV未安装，使用默认主体尺寸: {default_w}x{default_h}, 占比: 宽度{default_w/width:.1%}, 高度{default_h/height:.1%}")
+        return (default_x, default_y, default_w, default_h), (default_center_x, default_center_y)
     except Exception as e:
         print(f"❌ 智能主体检测失败: {e}")
         # 返回图像中心作为默认主体位置
         width, height = image.size
         default_center_x = width // 2
         default_center_y = height // 2
-        return (width//4, height//4, width//2, height//2), (default_center_x, default_center_y)
+
+        # 🚀 修复：使用合理的默认主体尺寸
+        if width > height:
+            default_w = int(width * 0.3)
+            default_h = int(height * 0.45)
+        else:
+            default_w = int(width * 0.45)
+            default_h = int(height * 0.3)
+
+        default_w = max(default_w, width // 8)
+        default_h = max(default_h, height // 8)
+        default_w = min(default_w, int(width * 0.5))
+        default_h = min(default_h, int(height * 0.5))
+
+        default_x = default_center_x - default_w // 2
+        default_y = default_center_y - default_h // 2
+
+        print(f"🔍 异常处理，使用默认主体尺寸: {default_w}x{default_h}, 占比: 宽度{default_w/width:.1%}, 高度{default_h/height:.1%}")
+        return (default_x, default_y, default_w, default_h), (default_center_x, default_center_y)
 
 
 def test_universal_detection():
