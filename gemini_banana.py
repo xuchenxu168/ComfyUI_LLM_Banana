@@ -87,13 +87,13 @@ def detect_available_upscale_models():
     print(f"🔍 可用AI放大模型: {available_models}")
     return available_models
 
-def ai_upscale_with_realesrgan(image, target_width, target_height):
+def ai_upscale_with_realesrgan(image, target_width, target_height, gigapixel_model="High Fidelity"):
     """
     统一委托到通用放大器（banana_upscale.smart_upscale），优先2x，失败回退LANCZOS。
     """
     try:
         from .banana_upscale import smart_upscale as _smart
-        res = _smart(image, target_width, target_height)
+        res = _smart(image, target_width, target_height, gigapixel_model)
         if res is not None:
             return res
         print(f"⚠️ 智能放大器不可用，使用高质量重采样")
@@ -135,13 +135,13 @@ def ai_upscale_with_waifu2x(image, target_width, target_height):
         print(f"❌ Waifu2x 放大失败: {e}")
         raise e
 
-def smart_ai_upscale(image, target_width, target_height):
+def smart_ai_upscale(image, target_width, target_height, gigapixel_model="High Fidelity"):
 	"""
 	统一委托到通用放大器（banana_upscale.smart_upscale）
 	"""
 	try:
 		from .banana_upscale import smart_upscale as _smart
-		return _smart(image, target_width, target_height)
+		return _smart(image, target_width, target_height, gigapixel_model)
 	except Exception as e:
 		_log_warning(f"⚠️ 智能放大器失败: {e}")
 		return None
@@ -335,7 +335,7 @@ def remove_white_areas(image: Image.Image, white_threshold: int = 240) -> Image.
 
 def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
                              fill_color: Tuple[int, int, int] = (255, 255, 255),
-                             fill_strategy: str = "smart") -> Image.Image:
+                             fill_strategy: str = "smart", gigapixel_model: str = "High Fidelity") -> Image.Image:
     """
     🚀 直接目标尺寸扩图技术，按控制尺寸要求直接扩图
     彻底解决过度扩图问题，直接扩到目标尺寸
@@ -495,7 +495,7 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
         # 优先使用AI模型，回退到高质量重采样
         try:
             _log_info(f"🔧 尝试使用AI放大模型进行高清放大...")
-            ai_upscaled_image = smart_ai_upscale(image, enlarged_width, enlarged_height)
+            ai_upscaled_image = smart_ai_upscale(image, enlarged_width, enlarged_height, gigapixel_model)
             
             if ai_upscaled_image is not None:
                 # 如果AI放大成功，调整到目标尺寸
@@ -567,7 +567,7 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
         final_image.paste(resized_img, (paste_x, paste_y))
         return final_image
 
-def smart_ai_upscale(image, target_width, target_height):
+def smart_ai_upscale(image, target_width, target_height, gigapixel_model="High Fidelity"):
     """
     🚀 智能AI放大技术 - 统一委托到通用放大器（banana_upscale.smart_upscale）
     """
@@ -578,7 +578,7 @@ def smart_ai_upscale(image, target_width, target_height):
             from banana_upscale import smart_upscale as _smart
 
         # 调用AI放大
-        result = _smart(image, target_width, target_height)
+        result = _smart(image, target_width, target_height, gigapixel_model)
 
         # 验证结果是否有效
         if result is not None and hasattr(result, 'size') and result.size[0] > 0 and result.size[1] > 0:
@@ -623,7 +623,7 @@ def _analyze_image_type_simple(image: Image.Image) -> str:
         return "general"
 
 
-def _apply_ai_super_resolution(image: Image.Image, image_type: str = "general") -> Optional[Image.Image]:
+def _apply_ai_super_resolution(image: Image.Image, image_type: str = "general", gigapixel_model: str = "High Fidelity") -> Optional[Image.Image]:
     """
     🚀 AI超分辨率增强：根据图像类型选择最佳策略
     """
@@ -652,7 +652,7 @@ def _apply_ai_super_resolution(image: Image.Image, image_type: str = "general") 
         _log_info(f"🚀 尝试AI超分辨率增强: {image.size} -> ({target_w}, {target_h})")
 
         # 使用智能放大系统
-        enhanced = smart_ai_upscale(image, target_w, target_h)
+        enhanced = smart_ai_upscale(image, target_w, target_h, gigapixel_model)
         if enhanced:
             # 如果放大成功，缩回原尺寸以保持细节提升
             final = enhanced.resize(image.size, Image.Resampling.LANCZOS)
@@ -666,7 +666,7 @@ def _apply_ai_super_resolution(image: Image.Image, image_type: str = "general") 
         return None
 
 
-def enhance_image_quality(image: Image.Image, quality: str = "hd", adaptive_mode: str = "disabled") -> Image.Image:
+def enhance_image_quality(image: Image.Image, quality: str = "hd", adaptive_mode: str = "disabled", gigapixel_model: str = "High Fidelity") -> Image.Image:
     """
     🚀 图像质量增强（集成AI超分辨率技术）
     - 传统增强：锐化、对比度、色彩、亮度微调
@@ -681,7 +681,7 @@ def enhance_image_quality(image: Image.Image, quality: str = "hd", adaptive_mode
         image_type = _analyze_image_type_simple(image)
 
         # 应用AI超分辨率增强
-        ai_enhanced = _apply_ai_super_resolution(image, image_type)
+        ai_enhanced = _apply_ai_super_resolution(image, image_type, gigapixel_model)
         if ai_enhanced:
             image = ai_enhanced
             _log_info(f"✅ AI超分辨率增强完成")
@@ -1778,6 +1778,12 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                     "default": "255,255,255",
                     "placeholder": "填充颜色 RGB (如: 255,255,255)"
                 }),
+
+                # 🎯 Gigapixel AI 模型选择
+                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
+                    "default": "High Fidelity",
+                    "label": "Gigapixel AI Model"
+                }),
                 
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
@@ -1858,6 +1864,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         smart_resize: bool = True,
         fill_strategy: str = "smart",
         fill_color: str = "255,255,255",
+        gigapixel_model: str = "High Fidelity",
         detail_level: str = "Professional Detail",
         camera_control: str = "Auto Select",
         lighting_control: str = "Auto Settings",
@@ -2175,7 +2182,13 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                     "default": "255,255,255",
                     "placeholder": "填充颜色 RGB (如: 255,255,255)"
                 }),
-                
+
+                # 🎯 Gigapixel AI 模型选择
+                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
+                    "default": "High Fidelity",
+                    "label": "Gigapixel AI Model"
+                }),
+
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
                 "top_k": ("INT", {"default": default_params.get('top_k', 40), "min": 0, "max": 100}),
@@ -2225,6 +2238,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         smart_resize,
         fill_strategy,
         fill_color,
+        gigapixel_model,
         temperature,
         top_p,
         top_k,
@@ -2338,7 +2352,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                         _log_info(f"🔄 强制调整图像尺寸: {current_width}x{current_height} -> {target_width}x{target_height}")
 
                         # 🚀 使用智能调整放大技术（支持用户选择的填充策略）
-                        edited_image = smart_resize_with_padding(edited_image, (target_width, target_height), fill_strategy=fill_strategy)
+                        edited_image = smart_resize_with_padding(edited_image, (target_width, target_height), fill_strategy=fill_strategy, gigapixel_model=gigapixel_model)
 
                         print(f"✅ [Image to Image] 智能调整放大完成: {edited_image.size}")
                         _log_info(f"✅ 扩图技术完成: {edited_image.size}")
@@ -2375,7 +2389,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                     _log_warning(f"图像类型错误: {type(edited_image)}，跳过质量增强")
                 else:
                     print(f"🎨 [Image to Image] 正在增强图像，原始尺寸: {edited_image.size}")
-                    edited_image = enhance_image_quality(edited_image, controls['quality'], "disabled")
+                    edited_image = enhance_image_quality(edited_image, controls['quality'], "disabled", gigapixel_model)
                     print(f"✅ [Image to Image] 质量增强完成，最终尺寸: {edited_image.size}")
             else:
                 print(f"⏭️ [Image to Image] 跳过质量增强 (enhance_quality={enhance_quality}, quality={controls['quality']})")
@@ -2544,7 +2558,7 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
             if isinstance(generated_image, Image.Image) and enhance_quality and controls['quality'] in ['hd', 'ultra_hd', 'ai_enhanced', 'ai_ultra']:
                 _log_info(f"✨ 应用质量增强，质量等级: {controls['quality']}")
                 try:
-                    generated_image = enhance_image_quality(generated_image, controls['quality'], "disabled")
+                    generated_image = enhance_image_quality(generated_image, controls['quality'], "disabled", gigapixel_model)
                 except Exception as e:
                     _log_warning(f"质量增强失败: {e}，跳过增强")
             
@@ -2816,7 +2830,13 @@ class GeminiBananaMultiImageEditNode:
                     "default": "255,255,255",
                     "placeholder": "填充颜色 RGB (如: 255,255,255)"
                 }),
-                
+
+                # 🎯 Gigapixel AI 模型选择
+                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
+                    "default": "High Fidelity",
+                    "label": "Gigapixel AI Model"
+                }),
+
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.95), "min": 0.0, "max": 1.0}),
                 "top_k": ("INT", {"default": default_params.get('top_k', 40), "min": 0, "max": 100}),
@@ -2886,7 +2906,7 @@ class GeminiBananaMultiImageEditNode:
     def edit_multiple_images(self, api_key: str, prompt: str, model: str, size: str, quality: str, style: str,
                            detail_level: str, camera_control: str, lighting_control: str, template_selection: str,
                            quality_enhancement: bool, enhance_quality: bool, smart_resize: bool, fill_strategy: str,
-                           fill_color: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
+                           fill_color: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
                            post_generation_control: str, custom_size: str = "", image1=None, image2=None, image3=None, image4=None,
                            custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用 Gemini API 进行多图像编辑"""
@@ -2953,7 +2973,7 @@ class GeminiBananaMultiImageEditNode:
             # 🚀 应用图像质量增强（支持AI超分辨率）
             if quality_enhancement and controls['quality'] in ['hd', 'ultra_hd', 'ai_enhanced', 'ai_ultra']:
                 try:
-                    enhanced_image = enhance_image_quality(pil_image, controls['quality'], "disabled")
+                    enhanced_image = enhance_image_quality(pil_image, controls['quality'], "disabled", gigapixel_model)
                     print(f"✨ 图像 {i+1} 质量增强完成")
                 except Exception as e:
                     print(f"⚠️ 图像 {i+1} 质量增强失败: {e}，使用原图")
@@ -3115,7 +3135,7 @@ Execute the image editing task now and return the generated image."""
                             print(f"🔄 强制调整图像尺寸: {current_width}x{current_height} -> {target_width}x{target_height}")
                             
                             # 🚀 使用无白色填充不变形的扩图技术（使用crop模式避免重叠）
-                            edited_image = smart_resize_with_padding(edited_image, (target_width, target_height), fill_strategy="crop")
+                            edited_image = smart_resize_with_padding(edited_image, (target_width, target_height), fill_strategy="crop", gigapixel_model=gigapixel_model)
                             print(f"🎯 扩图技术完成，无白色填充不变形")
 
                             print(f"✅ 图像尺寸调整完成: {edited_image.size}")
@@ -3135,7 +3155,7 @@ Execute the image editing task now and return the generated image."""
                         print(f"✨ 应用质量增强，质量等级: {controls['quality']}")
                         try:
                             if isinstance(edited_image, Image.Image):
-                                edited_image = enhance_image_quality(edited_image, controls['quality'], "disabled")
+                                edited_image = enhance_image_quality(edited_image, controls['quality'], "disabled", gigapixel_model)
                                 print(f"✅ 增强完成")
                             else:
                                 print(f"⚠️ 图像类型错误: {type(edited_image)}，跳过质量增强")

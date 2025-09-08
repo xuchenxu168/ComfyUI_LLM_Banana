@@ -1,0 +1,96 @@
+{
+  "gigapixel_ai": {
+    "enabled": true,
+    "description": "Gigapixel AI 高质量图像放大设置",
+    "executable_paths": [
+      "C:\\Program Files\\Topaz Labs LLC\\Topaz Gigapixel AI\\gigapixel.exe",
+      "C:\\Program Files (x86)\\Topaz Labs LLC\\Topaz Gigapixel AI\\gigapixel.exe",
+      "gigapixel"
+    ],
+    "default_model": "fidelity",
+    "model_version": 2,
+    "timeout_seconds": 300,
+    "temp_cleanup": true,
+    "priority": 1,
+    "supported_formats": [".png", ".jpg", ".jpeg", ".tif", ".tiff"],
+    "max_scale": 16.0,
+    "min_scale": 1.0
+  },
+  "upscale_settings": {
+    "sharpen": 1.0,
+    "denoise": 1.0,
+    "compression": 67.0,
+    "fine_detail_retention": 50.0,
+    "pre_downscaling": 75.0
+  },
+  "models": {
+    "std": {
+      "name": "Standard",
+      "description": "通用标准模型，适合大多数图像",
+      "needs_mv2": true
+    },
+    "fidelity": {
+      "name": "High Fidelity", 
+      "description": "高保真模型，保持原始细节",
+      "needs_mv2": true
+    },
+    "lowres": {
+      "name": "Low Resolution",
+      "description": "低分辨率图像专用模型",
+      "needs_mv2": true
+    },
+    "recovery": {
+      "name": "Recover",
+      "description": "图像恢复模型，修复损坏图像",
+      "needs_mv2": true
+    },
+    "art": {
+      "name": "Art & CG",
+      "description": "艺术和CG图像专用模型",
+      "needs_mv2": false
+    },
+    "lines": {
+      "name": "Lines",
+      "description": "线条图像专用模型",
+      "needs_mv2": false
+    },
+    "text": {
+      "name": "Text & Shapes",
+      "description": "文字和形状专用模型",
+      "needs_mv2": false
+    },
+    "vc": {
+      "name": "Very Compressed",
+      "description": "高压缩图像专用模型",
+      "needs_mv2": false
+    },
+    "redefine": {
+      "name": "Redefine",
+      "description": "重新定义模型，最新技术",
+      "needs_mv2": false
+    }
+  },
+  "fallback_strategy": {
+    "enabled": true,
+    "order": [
+      "gigapixel_ai",
+      "realesrgan_2x",
+      "realesrgan_4x", 
+      "swinir",
+      "nomos",
+      "bsrgan",
+      "lanczos"
+    ]
+  },
+  "performance": {
+    "max_concurrent_jobs": 1,
+    "memory_limit_mb": 4096,
+    "use_gpu": true
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info",
+    "log_commands": true,
+    "log_timing": true
+  }
+}

@@ -3512,14 +3512,23 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
 
 class KenChenLLMGeminiBananaMirrorImageGenNode:
     """Gemini Banana 镜像站图片生成节点
-    
+
     功能特性:
     - 支持选择预配置的镜像站（official, comfly, custom）
     - 自动填充对应镜像站的 API URL 和 API Key
     - 选择 custom 时可手动输入自定义镜像站信息
     - 智能URL格式验证和自动补全
     """
-    
+
+    # 设置节点颜色为橙色/棕色系
+    @classmethod
+    def get_node_color(cls):
+        return "#D2691E"  # 巧克力橙色
+
+    @classmethod
+    def get_node_bgcolor(cls):
+        return "#8B4513"  # 深棕色背景
+
     @classmethod
     def INPUT_TYPES(cls):
         # 对齐 Gemini Banana Text to Image Banana 的控件
@@ -3587,6 +3596,12 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "default": "255,255,255",
                     "placeholder": "填充颜色 RGB (如: 255,255,255)"
                 }),
+
+                # 🎯 Gigapixel AI 模型选择
+                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
+                    "default": "High Fidelity",
+                    "label": "Gigapixel AI Model"
+                }),
                 
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
@@ -3619,6 +3634,17 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
     RETURN_NAMES = ("image", "response_text")
     FUNCTION = "generate_image"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
+
+    # 设置节点颜色 - 使用ComfyUI标准属性
+    color = "#D2691E"  # 巧克力橙色
+    bgcolor = "#8B4513"  # 深棕色背景
+    groupcolor = "#CD853F"  # 沙棕色
+
+    def __init__(self):
+        # 强制设置颜色属性
+        self.color = "#D2691E"
+        self.bgcolor = "#8B4513"
+        self.groupcolor = "#CD853F"
     
     def _push_chat(self, user_prompt: str, response_text: str, unique_id: str):
         if not PromptServer or not unique_id:
@@ -3654,7 +3680,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
     def generate_image(self, mirror_site: str, api_key: str, prompt: str, model: str,
                       proxy: str, size: str, quality: str, style: str, detail_level: str, camera_control: str,
                       lighting_control: str, template_selection: str, quality_enhancement: bool, enhance_quality: bool,
-                      smart_resize: bool, fill_color: str, temperature: float, top_p: float, top_k: int,
+                      smart_resize: bool, fill_color: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int,
                       max_output_tokens: int, seed: int, custom_size: str = "", api4gpt_service: str = "nano-banana",
                       custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API生成图片"""
@@ -5008,14 +5034,23 @@ Execute the image generation/editing task now and return the generated image."""
 
 class KenChenLLMGeminiBananaMirrorImageEditNode:
     """Gemini Banana 镜像站图片编辑节点
-    
+
     功能特性:
     - 支持选择预配置的镜像站（official, comfly, custom）
     - 自动填充对应镜像站的 API URL 和 API Key
     - 选择 custom 时可手动输入自定义镜像站信息
     - 智能URL格式验证和自动补全
     """
-    
+
+    # 设置节点颜色为橙色/棕色系
+    @classmethod
+    def get_node_color(cls):
+        return "#D2691E"  # 巧克力橙色
+
+    @classmethod
+    def get_node_bgcolor(cls):
+        return "#8B4513"  # 深棕色背景
+
     @classmethod
     def INPUT_TYPES(cls):
         try:
@@ -5080,7 +5115,13 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "default": "255,255,255",
                     "placeholder": "填充颜色 RGB (如: 255,255,255)"
                 }),
-                
+
+                # 🎯 Gigapixel AI 模型选择
+                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
+                    "default": "High Fidelity",
+                    "label": "Gigapixel AI Model"
+                }),
+
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
                 "top_k": ("INT", {"default": default_params.get('top_k', 40), "min": 0, "max": 100}),
@@ -5112,6 +5153,17 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
     RETURN_NAMES = ("edited_image", "response_text")
     FUNCTION = "edit_image"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
+
+    # 设置节点颜色 - 使用ComfyUI标准属性
+    color = "#D2691E"  # 巧克力橙色
+    bgcolor = "#8B4513"  # 深棕色背景
+    groupcolor = "#CD853F"  # 沙棕色
+
+    def __init__(self):
+        # 强制设置颜色属性
+        self.color = "#D2691E"
+        self.bgcolor = "#8B4513"
+        self.groupcolor = "#CD853F"
     
     def _push_chat(self, user_prompt: str, response_text: str, unique_id: str):
         if not PromptServer or not unique_id:
@@ -5147,7 +5199,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
     def edit_image(self, mirror_site: str, api_key: str, image: torch.Tensor, prompt: str, model: str,
                     proxy: str, size: str, quality: str, style: str, detail_level: str, camera_control: str, lighting_control: str,
                     template_selection: str, quality_enhancement: bool, enhance_quality: bool, smart_resize: bool,
-                    fill_color: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
+                    fill_color: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
                     custom_size: str = "", api4gpt_service: str = "nano-banana", custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API编辑图片"""
 
@@ -6281,7 +6333,7 @@ Execute the image editing task now and return the edited image."""
 class KenChenLLMGeminiBananaMultiImageEditNode:
     """
     Gemini Banana 多图像编辑节点
-    
+
     功能特性:
     - 支持多张输入图像（最多4张）
     - 专业的图像编辑提示词
@@ -6289,7 +6341,16 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
     - 智能图像组合编辑
     - 支持多个镜像站
     """
-    
+
+    # 设置节点颜色为橙色/棕色系
+    @classmethod
+    def get_node_color(cls):
+        return "#D2691E"  # 巧克力橙色
+
+    @classmethod
+    def get_node_bgcolor(cls):
+        return "#8B4513"  # 深棕色背景
+
     @classmethod
     def INPUT_TYPES(cls):
         try:
@@ -6353,7 +6414,13 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "default": "255,255,255",
                     "placeholder": "填充颜色 RGB (如: 255,255,255)"
                 }),
-                
+
+                # 🎯 Gigapixel AI 模型选择
+                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
+                    "default": "High Fidelity",
+                    "label": "Gigapixel AI Model"
+                }),
+
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
                 "top_k": ("INT", {"default": default_params.get('top_k', 40), "min": 0, "max": 100}),
@@ -6390,6 +6457,17 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
     FUNCTION = "edit_multiple_images"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
 
+    # 设置节点颜色 - 使用ComfyUI标准属性
+    color = "#D2691E"  # 巧克力橙色
+    bgcolor = "#8B4513"  # 深棕色背景
+    groupcolor = "#CD853F"  # 沙棕色
+
+    def __init__(self):
+        # 强制设置颜色属性
+        self.color = "#D2691E"
+        self.bgcolor = "#8B4513"
+        self.groupcolor = "#CD853F"
+
     def _push_chat(self, user_prompt: str, response_text: str, unique_id: str):
         if not PromptServer or not unique_id:
             return
@@ -6415,7 +6493,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
     def edit_multiple_images(self, mirror_site: str, api_key: str, prompt: str, model: str,
                            proxy: str, size: str, quality: str, style: str, detail_level: str, camera_control: str, lighting_control: str,
                            template_selection: str, quality_enhancement: bool, enhance_quality: bool, smart_resize: bool,
-                           fill_color: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
+                           fill_color: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
                            custom_size: str = "", api4gpt_service: str = "nano-banana", image1=None, image2=None, image3=None, image4=None, custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API进行多图像编辑"""
 
@@ -7675,8 +7753,39 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "KenChenLLMGeminiBananaMirrorImageGenNode": "Gemini Banana 图像生成",
-    "KenChenLLMGeminiBananaMirrorImageEditNode": "Gemini Banana 图片编辑",
-    "GeminiBananaMirrorMultiImageEdit": "Gemini Banana Mirror 多图像编辑",
+    "KenChenLLMGeminiBananaMirrorImageGenNode": "🍌 Gemini Banana 镜像图像生成",
+    "KenChenLLMGeminiBananaMirrorImageEditNode": "🍌 Gemini Banana 镜像图片编辑",
+    "GeminiBananaMirrorMultiImageEdit": "🍌 Gemini Banana 镜像多图像编辑",
 }
+
+# 强制设置节点颜色
+def setup_node_colors():
+    """为镜像节点设置橙色主题"""
+    orange_color = "#D2691E"  # 巧克力橙色
+    brown_bgcolor = "#8B4513"  # 深棕色背景
+    sand_groupcolor = "#CD853F"  # 沙棕色
+
+    for node_class in [KenChenLLMGeminiBananaMirrorImageGenNode,
+                       KenChenLLMGeminiBananaMirrorImageEditNode,
+                       KenChenLLMGeminiBananaMultiImageEditNode]:
+        # 设置类级别的颜色属性
+        node_class.color = orange_color
+        node_class.bgcolor = brown_bgcolor
+        node_class.groupcolor = sand_groupcolor
+
+        # 确保实例也有这些颜色
+        original_init = getattr(node_class, '__init__', None)
+
+        def colored_init(self, *args, **kwargs):
+            if original_init:
+                original_init(self, *args, **kwargs)
+            self.color = orange_color
+            self.bgcolor = brown_bgcolor
+            self.groupcolor = sand_groupcolor
+
+        node_class.__init__ = colored_init
+
+# 应用颜色设置
+setup_node_colors()
+print("🎨 已为镜像节点设置橙色主题")
 
