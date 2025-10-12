@@ -1,10 +1,10 @@
 {
-    "api_key": "sk-bXnweb9SnAddPUpI828280750b054b1cB6FbE0378544320e",
+    "api_key": "",
     "base_url": "https://ai.comfly.chat/v1",
     "prompt_api_providers": {
         "Comfly": {
             "url": "https://ai.comfly.chat/v1",
-            "api_key": "sk-bXnweb9SnAddPUpI828280750b054b1cB6FbE0378544320e",
+            "api_key": "",
             "api_format": "openai",
             "models": [
                 "gpt-4-v",
@@ -39,7 +39,7 @@
         },
         "T8的贞贞AI工坊": {
             "url": "https://ai.t8star.cn/v1",
-            "api_key": "sk-hBhFzjZ6L2V6HKasOcwGLu6bTupl86mzan1Ki1q5TzpJPJeC",
+            "api_key": "",
             "api_format": "openai",
             "models": [
                 "gpt-4-v",
@@ -81,4 +81,5 @@
         "claude-sonnet-4-5-20250929-thinking": "https://ai.comfly.chat/v1",
         "claude-sonnet-4-5-20250929": "https://ai.comfly.chat/v1"
     }
+
 }
