@@ -6,8 +6,8 @@
     "default_model": {
         "text_gen": "gemini-2.0-flash-lite",
         "multimodal": "gemini-2.5-pro-exp-03-25",
-        "image_gen": "gemini-2.5-flash-image-preview",
-        "image_edit": "gemini-2.5-flash-image-preview"
+        "image_gen": "gemini-2.5-flash-image",
+        "image_edit": "gemini-2.5-flash-image"
     },
     "default_params": {
         "temperature": 1.0,
@@ -48,7 +48,7 @@
             "url": "https://ai.comfly.chat/v1",
             "api_key": "sk-bXnweb9SnAddPUpI828280750b054b1cB6FbE0378544320e"
         },
-        "T8的贞贞的AI工坊": {
+        "T8的贞贞AI工坊": {
             "url": "https://ai.t8star.cn",
             "api_key": "sk-hBhFzjZ6L2V6HKasOcwGLu6bTupl86mzan1Ki1q5TzpJPJeC",
             "api_format": "openai",
@@ -56,11 +56,11 @@
             "description": "T8贞贞的AI工坊镜像站，支持Gemini 2.5 Flash Image Preview模型，使用OpenAI兼容的API格式"
         },
         "API4GPT": {
-            "url": "https://www.api4gpt.com",
+            "url": "https://one.api4gpt.com",
             "api_key": "sk-7vQ50rx6H3nYp5g0lBK81oJNZCcqAnJeNgOI6AEUEZncsOGB",
-            "api_format": "gemini",
-            "models": ["gemini-2.5-flash-image-preview", "gemini-2.5-flash-image-hd", "gemini-2.5-flash-image-preview-hd"],
-            "description": "API4GPT镜像站，支持直接调用Gemini模型（经济方案）和多种图像服务"
+            "api_format": "openai",
+            "models": ["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.5-flash-image-hd", "gemini-2.5-flash-image-vip"],
+            "description": "API4GPT镜像站，使用OpenAI兼容格式，支持nano-banana图像生成服务"
         },
         "OpenRouter": {
             "url": "https://openrouter.ai/api/v1",
@@ -108,18 +108,21 @@
             "gemini-2.0-flash-exp-image-generation"
         ],
         "image_gen_models": [
+            "gemini-2.5-flash-image",
             "gemini-2.5-flash-image-preview",
             "gemini-2.0-flash",
             "fal-ai/nano-banana",
             "nano-banana"
         ],
         "image_edit_models": [
+            "gemini-2.5-flash-image",
             "gemini-2.5-flash-image-preview",
             "gemini-2.0-flash",
             "fal-ai/nano-banana/edit",
             "nano-banana/edit"
         ],
         "enhanced_image_models": [
+            "gemini-2.5-flash-image",
             "gemini-2.5-flash-image-preview",
             "gemini-2.5-flash-image-hd",
             "gemini-2.0-flash-preview-image-generation"
@@ -151,7 +154,16 @@
         "camera_control_system": true,
         "lighting_control_system": true,
         "template_selection_system": true,
-        "quality_enhancement_toggle": true
+        "quality_enhancement_toggle": true,
+        "aspect_ratio_control": true,
+        "multi_image_input": true,
+        "editing_mode_selection": true,
+        "high_fidelity_text_rendering": true,
+        "iterative_refinement": true,
+        "semantic_inpainting": true,
+        "style_transfer": true,
+        "multi_image_composition": true,
+        "preserve_fidelity_details": true
     },
     "image_settings": {
         "max_image_size": 2048,
@@ -161,7 +173,7 @@
         "size_presets": [
             "Original size",
             "512x512",
-            "768x768", 
+            "768x768",
             "1024x1024",
             "1024x1792",
             "1792x1024",
@@ -171,6 +183,31 @@
             "2560x1440",
             "3840x2160"
         ],
+        "aspect_ratios": [
+            "1:1",
+            "2:3",
+            "3:2",
+            "3:4",
+            "4:3",
+            "4:5",
+            "5:4",
+            "9:16",
+            "16:9",
+            "21:9"
+        ],
+        "aspect_ratio_resolutions": {
+            "1:1": "1024x1024",
+            "2:3": "832x1248",
+            "3:2": "1248x832",
+            "3:4": "864x1184",
+            "4:3": "1184x864",
+            "4:5": "896x1152",
+            "5:4": "1152x896",
+            "9:16": "768x1344",
+            "16:9": "1344x768",
+            "21:9": "1536x672"
+        },
+        "response_modalities": ["TEXT_AND_IMAGE", "IMAGE_ONLY"],
         "quality_presets": ["standard", "hd", "ultra_hd", "ai_enhanced", "ai_ultra"],
         "style_presets": [
             "vivid", "natural", "artistic", "cinematic", "photographic",
@@ -180,6 +217,8 @@
             "vintage_film_photography", "architectural_photography", "gourmet_food_photography"
         ],
         "default_size": "1024x1024",
+        "default_aspect_ratio": "1:1",
+        "default_response_modality": "TEXT_AND_IMAGE",
         "default_quality": "hd",
         "default_style": "natural",
         "default_detail_level": "Professional Detail",
@@ -187,11 +226,53 @@
         "default_lighting_control": "Auto Settings",
         "default_template": "Auto Select"
     },
+    "prompt_templates": {
+        "add_remove_elements": "Using the provided image of [subject], please [add/remove/modify] [element] to/from the scene. Ensure the change is [description of how the change should integrate].",
+        "inpainting": "Using the provided image, change only the [specific element] to [new element/description]. Keep everything else in the image exactly the same, preserving the original style, lighting, and composition.",
+        "style_transfer": "Transform the provided photograph of [subject] into the artistic style of [artist/art style]. Preserve the original composition but render it with [description of stylistic elements].",
+        "multi_image_composition": "Create a new image by combining the elements from the provided images. Take the [element from image 1] and place it with/on the [element from image 2]. The final image should be a [description of the final scene].",
+        "preserve_fidelity": "Using the provided images, place [element from image 2] onto [element from image 1]. Ensure that the features of [element from image 1] remain completely unchanged. The added element should [description of how the element should integrate].",
+        "high_fidelity_text": "A single [type] with high-fidelity text rendering. [scene description]. A caption box at the top reads \"[text content]\". The text should be clear, legible, and properly positioned.",
+        "iterative_refinement": "Based on the previous image, make the following adjustments: [specific changes]. Maintain the overall composition and style while improving [aspect to improve]."
+    },
+    "editing_modes": {
+        "add_elements": {
+            "name": "Add Elements",
+            "description": "Add new elements to the image while matching style and lighting",
+            "template_key": "add_remove_elements"
+        },
+        "remove_elements": {
+            "name": "Remove Elements",
+            "description": "Remove unwanted elements from the image",
+            "template_key": "add_remove_elements"
+        },
+        "inpainting": {
+            "name": "Inpainting (Semantic Mask)",
+            "description": "Edit specific parts of the image while preserving others",
+            "template_key": "inpainting"
+        },
+        "style_transfer": {
+            "name": "Style Transfer",
+            "description": "Transform image into different artistic styles",
+            "template_key": "style_transfer"
+        },
+        "composition": {
+            "name": "Multi-Image Composition",
+            "description": "Combine elements from multiple images",
+            "template_key": "multi_image_composition"
+        },
+        "preserve_details": {
+            "name": "Preserve High-Fidelity Details",
+            "description": "Edit while preserving important details like faces or logos",
+            "template_key": "preserve_fidelity"
+        }
+    },
     "limits": {
         "max_video_frames": 10,
         "max_image_size": 4096,
         "max_audio_duration": 300,
-        "max_prompt_length": 8000
+        "max_prompt_length": 8000,
+        "max_input_images": 3
     },
     "error_codes": {
         "429": "Rate limit exceeded - using exponential backoff",
@@ -207,7 +288,7 @@
         "cost_per_million_tokens": "$30.00"
     },
     "notes": {
-        "nano_banana": "完整的 Gemini Banana 实现，集成参考项目的所有功能模块",
+        "nano_banana": "完整的 Gemini (Nano Banana) 实现，集成官方文档的所有图像生成功能",
         "best_practices": [
             "使用官方API获得最佳性能和稳定性",
             "镜像站适用于网络受限环境",
@@ -224,18 +305,27 @@
             "📊 专业细节等级控制（Basic Detail → Masterpiece Level）",
             "📷 专业相机控制（Wide-angle, Macro, Low-angle, High-angle等）",
             "💡 专业灯光控制（Natural, Studio, Dramatic, Golden Hour等）",
-            "🎭 专业模板选择系统（Portrait, Landscape, Product等）"
+            "🎭 专业模板选择系统（Portrait, Landscape, Product等）",
+            "📐 Aspect Ratio控制（1:1, 16:9, 9:16等10种比例）",
+            "🖼️ 多图输入支持（最多3张图片）",
+            "✏️ 编辑模式选择（添加/删除元素、局部重绘、风格转换、合成）",
+            "🔤 高保真文字渲染（清晰易读的文本生成）",
+            "🔄 对话式迭代修正（逐步优化图像）",
+            "🎯 语义遮罩（Semantic Masking）局部编辑",
+            "🎨 风格转换（Style Transfer）艺术化处理",
+            "🖼️ 多图合成（Multi-Image Composition）创意拼贴",
+            "💎 保留高保真细节（人脸、标志等重要元素）"
         ],
         "all_features": [
             "纯文字转图像生成（Gemini Banana原生）",
-            "图像到图像编辑和变换（Gemini Banana原生）", 
+            "图像到图像编辑和变换（Gemini Banana原生）",
             "多模态智能分析（Gemini Banana原生）",
 
             "智能重试机制与错误分类处理",
             "增强图像处理和格式优化",
             "自动图像尺寸调整和质量控制",
             "全面的日志记录和用户友好错误提示",
-            
+
             "🚀 超越参考项目的增强功能：",
             "✨ 智能图像质量增强（锐化、对比度、色彩优化）",
             "🎨 高级风格模板系统（vivid, natural, artistic, cinematic, photographic）",
@@ -243,14 +333,26 @@
             "🎯 自定义填充颜色和指令系统",
             "📏 超高清分辨率支持（1920x1080, 2560x1440, 3840x2160）",
             "💡 智能提示词增强和风格识别",
-            
+
             "🚀 参考项目核心功能完全实现：",
             "📊 细节等级控制：Basic Detail → Professional Detail → Premium Quality → Masterpiece Level",
             "📷 相机控制：Wide-angle Lens, Macro Shot, Low-angle Perspective, High-angle Shot, Close-up Shot, Medium Shot",
             "💡 灯光控制：Natural Light, Studio Lighting, Dramatic Shadows, Soft Glow, Golden Hour, Blue Hour",
             "🎭 模板选择：Professional Portrait, Cinematic Landscape, Product Photography, Digital Concept Art, Anime Style Art, Photorealistic Render, Classical Oil Painting, Watercolor Painting, Cyberpunk Future, Vintage Film Photography, Architectural Photography, Gourmet Food Photography",
             "✨ 质量增强开关：Enable Quality Enhancement",
-            "🎨 自定义添加：Custom Additions支持"
+            "🎨 自定义添加：Custom Additions支持",
+
+            "🎯 Gemini官方文档完整功能实现：",
+            "📐 Aspect Ratio控制：1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9",
+            "🖼️ 多图输入支持：最多3张图片同时输入",
+            "✏️ 添加/删除元素：智能添加或移除图像元素",
+            "🎯 局部重绘（Inpainting）：语义遮罩编辑特定区域",
+            "🎨 风格转换（Style Transfer）：转换为不同艺术风格",
+            "🖼️ 多图合成（Composition）：合并多张图片元素",
+            "💎 保留高保真细节：保持人脸、标志等重要细节不变",
+            "🔤 高保真文字渲染：生成清晰易读的文本内容",
+            "🔄 对话式迭代修正：逐步优化和改进图像",
+            "📊 Response Modalities控制：TEXT_AND_IMAGE或IMAGE_ONLY"
         ],
         "module_mapping": {
             "gemini_banana.py": "原生Google GenAI API支持"

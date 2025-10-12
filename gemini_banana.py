@@ -730,53 +730,49 @@ def image_to_base64_enhanced(image: Image.Image, format: str = "PNG") -> str:
     image.save(buffered, format=format, quality=95, optimize=True)
     return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-def process_image_controls(size: str, quality: str, style: str, custom_size: str = "") -> dict:
+def process_image_controls(quality: str, style: str) -> dict:
     """
     处理图像控制参数，返回标准化的控制配置
-    
+
+    注意：根据Gemini官方API文档，尺寸控制应该通过generationConfig.imageConfig.aspectRatio参数实现，
+    而不是通过提示词。因此这个函数只处理quality和style参数。
+
+    为了向后兼容，返回一个默认的size值（"Original size"），但这个值不应该被使用。
+    新代码应该使用upscale_factor参数进行放大。
+
     Args:
-        size: 预设尺寸
         quality: 质量设置
         style: 风格设置
-        custom_size: 自定义尺寸
-        
+
     Returns:
         dict: 包含处理后的图像控制参数
     """
-    # 处理尺寸
-    final_size = custom_size.strip() if custom_size and custom_size.strip() else size
-    
-    # 验证自定义尺寸格式
-    if custom_size and custom_size.strip():
-        import re
-        size_pattern = r'^\d+x\d+$'
-        if not re.match(size_pattern, custom_size.strip()):
-            print(f"⚠️ 自定义尺寸格式无效: {custom_size}，使用预设尺寸: {size}")
-            final_size = size
-    
-    # 构建控制配置
+    # 构建控制配置（包含quality、style和默认的size）
     controls = {
-        "size": final_size,
         "quality": quality,
         "style": style,
-        "is_custom_size": bool(custom_size and custom_size.strip())
+        "size": "Original size",  # 默认值，用于向后兼容
+        "is_custom_size": False   # 默认值，用于向后兼容
     }
-    
+
     return controls
 
 
 def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str = "Professional Detail",
                                camera_control: str = "Auto Select", lighting_control: str = "Auto Settings",
                                template_selection: str = "Auto Select", quality_enhancement: bool = True,
-                               enhance_quality: bool = True, smart_resize: bool = True, fill_color: str = "255,255,255",
-                               skip_size_hints: bool = False) -> str:
+                               enhance_quality: bool = True, smart_resize: bool = True, fill_color: str = "255,255,255") -> str:
     """
-    🚀 超越参考项目的智能提示词增强系统
-    集成参考项目的最佳技术并大幅超越：
+    🚀 智能提示词增强系统
+
+    根据Gemini官方API文档，图像尺寸应该通过generationConfig.imageConfig.aspectRatio参数控制，
+    而不是通过提示词。因此这个函数只处理质量和风格的增强。
+
+    集成的增强功能：
     - 智能风格识别和模板
     - 动态质量控制指令
-    - 尺寸优化提示
     - 艺术风格增强
+    - 专业摄影参数
     """
     
     # 🚀 超越参考项目的完整风格模板系统
@@ -910,44 +906,13 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
     if "lighting" in style_config:
         enhanced_parts.append(f"Lighting: {style_config['lighting']}")
     
-    # 添加质量控制（超越参考项目）
+    # 添加质量控制
     if controls['quality'] == "hd":
         enhanced_parts.append(style_config["quality_boost"])
         enhanced_parts.append("Generate in ultra-high definition with exceptional detail.")
     elif controls['quality'] == "ultra_hd":
         enhanced_parts.append(style_config["quality_boost"])
         enhanced_parts.append("Generate in ultra-high definition with exceptional detail and professional quality.")
-    
-    # 🚀 关键修复：明确指定目标尺寸，避免后期裁剪
-    if controls['size']:
-        # 解析尺寸信息
-        size_str = controls['size']
-        if 'x' in size_str:
-            try:
-                width, height = map(int, size_str.split('x'))
-                aspect_ratio = width / height
-
-                # 根据宽高比提供更具体的构图指导
-                if aspect_ratio > 1.5:  # 横向图像
-                    composition_guide = "wide landscape composition with horizontal emphasis"
-                elif aspect_ratio < 0.7:  # 纵向图像
-                    composition_guide = "tall portrait composition with vertical emphasis, ensure the main subject fits completely within the frame"
-                else:  # 接近正方形
-                    composition_guide = "balanced square composition"
-
-                enhanced_parts.append(f"IMPORTANT: Generate image in exact dimensions {size_str} pixels with {composition_guide}.")
-                enhanced_parts.append(f"Ensure the main subject is properly centered and fully visible within the {size_str} frame.")
-                enhanced_parts.append("Do not crop or cut off any important parts of the subject.")
-
-            except ValueError:
-                enhanced_parts.append(f"Generate image optimized for {size_str} dimensions.")
-        else:
-            enhanced_parts.append(f"Generate image optimized for {size_str} dimensions.")
-
-    # 添加自定义尺寸处理（超越参考项目）
-    if controls.get('is_custom_size', False):
-        enhanced_parts.append(f"CUSTOM SIZE REQUIREMENT: This is a custom dimension request for {controls['size']}.")
-        enhanced_parts.append("Pay extra attention to composition and ensure all elements fit perfectly within these exact dimensions.")
     
     # 🎯 关键指令：必须生成图像而不是描述
     enhanced_parts.append("CRITICAL: You MUST return an actual generated image, not just a description.")
@@ -1026,15 +991,6 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
     enhanced_parts.append("Include rich environmental details and background elements.")
     enhanced_parts.append("Create depth and layers in the composition with foreground, middle ground, and background.")
     enhanced_parts.append("Use natural perspective and realistic spatial relationships.")
-
-    # 添加尺寸优化提示（仅在不跳过尺寸提示时）
-    if not skip_size_hints and controls['size']:
-        enhanced_parts.append(f"Optimize composition for {controls['size']} aspect ratio.")
-
-    # 添加自定义尺寸处理（仅在不跳过尺寸提示时）
-    if not skip_size_hints and controls.get('is_custom_size', False):
-        enhanced_parts.append(f"Pay special attention to the custom dimensions: {controls['size']}")
-        enhanced_parts.append("Adjust the composition to fit the custom aspect ratio while maintaining subject integrity.")
 
     # 🎯 最终平衡提醒：确保主体与环境的平衡
     enhanced_parts.append("Create a balanced composition with the subject clearly visible in their environment, showing both the subject and meaningful background context.")
@@ -1361,13 +1317,32 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         client = genai.Client(api_key=api_key)
         
         # 转换generation_config格式
-        official_config = types.GenerateContentConfig(
-            temperature=generation_config.get('temperature', 0.7),
-            top_p=generation_config.get('top_p', 0.95),
-            top_k=generation_config.get('top_k', 40),
-            max_output_tokens=generation_config.get('max_output_tokens', 8192),
-            response_modalities=['Text', 'Image'] if 'image' in model.lower() else ['Text']
-        )
+        config_params = {
+            'temperature': generation_config.get('temperature', 0.7),
+            'top_p': generation_config.get('topP', generation_config.get('top_p', 0.95)),
+            'top_k': generation_config.get('topK', generation_config.get('top_k', 40)),
+            'max_output_tokens': generation_config.get('maxOutputTokens', generation_config.get('max_output_tokens', 8192)),
+        }
+
+        # 处理responseModalities
+        if 'responseModalities' in generation_config:
+            config_params['response_modalities'] = generation_config['responseModalities']
+        elif 'image' in model.lower():
+            config_params['response_modalities'] = ['Text', 'Image']
+        else:
+            config_params['response_modalities'] = ['Text']
+
+        # 处理imageConfig（aspect_ratio）
+        if 'imageConfig' in generation_config and 'aspectRatio' in generation_config['imageConfig']:
+            config_params['image_config'] = types.ImageConfig(
+                aspect_ratio=generation_config['imageConfig']['aspectRatio']
+            )
+
+        # 处理seed
+        if 'seed' in generation_config and generation_config['seed'] > 0:
+            config_params['seed'] = generation_config['seed']
+
+        official_config = types.GenerateContentConfig(**config_params)
         
         # 转换content_parts格式
         official_parts = []
@@ -1574,13 +1549,30 @@ def generate_with_priority_api_direct(api_key, model, request_data, max_retries=
         generation_config = request_data.get('generationConfig', {})
         
         # 转换generation_config
-        official_config = types.GenerateContentConfig(
-            temperature=generation_config.get('temperature', 0.7),
-            top_p=generation_config.get('topP', 0.95),
-            top_k=generation_config.get('topK', 40),
-            max_output_tokens=generation_config.get('maxOutputTokens', 8192),
-            response_modalities=['Text', 'Image'] if 'IMAGE' in generation_config.get('responseModalities', []) else ['Text']
-        )
+        config_params = {
+            'temperature': generation_config.get('temperature', 0.7),
+            'top_p': generation_config.get('topP', 0.95),
+            'top_k': generation_config.get('topK', 40),
+            'max_output_tokens': generation_config.get('maxOutputTokens', 8192),
+        }
+
+        # 处理responseModalities
+        if 'responseModalities' in generation_config:
+            config_params['response_modalities'] = generation_config['responseModalities']
+        else:
+            config_params['response_modalities'] = ['Text', 'Image']
+
+        # 处理imageConfig（aspect_ratio）
+        if 'imageConfig' in generation_config and 'aspectRatio' in generation_config['imageConfig']:
+            config_params['image_config'] = types.ImageConfig(
+                aspect_ratio=generation_config['imageConfig']['aspectRatio']
+            )
+
+        # 处理seed
+        if 'seed' in generation_config and generation_config['seed'] > 0:
+            config_params['seed'] = generation_config['seed']
+
+        official_config = types.GenerateContentConfig(**config_params)
         
         # 转换contents格式
         official_contents = []
@@ -1731,10 +1723,12 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         default_model = config.get('default_model', {}).get('image_gen', "gemini-2.5-flash-image-preview")
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
         
-        # Get image control presets - Enhanced with reference project technology
-        size_presets = image_settings.get('size_presets', [
-            "Original size", "512x512", "768x768", "1024x1024", "1024x1792", "1792x1024",
-            "1920x1080", "2560x1440", "3840x2160"  # 超越参考项目的高分辨率选项
+        # Get image control presets - Enhanced with Gemini official API features
+        aspect_ratios = image_settings.get('aspect_ratios', [
+            "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
+        ])
+        response_modalities = image_settings.get('response_modalities', [
+            "TEXT_AND_IMAGE", "IMAGE_ONLY"
         ])
         quality_presets = image_settings.get('quality_presets', [
             "standard", "hd", "ultra_hd", "ai_enhanced", "ai_ultra"  # 🚀 AI超分辨率增强选项
@@ -1756,34 +1750,35 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                     {"default": default_model},
                 ),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
-                "size": (size_presets, {"default": image_settings.get('default_size', "1024x1024")}),
+
+                # 📐 Gemini官方API图像控制参数
+                "aspect_ratio": (aspect_ratios, {
+                    "default": image_settings.get('default_aspect_ratio', "1:1"),
+                    "tooltip": "图像宽高比 (Gemini官方API支持)"
+                }),
+                "response_modality": (response_modalities, {
+                    "default": image_settings.get('default_response_modality', "TEXT_AND_IMAGE"),
+                    "tooltip": "响应模式：TEXT_AND_IMAGE=文字+图像，IMAGE_ONLY=仅图像"
+                }),
+
+                # 🔍 Topaz Gigapixel AI放大控制
+                "upscale_factor": (["1x (不放大)", "2x", "4x", "6x"], {
+                    "default": "1x (不放大)",
+                    "tooltip": "使用Topaz Gigapixel AI进行智能放大"
+                }),
+                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
+                    "default": "High Fidelity",
+                    "tooltip": "Gigapixel AI放大模型"
+                }),
+
                 "quality": (quality_presets, {"default": image_settings.get('default_quality', "hd")}),
                 "style": (style_presets, {"default": image_settings.get('default_style', "natural")}),
-                
+
                 # 🎨 智能图像控制组（放在style下面）
                 "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
                 "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
                 "lighting_control": (["Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
                 "template_selection": (["Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
-                
-                # 🚀 质量增强控制组
-                "quality_enhancement": ("BOOLEAN", {"default": True, "label": "Enable Quality Enhancement"}),
-                "enhance_quality": ("BOOLEAN", {"default": True, "label": "Enhanced Image Quality"}),
-                "smart_resize": ("BOOLEAN", {"default": True, "label": "Smart Resize with Padding"}),
-                "fill_strategy": (["smart", "direct", "crop", "paste"], {
-                    "default": "smart",
-                    "tooltip": "填充策略: smart=智能选择, direct=直接扩图到目标尺寸(推荐), crop=裁剪模式(无填充), paste=粘贴模式(有填充)"
-                }),
-                "fill_color": ("STRING", {
-                    "default": "255,255,255",
-                    "placeholder": "填充颜色 RGB (如: 255,255,255)"
-                }),
-
-                # 🎯 Gigapixel AI 模型选择
-                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
-                    "default": "High Fidelity",
-                    "label": "Gigapixel AI Model"
-                }),
                 
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
@@ -1792,13 +1787,6 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 "seed": ("INT", {"default": default_params.get('seed', 0), "min": 0, "max": 0xfffffff}),
             },
             "optional": {
-                # 📏 尺寸和自定义控制
-                "custom_size": ("STRING", {
-                    "default": "", 
-                    "multiline": False,
-                    "placeholder": "自定义尺寸 (如: 1920x1080)"
-                }),
-                
                 # ✨ 自定义指令组
                 "custom_instructions": ("STRING", {
                     "default": "",
@@ -1850,7 +1838,10 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         prompt,
         model,
         proxy,
-        size,
+        aspect_ratio,
+        response_modality,
+        upscale_factor,
+        gigapixel_model,
         quality,
         style,
         temperature,
@@ -1858,18 +1849,11 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         top_k,
         max_output_tokens,
         seed,
-        custom_size: str = "",
         custom_instructions: str = "",
-        enhance_quality: bool = True,
-        smart_resize: bool = True,
-        fill_strategy: str = "smart",
-        fill_color: str = "255,255,255",
-        gigapixel_model: str = "High Fidelity",
         detail_level: str = "Professional Detail",
         camera_control: str = "Auto Select",
         lighting_control: str = "Auto Settings",
         template_selection: str = "Auto Select",
-        quality_enhancement: bool = True,
         unique_id: str = "",
     ):
         try:
@@ -1890,102 +1874,31 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 error_msg = "提示词不能为空"
                 _log_error(error_msg)
                 return (error_msg, create_dummy_image())
-            
-            # 🚀 超越参考项目的图像控制参数处理
-            controls = process_image_controls(size, quality, style, custom_size)
-            
-            # 🚀 处理参考项目的智能控制参数（超越参考项目）
+
+            # 🎨 构建增强提示词（使用enhance_prompt_with_controls函数）
+            controls = process_image_controls(quality, style)
+
+            # 使用enhance_prompt_with_controls函数进行完整的提示词增强
             enhanced_prompt = enhance_prompt_with_controls(
-                prompt.strip(), controls, detail_level, camera_control, lighting_control, 
-                template_selection, quality_enhancement, enhance_quality, smart_resize, fill_color
+                prompt.strip(),
+                controls,
+                detail_level,
+                camera_control,
+                lighting_control,
+                template_selection,
+                quality_enhancement="Auto",  # 默认值
+                enhance_quality=True,  # 默认值
+                smart_resize=True,  # 默认值
+                fill_color="white"  # 默认值
             )
-            
-            # 处理自定义指令（超越参考项目的功能）
+
+            # 处理自定义指令
             if custom_instructions and custom_instructions.strip():
-                enhanced_prompt += f"\n\nCUSTOM INSTRUCTIONS: {custom_instructions.strip()}"
+                enhanced_prompt += f"\n\n{custom_instructions.strip()}"
                 _log_info(f"📝 添加自定义指令: {custom_instructions[:100]}...")
-            
-            # 🎨 添加参考项目的专业控制参数（真正实现）
-            if detail_level != "Auto Select":
-                detail_instructions = {
-                    "Basic Detail": "Generate with basic detail level, suitable for quick previews",
-                    "Professional Detail": "Generate with professional detail level, suitable for commercial use",
-                    "Premium Quality": "Generate with premium quality detail, suitable for high-end applications",
-                    "Masterpiece Level": "Generate with masterpiece-level detail, suitable for gallery exhibitions"
-                }
-                enhanced_prompt += f"\nDetail Level: {detail_level} - {detail_instructions.get(detail_level, '')}"
-                _log_info(f"📊 设置细节等级: {detail_level}")
-            
-            if camera_control != "Auto Select":
-                camera_instructions = {
-                    "Wide-angle Lens": "Use wide-angle lens perspective for expansive, immersive composition",
-                    "Macro Shot": "Use macro photography techniques for extreme close-up detail",
-                    "Low-angle Perspective": "Use low-angle camera perspective for dramatic, heroic composition",
-                    "High-angle Shot": "Use high-angle camera perspective for overview and context",
-                    "Close-up Shot": "Use close-up photography for intimate, detailed composition",
-                    "Medium Shot": "Use medium shot composition for balanced framing"
-                }
-                enhanced_prompt += f"\nCamera Control: {camera_control} - {camera_instructions.get(camera_control, '')}"
-                _log_info(f"📷 设置相机控制: {camera_control}")
-            
-            if lighting_control != "Auto Settings":
-                lighting_instructions = {
-                    "Natural Light": "Use natural lighting with soft, diffused illumination",
-                    "Studio Lighting": "Use professional studio lighting setup with controlled shadows",
-                    "Dramatic Shadows": "Use dramatic lighting with strong contrast and deep shadows",
-                    "Soft Glow": "Use soft, glowing lighting for gentle, romantic atmosphere",
-                    "Golden Hour": "Use golden hour lighting with warm, golden tones",
-                    "Blue Hour": "Use blue hour lighting with cool, atmospheric tones"
-                }
-                enhanced_prompt += f"\nLighting Control: {lighting_control} - {lighting_instructions.get(lighting_control, '')}"
-                _log_info(f"💡 设置灯光控制: {lighting_control}")
-            
-            if template_selection != "Auto Select":
-                # 使用我们已定义的风格模板
-                # 使用我们已定义的风格模板
-                template_instructions = {
-                    "Professional Portrait": "Apply professional portrait photography techniques and composition",
-                    "Cinematic Landscape": "Use cinematic landscape photography composition and lighting",
-                    "Product Photography": "Apply professional product photography techniques and studio setup",
-                    "Digital Concept Art": "Use digital concept art style and creative composition",
-                    "Anime Style Art": "Apply anime/manga art style and vibrant aesthetics",
-                    "Photorealistic Render": "Create photorealistic 3D rendering quality and materials",
-                    "Classical Oil Painting": "Apply classical oil painting techniques and traditional style",
-                    "Watercolor Painting": "Use watercolor painting techniques and flowing aesthetics",
-                    "Cyberpunk Future": "Apply cyberpunk futuristic aesthetics and neon lighting",
-                    "Vintage Film Photography": "Use vintage film photography aesthetics and color grading",
-                    "Architectural Photography": "Apply architectural photography techniques and perspective",
-                    "Gourmet Food Photography": "Use gourmet food photography techniques and appetizing lighting"
-                }
-                enhanced_prompt += f"\nTemplate: {template_selection} - {template_instructions.get(template_selection, 'Follow professional composition guidelines')}"
-                _log_info(f"🎭 设置模板选择: {template_selection}")
-            
-            # 🚀 处理质量增强开关（参考项目功能）
-            if quality_enhancement:
-                enhanced_prompt += "\nQuality Enhancement: ENABLED - Apply advanced image quality improvements including sharpening, contrast enhancement, and color optimization."
-                _log_info("✨ 质量增强已启用")
-            
-            # 🚀 处理自定义指令（超越参考项目的功能）
-            if custom_instructions and custom_instructions.strip():
-                enhanced_prompt += f"\nCustom Instructions: {custom_instructions.strip()}"
-                _log_info(f"📝 添加自定义指令: {custom_instructions[:100]}...")
-            
-            # 处理填充颜色（超越参考项目的功能）
-            try:
-                fill_color_tuple = tuple(map(int, fill_color.split(',')))
-                if len(fill_color_tuple) == 3:
-                    _log_info(f"🎨 使用自定义填充颜色: RGB{fill_color_tuple}")
-                else:
-                    fill_color_tuple = (255, 255, 255)
-                    _log_warning("⚠️ 填充颜色格式无效，使用默认白色")
-            except:
-                fill_color_tuple = (255, 255, 255)
-                _log_warning("⚠️ 填充颜色解析失败，使用默认白色")
-            
-            _log_info(f"🎨 图像控制参数: 尺寸={controls['size']}, 质量={controls['quality']}, 风格={controls['style']}")
-            if controls['is_custom_size']:
-                _log_info(f"📏 使用自定义尺寸: {controls['size']}")
-            
+
+            _log_info(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
+
             # 代理处理：有效则设置，None或无效时使用系统代理
             if proxy and proxy.strip() and "None" not in proxy:
                 os.environ['HTTPS_PROXY'] = proxy.strip()
@@ -2001,9 +1914,23 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 "topP": top_p,
                 "topK": top_k,
                 "maxOutputTokens": max_output_tokens,
-                "responseModalities": ["TEXT", "IMAGE"]  # 关键：启用图像生成
             }
-            
+
+            # 🎯 Gemini官方API：Response Modalities控制
+            if response_modality == "IMAGE_ONLY":
+                generation_config["responseModalities"] = ["Image"]
+                _log_info("📊 响应模式：仅图像（IMAGE_ONLY）")
+            else:
+                generation_config["responseModalities"] = ["Text", "Image"]
+                _log_info("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
+
+            # 📐 Gemini官方API：Aspect Ratio控制
+            if aspect_ratio and aspect_ratio != "1:1":
+                generation_config["imageConfig"] = {
+                    "aspectRatio": aspect_ratio
+                }
+                _log_info(f"📐 设置宽高比: {aspect_ratio}")
+
             # 智能种子控制
             if seed > 0:
                 generation_config["seed"] = seed
@@ -2046,19 +1973,39 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                         pil_image = Image.fromarray(img_array)
                         generated_image = pil_image
                     
-                    # 简化尺寸处理 - 直接使用生成的图像
-                    # 如果需要特定尺寸，可以在这里添加简单的resize
-                    size_value = controls['size']
-                    if 'x' in size_value and isinstance(generated_image, Image.Image):
+                    # 🔍 Topaz Gigapixel AI智能放大
+                    if upscale_factor and upscale_factor != "1x (不放大)" and isinstance(generated_image, Image.Image):
                         try:
-                            target_width, target_height = map(int, size_value.split('x'))
-                            current_width, current_height = generated_image.size
+                            # 提取放大倍数
+                            scale = int(upscale_factor.replace("x", "").strip())
+                            if scale > 1:
+                                _log_info(f"🔍 使用智能AI放大进行{scale}x放大，模型: {gigapixel_model}")
 
-                            if (current_width, current_height) != (target_width, target_height):
-                                # 简单的resize，保持宽高比
-                                generated_image = generated_image.resize((target_width, target_height), Image.Resampling.LANCZOS)
-                        except:
-                            pass  # 如果尺寸解析失败，保持原始尺寸
+                                # 导入放大函数
+                                try:
+                                    from .banana_upscale import smart_upscale
+                                except ImportError:
+                                    from banana_upscale import smart_upscale
+
+                                # 计算目标尺寸
+                                target_w = generated_image.width * scale
+                                target_h = generated_image.height * scale
+
+                                # 使用智能放大
+                                upscaled_image = smart_upscale(
+                                    generated_image,
+                                    target_w,
+                                    target_h,
+                                    gigapixel_model
+                                )
+
+                                if upscaled_image:
+                                    generated_image = upscaled_image
+                                    _log_info(f"✅ 智能AI放大完成: {generated_image.size}")
+                                else:
+                                    _log_warning("⚠️ 智能AI放大失败，使用原始图像")
+                        except Exception as e:
+                            _log_warning(f"⚠️ 智能AI放大失败: {e}，使用原始图像")
 
                 except Exception as e:
                     _log_error(f"图像处理失败: {e}")
@@ -2134,10 +2081,12 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         default_model = config.get('default_model', {}).get('image_gen', "gemini-2.5-flash-image-preview")
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
         
-        # 🚀 超越参考项目的图像控制预设
-        size_presets = image_settings.get('size_presets', [
-            "Original size", "512x512", "768x768", "1024x1024", "1024x1792", "1792x1024",
-            "1920x1080", "2560x1440", "3840x2160"  # 超越参考项目的高分辨率选项
+        # 🚀 Gemini官方API图像控制预设
+        aspect_ratios = image_settings.get('aspect_ratios', [
+            "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
+        ])
+        response_modalities = image_settings.get('response_modalities', [
+            "TEXT_AND_IMAGE", "IMAGE_ONLY"
         ])
         quality_presets = image_settings.get('quality_presets', [
             "standard", "hd", "ultra_hd", "ai_enhanced", "ai_ultra"  # 🚀 AI超分辨率增强选项
@@ -2160,34 +2109,35 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                     {"default": default_model},
                 ),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
-                "size": (size_presets, {"default": image_settings.get('default_size', "1024x1024")}),
+
+                # 📐 Gemini官方API图像控制参数
+                "aspect_ratio": (aspect_ratios, {
+                    "default": image_settings.get('default_aspect_ratio', "1:1"),
+                    "tooltip": "图像宽高比 (Gemini官方API支持)"
+                }),
+                "response_modality": (response_modalities, {
+                    "default": image_settings.get('default_response_modality', "TEXT_AND_IMAGE"),
+                    "tooltip": "响应模式：TEXT_AND_IMAGE=文字+图像，IMAGE_ONLY=仅图像"
+                }),
+
+                # 🔍 Topaz Gigapixel AI放大控制
+                "upscale_factor": (["1x (不放大)", "2x", "4x", "6x"], {
+                    "default": "1x (不放大)",
+                    "tooltip": "使用Topaz Gigapixel AI进行智能放大"
+                }),
+                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
+                    "default": "High Fidelity",
+                    "tooltip": "Gigapixel AI放大模型"
+                }),
+
                 "quality": (quality_presets, {"default": image_settings.get('default_quality', "hd")}),
                 "style": (style_presets, {"default": image_settings.get('default_style', "natural")}),
-                
+
                 # 🎨 智能图像控制组（放在style下面）
                 "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
                 "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
                 "lighting_control": (["Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
                 "template_selection": (["Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
-                
-                # 🚀 质量增强控制组
-                "quality_enhancement": ("BOOLEAN", {"default": True, "label": "Enable Quality Enhancement"}),
-                "enhance_quality": ("BOOLEAN", {"default": True, "label": "Enhanced Image Quality"}),
-                "smart_resize": ("BOOLEAN", {"default": True, "label": "Smart Resize with Padding"}),
-                "fill_strategy": (["smart", "direct", "crop", "paste"], {
-                    "default": "smart",
-                    "tooltip": "填充策略: smart=智能选择, direct=直接扩图到目标尺寸(推荐), crop=裁剪模式(无填充), paste=粘贴模式(有填充)"
-                }),
-                "fill_color": ("STRING", {
-                    "default": "255,255,255",
-                    "placeholder": "填充颜色 RGB (如: 255,255,255)"
-                }),
-
-                # 🎯 Gigapixel AI 模型选择
-                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
-                    "default": "High Fidelity",
-                    "label": "Gigapixel AI Model"
-                }),
 
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
@@ -2196,12 +2146,6 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 "seed": ("INT", {"default": default_params.get('seed', 0), "min": 0, "max": 0xfffffff}),
             },
             "optional": {
-                "custom_size": ("STRING", {
-                    "default": "", 
-                    "multiline": False,
-                    "placeholder": "自定义尺寸 (如: 1920x1080)"
-                }),
-                
                 # ✨ 自定义指令组
                 "custom_additions": ("STRING", {
                     "default": "",
@@ -2226,25 +2170,21 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         image,
         model,
         proxy,
-        size,
+        aspect_ratio,
+        response_modality,
+        upscale_factor,
+        gigapixel_model,
         quality,
         style,
         detail_level,
         camera_control,
         lighting_control,
         template_selection,
-        quality_enhancement,
-        enhance_quality,
-        smart_resize,
-        fill_strategy,
-        fill_color,
-        gigapixel_model,
         temperature,
         top_p,
         top_k,
         max_output_tokens,
         seed,
-        custom_size: str = "",
         custom_additions: str = "",
         unique_id: str = "",
     ):
@@ -2266,17 +2206,30 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 error_msg = "提示词不能为空"
                 _log_error(error_msg)
                 return (error_msg, create_dummy_image())
-            
-            # 处理图像控制参数
-            controls = process_image_controls(size, quality, style, custom_size)
+
+            # 🎨 构建增强提示词（使用enhance_prompt_with_controls函数）
+            controls = process_image_controls(quality, style)
+
+            # 使用enhance_prompt_with_controls函数进行完整的提示词增强
             enhanced_prompt = enhance_prompt_with_controls(
-                prompt.strip(), controls, detail_level, camera_control, lighting_control, 
-                template_selection, quality_enhancement, enhance_quality, smart_resize, fill_color
+                prompt.strip(),
+                controls,
+                detail_level,
+                camera_control,
+                lighting_control,
+                template_selection,
+                quality_enhancement="Auto",  # 默认值
+                enhance_quality=True,  # 默认值
+                smart_resize=True,  # 默认值
+                fill_color="white"  # 默认值
             )
-            
-            _log_info(f"🎨 图像控制参数: 尺寸={controls['size']}, 质量={controls['quality']}, 风格={controls['style']}")
-            if controls['is_custom_size']:
-                _log_info(f"📏 使用自定义尺寸: {controls['size']}")
+
+            # 处理自定义指令
+            if custom_additions and custom_additions.strip():
+                enhanced_prompt += f"\n\n{custom_additions.strip()}"
+                _log_info(f"📝 添加自定义指令: {custom_additions[:100]}...")
+
+            _log_info(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
             
             # 转换输入图片
             pil_image = tensor_to_pil(image)
@@ -2302,9 +2255,23 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 "topP": top_p,
                 "topK": top_k,
                 "maxOutputTokens": max_output_tokens,
-                "responseModalities": ["TEXT", "IMAGE"]  # 关键：启用图像生成
             }
-            
+
+            # 🎯 Gemini官方API：Response Modalities控制
+            if response_modality == "IMAGE_ONLY":
+                generation_config["responseModalities"] = ["Image"]
+                _log_info("📊 响应模式：仅图像（IMAGE_ONLY）")
+            else:
+                generation_config["responseModalities"] = ["Text", "Image"]
+                _log_info("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
+
+            # 📐 Gemini官方API：Aspect Ratio控制
+            if aspect_ratio and aspect_ratio != "1:1":
+                generation_config["imageConfig"] = {
+                    "aspectRatio": aspect_ratio
+                }
+                _log_info(f"📐 设置宽高比: {aspect_ratio}")
+
             # 智能种子控制
             if seed > 0:
                 generation_config["seed"] = seed
@@ -2329,70 +2296,51 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 edited_image = pil_image
                 if not raw_text:
                     raw_text = "图片编辑请求已发送，但未收到编辑后的图片"
-            
-            # 强制调整图像尺寸到用户指定的尺寸
-            try:
-                # 确保edited_image是PIL Image格式
-                if isinstance(edited_image, torch.Tensor):
-                    print(f"🔄 [Image to Image] 转换tensor到PIL Image进行尺寸调整")
-                    edited_image = tensor_to_pil(edited_image)
 
-                # 解析目标尺寸
-                size_str = str(controls['size'])
-                print(f"🔍 [Image to Image] 解析尺寸字符串: '{size_str}'")
+            # 确保edited_image是PIL Image格式
+            if isinstance(edited_image, torch.Tensor):
+                edited_image = tensor_to_pil(edited_image)
 
-                if 'x' in size_str and size_str != "Original size":
-                    target_width, target_height = map(int, size_str.split('x'))
-                    current_width, current_height = edited_image.size
+            # 🔍 智能AI放大
+            if upscale_factor and upscale_factor != "1x (不放大)" and isinstance(edited_image, Image.Image):
+                try:
+                    # 提取放大倍数
+                    scale = int(upscale_factor.replace("x", "").strip().split()[0])
+                    if scale > 1:
+                        _log_info(f"🔍 使用智能AI放大进行{scale}x放大，模型: {gigapixel_model}")
 
-                    print(f"🎯 [Image to Image] 目标尺寸: {target_width}x{target_height}, 当前尺寸: {current_width}x{current_height}")
+                        # 导入放大函数
+                        try:
+                            from .banana_upscale import smart_upscale
+                        except ImportError:
+                            from banana_upscale import smart_upscale
 
-                    if (current_width, current_height) != (target_width, target_height):
-                        print(f"🔄 [Image to Image] 开始智能调整放大: {current_width}x{current_height} -> {target_width}x{target_height}")
-                        _log_info(f"🔄 强制调整图像尺寸: {current_width}x{current_height} -> {target_width}x{target_height}")
+                        # 计算目标尺寸
+                        target_w = edited_image.width * scale
+                        target_h = edited_image.height * scale
 
-                        # 🚀 使用智能调整放大技术（支持用户选择的填充策略）
-                        edited_image = smart_resize_with_padding(edited_image, (target_width, target_height), fill_strategy=fill_strategy, gigapixel_model=gigapixel_model)
+                        # 使用智能放大
+                        upscaled_image = smart_upscale(
+                            edited_image,
+                            target_w,
+                            target_h,
+                            gigapixel_model
+                        )
 
-                        print(f"✅ [Image to Image] 智能调整放大完成: {edited_image.size}")
-                        _log_info(f"✅ 扩图技术完成: {edited_image.size}")
-                    else:
-                        print(f"✅ [Image to Image] 图像尺寸已符合要求: {edited_image.size}")
-                        _log_info(f"✅ 图像尺寸已符合要求: {edited_image.size}")
-                else:
-                    print(f"⏭️ [Image to Image] 跳过尺寸调整 (size='{size_str}')")
+                        if upscaled_image:
+                            edited_image = upscaled_image
+                            _log_info(f"✅ 智能AI放大完成: {edited_image.size}")
+                        else:
+                            _log_warning("⚠️ 智能AI放大失败，使用原始图像")
+                except Exception as e:
+                    _log_warning(f"⚠️ 智能AI放大失败: {e}，使用原始图像")
 
-            except Exception as e:
-                print(f"❌ [Image to Image] 尺寸调整失败: {e}, 保持原始尺寸")
-                _log_warning(f"尺寸调整失败: {e}, 保持原始尺寸")
-            
             # 如果没有响应文本，提供默认文本
             if not raw_text:
                 response_text = "图片编辑完成！这是根据您的编辑指令修改后的图像。"
                 _log_info("📝 使用默认响应文本")
             else:
                 response_text = raw_text.strip()
-            
-            # 🚀 应用质量增强（支持AI超分辨率）
-            print(f"🔍 [Image to Image] 质量增强检查: enhance_quality={enhance_quality}, quality={controls['quality']}")
-            if enhance_quality and controls['quality'] in ['hd', 'ultra_hd', 'ai_enhanced', 'ai_ultra']:
-                print(f"✨ [Image to Image] 开始应用质量增强，质量等级: {controls['quality']}")
-                _log_info(f"✨ 应用质量增强，质量等级: {controls['quality']}")
-
-                # 确保edited_image是PIL Image类型
-                if isinstance(edited_image, torch.Tensor):
-                    print(f"🔄 [Image to Image] 转换tensor到PIL Image进行质量增强")
-                    edited_image = tensor_to_pil(edited_image)
-
-                if not isinstance(edited_image, Image.Image):
-                    print(f"❌ [Image to Image] 图像类型错误: {type(edited_image)}，跳过质量增强")
-                    _log_warning(f"图像类型错误: {type(edited_image)}，跳过质量增强")
-                else:
-                    print(f"🎨 [Image to Image] 正在增强图像，原始尺寸: {edited_image.size}")
-                    edited_image = enhance_image_quality(edited_image, controls['quality'], "disabled", gigapixel_model)
-                    print(f"✅ [Image to Image] 质量增强完成，最终尺寸: {edited_image.size}")
-            else:
-                print(f"⏭️ [Image to Image] 跳过质量增强 (enhance_quality={enhance_quality}, quality={controls['quality']})")
             
             # 转换为tensor
             if isinstance(edited_image, Image.Image):
@@ -2462,132 +2410,6 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
     RETURN_NAMES = ("text",)
     FUNCTION = "analyze_multimodal"
     
-    def analyze_multimodal(
-        self,
-        api_key,
-        prompt,
-        model,
-        size,
-        quality,
-        style,
-        detail_level,
-        camera_control,
-        lighting_control,
-        template_selection,
-        quality_enhancement,
-        enhance_quality,
-        smart_resize,
-        fill_strategy,
-        fill_color,
-        temperature,
-        top_p,
-        top_k,
-        max_output_tokens,
-        seed,
-        post_generation_control,
-        custom_size="",
-        image1=None,
-        image2=None,
-        image3=None,
-        image4=None,
-        custom_additions="",
-        unique_id=""
-    ) -> Tuple[torch.Tensor, str]:
-        """使用 Gemini API 进行多图像编辑"""
-        
-        # 验证API密钥
-        if not validate_api_key(api_key):
-            raise ValueError("API Key格式无效或为空")
-        
-        # 验证提示词
-        if not prompt.strip():
-            raise ValueError("提示词不能为空")
-        
-        # 处理图像控制参数
-        controls = process_image_controls(size, quality, style, custom_size)
-        enhanced_prompt = enhance_prompt_with_controls(
-            prompt.strip(), controls, detail_level, camera_control, lighting_control, 
-            template_selection, quality_enhancement, enhance_quality, smart_resize, fill_color
-        )
-        
-        # 简化的多图像编辑实现
-        try:
-            # 处理图像列表
-            images = []
-            for img in [image1, image2, image3, image4]:
-                if img is not None:
-                    images.append(tensor_to_pil(img))
-            
-            # 如果没有图像，返回错误
-            if not images:
-                return (create_dummy_image(), "没有提供输入图像")
-            
-            # 简化的API调用（使用第一张图像作为示例）
-            pil_image = images[0]
-            image_base64 = image_to_base64(pil_image, format='JPEG')
-            
-            # 构建请求内容
-            content_parts = [{
-                "text": enhanced_prompt
-            }, {
-                "inline_data": {
-                    "mime_type": "image/jpeg",
-                    "data": image_base64
-                }
-            }]
-            
-            # API配置
-            generation_config = {
-                'temperature': temperature,
-                'top_p': top_p,
-                'top_k': top_k,
-                'max_output_tokens': max_output_tokens
-            }
-            
-            # 调用API
-            response_json = generate_with_priority_api(api_key, model, content_parts, generation_config)
-            
-            # 处理响应
-            raw_text = extract_text_from_response(response_json)
-            generated_image = process_generated_image_from_response(response_json)
-            
-            if generated_image is None:
-                generated_image = pil_image  # 返回原图像
-            
-            # 🚀 应用质量增强（支持AI超分辨率）
-            if isinstance(generated_image, Image.Image) and enhance_quality and controls['quality'] in ['hd', 'ultra_hd', 'ai_enhanced', 'ai_ultra']:
-                _log_info(f"✨ 应用质量增强，质量等级: {controls['quality']}")
-                try:
-                    generated_image = enhance_image_quality(generated_image, controls['quality'], "disabled", gigapixel_model)
-                except Exception as e:
-                    _log_warning(f"质量增强失败: {e}，跳过增强")
-            
-            # 确保返回tensor格式
-            if isinstance(generated_image, Image.Image):
-                generated_image = pil_to_tensor(generated_image)
-            
-            assistant_text = raw_text if raw_text else "多图像编辑完成"
-            
-            return (generated_image, assistant_text)
-            
-        except Exception as e:
-            error_msg = str(e)
-            # 简化的错误处理
-            if "API key" in error_msg:
-                friendly_error = "API密钥无效"
-            elif "safety" in error_msg.lower():
-                friendly_error = "内容被安全过滤器阻止"
-            else:
-                friendly_error = f"编辑失败: {error_msg}"
-            
-            return (create_dummy_image(), friendly_error)
-
-class KenChenLLMGeminiBananaMultimodalBananaNode:
-    CATEGORY = "Ken-Chen/LLM-Nano-Banana"
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("text",)
-    FUNCTION = "analyze_multimodal"
-    
 
     
     @classmethod
@@ -2623,29 +2445,11 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
                     {"default": default_model},
                 ),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
-                
-                # 🎨 图像控制组（多模态节点也需要这些控制）
-                "size": (["512x512", "768x768", "1024x1024", "1024x1792", "1792x1024", "1920x1080", "2560x1440", "3840x2160"], {"default": "1024x1024"}),
-                "quality": (["standard", "hd", "ultra_hd", "ai_enhanced", "ai_ultra"], {"default": "hd"}),  # 🚀 AI超分辨率增强选项
-                "style": (["vivid", "natural", "artistic", "cinematic", "photographic"], {"default": "natural"}),
-                
-                # 🎨 智能图像控制组（放在style下面）
+
+                # 🎨 分析控制组
                 "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
                 "analysis_mode": (["Auto Select", "Visual Analysis", "Audio Analysis", "Combined Analysis", "Detailed Description", "Summary Report"], {"default": "Auto Select"}),
                 "output_format": (["Natural Language", "Structured Report", "Technical Analysis", "Creative Description", "Professional Summary"], {"default": "Natural Language"}),
-                
-                # 🚀 质量增强控制组
-                "quality_enhancement": ("BOOLEAN", {"default": True, "label": "Enable Quality Enhancement"}),
-                "enhance_quality": ("BOOLEAN", {"default": True, "label": "Enhanced Image Quality"}),
-                "smart_resize": ("BOOLEAN", {"default": True, "label": "Smart Resize with Padding"}),
-                "fill_strategy": (["smart", "direct", "crop", "paste"], {
-                    "default": "smart",
-                    "tooltip": "填充策略: smart=智能选择, direct=直接扩图到目标尺寸(推荐), crop=裁剪模式(无填充), paste=粘贴模式(有填充)"
-                }),
-                "fill_color": ("STRING", {
-                    "default": "255,255,255",
-                    "placeholder": "填充颜色 RGB (如: 255,255,255)"
-                }),
                 
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
@@ -2674,17 +2478,9 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
         prompt,
         model,
         proxy,
-        size,
-        quality,
-        style,
         detail_level,
         analysis_mode,
         output_format,
-        quality_enhancement,
-        enhance_quality,
-        smart_resize,
-        fill_strategy,
-        fill_color,
         temperature,
         top_p,
         top_k,
@@ -2791,10 +2587,12 @@ class GeminiBananaMultiImageEditNode:
         default_params = config.get('default_params', {})
         image_settings = config.get('image_settings', {})
         
-        # 🚀 超越参考项目的图像控制预设
-        size_presets = image_settings.get('size_presets', [
-            "Original size", "512x512", "768x768", "1024x1024", "1024x1792", "1792x1024",
-            "1920x1080", "2560x1440", "3840x2160"  # 超越参考项目的高分辨率选项
+        # 🚀 Gemini官方API图像控制预设
+        aspect_ratios = image_settings.get('aspect_ratios', [
+            "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
+        ])
+        response_modalities = image_settings.get('response_modalities', [
+            "TEXT_AND_IMAGE", "IMAGE_ONLY"
         ])
         quality_presets = image_settings.get('quality_presets', [
             "standard", "hd", "ultra_hd", "ai_enhanced", "ai_ultra"  # 🚀 AI超分辨率增强选项
@@ -2807,35 +2605,36 @@ class GeminiBananaMultiImageEditNode:
             "required": {
                 "api_key": ("STRING", {"default": "", "multiline": False}),
                 "prompt": ("STRING", {"default": "请根据这些图片进行专业的图像编辑", "multiline": True}),
-                "model": (["gemini-2.5-flash-image-preview", "gemini-2.0-flash"], {"default": "gemini-2.5-flash-image-preview"}),
-                "size": (size_presets, {"default": image_settings.get('default_size', "1024x1024")}),
+                "model": (["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.0-flash"], {"default": "gemini-2.5-flash-image"}),
+
+                # 📐 Gemini官方API图像控制参数
+                "aspect_ratio": (aspect_ratios, {
+                    "default": image_settings.get('default_aspect_ratio', "1:1"),
+                    "tooltip": "图像宽高比 (Gemini官方API支持)"
+                }),
+                "response_modality": (response_modalities, {
+                    "default": image_settings.get('default_response_modality', "TEXT_AND_IMAGE"),
+                    "tooltip": "响应模式：TEXT_AND_IMAGE=文字+图像，IMAGE_ONLY=仅图像"
+                }),
+
+                # 🔍 Topaz Gigapixel AI放大控制
+                "upscale_factor": (["1x (不放大)", "2x", "4x", "6x"], {
+                    "default": "1x (不放大)",
+                    "tooltip": "使用Topaz Gigapixel AI进行智能放大"
+                }),
+                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
+                    "default": "High Fidelity",
+                    "tooltip": "Gigapixel AI放大模型"
+                }),
+
                 "quality": (quality_presets, {"default": image_settings.get('default_quality', "hd")}),
                 "style": (style_presets, {"default": image_settings.get('default_style', "natural")}),
-                
+
                 # 🎨 智能图像控制组（放在style下面）
                 "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
                 "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
                 "lighting_control": (["Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
                 "template_selection": (["Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
-                
-                # 🚀 质量增强控制组
-                "quality_enhancement": ("BOOLEAN", {"default": True, "label": "Enable Quality Enhancement"}),
-                "enhance_quality": ("BOOLEAN", {"default": True, "label": "Enhanced Image Quality"}),
-                "smart_resize": ("BOOLEAN", {"default": True, "label": "Smart Resize with Padding"}),
-                "fill_strategy": (["smart", "direct", "crop", "paste"], {
-                    "default": "smart",
-                    "tooltip": "填充策略: smart=智能选择, direct=直接扩图到目标尺寸(推荐), crop=裁剪模式(无填充), paste=粘贴模式(有填充)"
-                }),
-                "fill_color": ("STRING", {
-                    "default": "255,255,255",
-                    "placeholder": "填充颜色 RGB (如: 255,255,255)"
-                }),
-
-                # 🎯 Gigapixel AI 模型选择
-                "gigapixel_model": (["High Fidelity", "Standard", "Art & CG", "Lines", "Very Compressed", "Low Resolution", "Text & Shapes", "Redefine", "Recover"], {
-                    "default": "High Fidelity",
-                    "label": "Gigapixel AI Model"
-                }),
 
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.95), "min": 0.0, "max": 1.0}),
@@ -2845,11 +2644,6 @@ class GeminiBananaMultiImageEditNode:
                 "post_generation_control": (["randomize", "maintain_consistency", "enhance_creativity"], {"default": "randomize"}),
             },
             "optional": {
-                "custom_size": ("STRING", {
-                    "default": "", 
-                    "multiline": False,
-                    "placeholder": "自定义尺寸 (如: 1920x1080)"
-                }),
                 "image1": ("IMAGE",),
                 "image2": ("IMAGE",),
                 "image3": ("IMAGE",),
@@ -2903,12 +2697,11 @@ class GeminiBananaMultiImageEditNode:
             _log_error(f"Chat push failed: {e}")
             pass
 
-    def edit_multiple_images(self, api_key: str, prompt: str, model: str, size: str, quality: str, style: str,
-                           detail_level: str, camera_control: str, lighting_control: str, template_selection: str,
-                           quality_enhancement: bool, enhance_quality: bool, smart_resize: bool, fill_strategy: str,
-                           fill_color: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
-                           post_generation_control: str, custom_size: str = "", image1=None, image2=None, image3=None, image4=None,
-                           custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
+    def edit_multiple_images(self, api_key: str, prompt: str, model: str, aspect_ratio: str, response_modality: str,
+                           upscale_factor: str, gigapixel_model: str, quality: str, style: str, detail_level: str,
+                           camera_control: str, lighting_control: str, template_selection: str, temperature: float, top_p: float,
+                           top_k: int, max_output_tokens: int, seed: int, post_generation_control: str,
+                           image1=None, image2=None, image3=None, image4=None, custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用 Gemini API 进行多图像编辑"""
 
         # 如果用户没有输入API密钥，自动从配置文件获取
@@ -2928,22 +2721,30 @@ class GeminiBananaMultiImageEditNode:
         # 验证提示词
         if not prompt.strip():
             raise ValueError("提示词不能为空")
-        
-        # 处理图像控制参数
-        controls = process_image_controls(size, quality, style, custom_size)
+
+        # 🎨 构建增强提示词（使用enhance_prompt_with_controls函数）
+        controls = process_image_controls(quality, style)
+
+        # 使用enhance_prompt_with_controls函数进行完整的提示词增强
         enhanced_prompt = enhance_prompt_with_controls(
-            prompt.strip(), controls, detail_level, camera_control, lighting_control, 
-            template_selection, quality_enhancement, enhance_quality, smart_resize, fill_color
+            prompt.strip(),
+            controls,
+            detail_level,
+            camera_control,
+            lighting_control,
+            template_selection,
+            quality_enhancement="Auto",  # 默认值
+            enhance_quality=True,  # 默认值
+            smart_resize=True,  # 默认值
+            fill_color="white"  # 默认值
         )
-        
+
         # 处理自定义指令
         if custom_additions and custom_additions.strip():
-            enhanced_prompt += f"\n\nCUSTOM INSTRUCTIONS: {custom_additions.strip()}"
+            enhanced_prompt += f"\n\n{custom_additions.strip()}"
             print(f"📝 添加自定义指令: {custom_additions[:100]}...")
-        
-        print(f"🎨 图像控制参数: 尺寸={controls['size']}, 质量={controls['quality']}, 风格={controls['style']}")
-        if controls['is_custom_size']:
-            print(f"📏 使用自定义尺寸: {controls['size']}")
+
+        print(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
         
         # 收集所有输入的图像
         all_input_pils = []
@@ -2968,18 +2769,8 @@ class GeminiBananaMultiImageEditNode:
         # 1. 对输入图像进行预处理增强
         enhanced_input_pils = []
         for i, pil_image in enumerate(all_input_pils):
-            print(f"🎨 对输入图像 {i+1} 应用图形增强技术...")
-
-            # 🚀 应用图像质量增强（支持AI超分辨率）
-            if quality_enhancement and controls['quality'] in ['hd', 'ultra_hd', 'ai_enhanced', 'ai_ultra']:
-                try:
-                    enhanced_image = enhance_image_quality(pil_image, controls['quality'], "disabled", gigapixel_model)
-                    print(f"✨ 图像 {i+1} 质量增强完成")
-                except Exception as e:
-                    print(f"⚠️ 图像 {i+1} 质量增强失败: {e}，使用原图")
-                    enhanced_image = pil_image
-            else:
-                enhanced_image = pil_image
+            print(f"🎨 处理输入图像 {i+1}...")
+            enhanced_image = pil_image
 
             # 调整图像尺寸以符合API要求
             enhanced_image = resize_image_for_api(enhanced_image)
@@ -3046,23 +2837,38 @@ Execute the image editing task now and return the generated image."""
         content.append({"type": "text", "text": image_edit_instruction})
         
         # 构建请求数据
+        generation_config = {
+            "temperature": temperature,
+            "topP": top_p,
+            "topK": top_k,
+            "maxOutputTokens": max_output_tokens,
+        }
+
+        # 🎯 Gemini官方API：Response Modalities控制
+        if response_modality == "IMAGE_ONLY":
+            generation_config["responseModalities"] = ["Image"]
+            print("📊 响应模式：仅图像（IMAGE_ONLY）")
+        else:
+            generation_config["responseModalities"] = ["Text", "Image"]
+            print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
+
+        # 📐 Gemini官方API：Aspect Ratio控制
+        if aspect_ratio and aspect_ratio != "1:1":
+            generation_config["imageConfig"] = {
+                "aspectRatio": aspect_ratio
+            }
+            print(f"📐 设置宽高比: {aspect_ratio}")
+
+        # 智能种子控制
+        if seed and seed > 0:
+            generation_config["seed"] = seed
+
         request_data = {
             "contents": [{
                 "parts": content
             }],
-            "generationConfig": {
-                "temperature": temperature,
-                "topP": top_p,
-                "topK": top_k,
-                "maxOutputTokens": max_output_tokens,
-                "responseModalities": ["TEXT", "IMAGE"],
-                "seed": seed if seed and seed > 0 else None
-            }
+            "generationConfig": generation_config
         }
-        
-        # 清理 None 值
-        if request_data["generationConfig"]["seed"] is None:
-            del request_data["generationConfig"]["seed"]
         
         # 设置请求头
         headers = {
@@ -3125,42 +2931,45 @@ Execute the image editing task now and return the generated image."""
                         edited_image = all_input_pils[0]  # 返回第一张图片
                         if not response_text:
                             response_text = "图片编辑请求已发送，但未收到编辑后的图片"
-                    
-                    # 强制调整图像尺寸到用户指定的尺寸
-                    try:
-                        target_width, target_height = map(int, controls['size'].split('x'))
-                        current_width, current_height = edited_image.size
-                        
-                        if (current_width, current_height) != (target_width, target_height):
-                            print(f"🔄 强制调整图像尺寸: {current_width}x{current_height} -> {target_width}x{target_height}")
-                            
-                            # 🚀 使用无白色填充不变形的扩图技术（使用crop模式避免重叠）
-                            edited_image = smart_resize_with_padding(edited_image, (target_width, target_height), fill_strategy="crop", gigapixel_model=gigapixel_model)
-                            print(f"🎯 扩图技术完成，无白色填充不变形")
 
-                            print(f"✅ 图像尺寸调整完成: {edited_image.size}")
-                        else:
-                            print(f"✅ 图像尺寸已符合要求: {edited_image.size}")
-                        
-                    except Exception as e:
-                        print(f"⚠️ 尺寸调整失败: {e}, 保持原始尺寸")
-                    
+                    # 🔍 智能AI放大
+                    if upscale_factor and upscale_factor != "1x (不放大)" and isinstance(edited_image, Image.Image):
+                        try:
+                            # 提取放大倍数
+                            scale = int(upscale_factor.replace("x", "").strip().split()[0])
+                            if scale > 1:
+                                print(f"🔍 使用智能AI放大进行{scale}x放大，模型: {gigapixel_model}")
+
+                                # 导入放大函数
+                                try:
+                                    from .banana_upscale import smart_upscale
+                                except ImportError:
+                                    from banana_upscale import smart_upscale
+
+                                # 计算目标尺寸
+                                target_w = edited_image.width * scale
+                                target_h = edited_image.height * scale
+
+                                # 使用智能放大
+                                upscaled_image = smart_upscale(
+                                    edited_image,
+                                    target_w,
+                                    target_h,
+                                    gigapixel_model
+                                )
+
+                                if upscaled_image:
+                                    edited_image = upscaled_image
+                                    print(f"✅ 智能AI放大完成: {edited_image.size}")
+                                else:
+                                    print("⚠️ 智能AI放大失败，使用原始图像")
+                        except Exception as e:
+                            print(f"⚠️ 智能AI放大失败: {e}，使用原始图像")
+
                     # 如果没有响应文本，提供默认文本
                     if not response_text:
                         response_text = "多图像编辑完成！这是根据您的指令和参考图像生成的编辑结果。"
                         print("📝 使用默认响应文本")
-                    
-                    # 🚀 应用质量增强（支持AI超分辨率）
-                    if enhance_quality and controls['quality'] in ['hd', 'ultra_hd', 'ai_enhanced', 'ai_ultra']:
-                        print(f"✨ 应用质量增强，质量等级: {controls['quality']}")
-                        try:
-                            if isinstance(edited_image, Image.Image):
-                                edited_image = enhance_image_quality(edited_image, controls['quality'], "disabled", gigapixel_model)
-                                print(f"✅ 增强完成")
-                            else:
-                                print(f"⚠️ 图像类型错误: {type(edited_image)}，跳过质量增强")
-                        except Exception as e:
-                            print(f"⚠️ 质量增强失败: {e}，跳过增强")
 
                     # 转换为tensor
                     image_tensor = pil_to_tensor(edited_image)

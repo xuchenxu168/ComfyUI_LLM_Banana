@@ -40,6 +40,51 @@ def get_chatfly_config():
         _log_error(f"读取ChatFly配置文件时发生错误: {e}")
         return {}
 
+def get_prompt_api_providers():
+    """
+    从ChatFly_config.json中获取提示词扩写API提供者配置
+    """
+    config_path = os.path.join(CURRENT_DIR, 'ChatFly_config.json')
+    try:
+        if os.path.exists(config_path):
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+
+            # 从配置文件中读取prompt_api_providers
+            if "prompt_api_providers" in config:
+                return config["prompt_api_providers"]
+            else:
+                _log_warning("ChatFly_config.json中未找到prompt_api_providers配置，使用默认配置。")
+                return {
+                    "Comfly": {
+                        "url": "https://ai.comfly.chat/v1",
+                        "api_key": config.get("api_key", ""),
+                        "api_format": "openai",
+                        "models": ["gpt-4o", "gpt-4-v", "claude-sonnet-4-20250514"],
+                        "description": "Comfly AI镜像站"
+                    }
+                }
+        else:
+            _log_warning("未找到ChatFly_config.json配置文件。")
+            return {}
+    except json.JSONDecodeError:
+        _log_error("ChatFly_config.json格式不正确。")
+        return {}
+    except Exception as e:
+        _log_error(f"读取配置文件时发生错误: {e}")
+        return {}
+
+def get_provider_config(provider_name):
+    """
+    根据提供者名称获取配置
+    """
+    providers = get_prompt_api_providers()
+    if provider_name not in providers:
+        _log_error(f"未知的API提供者: {provider_name}")
+        return {}
+
+    return providers[provider_name]
+
 def load_prompts_from_txt(file_path, default_built_in_prompts):
     """
     从特定格式的TXT文件加载多个提示词。
@@ -117,41 +162,34 @@ class Comfly_Prompt_Expand_From_Image:
         available_prompts = cls.get_image_prompts()
         prompt_keys = list(available_prompts.keys())
         default_selection = prompt_keys[0] if prompt_keys else "无可用提示词"
-        comfly_model_list = [
-            "gpt-4-v",
-            "gpt-4o-all",
-            "gpt-4-all",
-            "o1-all",
-            "o3-mini-all",
-            "o3-mini-high-all",
-            "gpt-4o-2024-05-13",
-            "gpt-4o",
-            "gpt-4o-mini",
-            "gpt-4o-mini-2024-07-18",
-            "gpt-4o-2024-08-06",
-            "chatgpt-4o-latest",
-            "gpt-5-nano-2025-08-07",
-            "gpt-5-nano",
-            "gpt-5-mini-2025-08-07",
-            "gpt-5-mini",
-            "gpt-5-chat-latest",
-            "gpt-5-2025-08-07",
-            "gpt-5",
-            "claude-sonnet-4-20250514-thinking",
-            "claude-opus-4-20250514",
-            "claude-sonnet-4-20250514",
-            "claude-opus-4-20250514-thinking",
-            "claude-opus-4-1-20250805-thinking",
-            "claude-opus-4-1-20250805"
-        ]
-        config = cls.get_comfly_config()
+
+        # 获取所有API提供者
+        providers = get_prompt_api_providers()
+        provider_names = list(providers.keys())
+        default_provider = provider_names[0] if provider_names else "Comfly"
+
+        # 合并所有提供者的模型列表（去重）
+        all_models = []
+        seen_models = set()
+        for provider_name, provider_info in providers.items():
+            models = provider_info.get("models", [])
+            for model in models:
+                if model not in seen_models:
+                    all_models.append(model)
+                    seen_models.add(model)
+
+        # 如果没有模型，使用默认值
+        if not all_models:
+            all_models = ["gpt-4o", "gpt-4-v", "claude-sonnet-4-20250514"]
+
         return {
             "required": {
+                "api_provider": (provider_names, {"default": default_provider, "label": "API提供者 API Provider"}),
                 "image_prompt_preset": (prompt_keys, {"default": default_selection, "label": "图像提示词预设 Image Prompt Preset"}),
                 "ref_image": ("STRING", {"multiline": True, "default": "", "placeholder": "Base64编码图片，或由上游节点传入 (Base64 image or from upstream node)", "label": "参考图片 Reference Image"}),
-                "base_url": ("STRING", {"multiline": False, "default": "", "placeholder": "API地址将自动根据模型选择（可手动覆盖）", "label": "API地址 API Base URL"}),
+                "base_url": ("STRING", {"multiline": False, "default": "", "placeholder": "API地址将自动根据提供者选择（可手动覆盖）", "label": "API地址 API Base URL"}),
                 "api_key": ("STRING", {"multiline": False, "default": "", "placeholder": "API密钥 (API Key)", "label": "API密钥 API Key"}),
-                "model": (comfly_model_list, {"default": comfly_model_list[0], "label": "模型 Model"}),
+                "model": (all_models, {"default": all_models[0] if all_models else "gpt-4o", "label": "模型 Model"}),
                 "system_prompt": ("STRING", {"multiline": True, "default": available_prompts.get(default_selection, ""), "placeholder": "系统提示词（可自定义专家角色，支持中文） System prompt (custom expert role, supports Chinese)", "label": "系统提示词 System Prompt"}),
                 "user_prompt": ("STRING", {"multiline": True, "default": "", "placeholder": "请输入你的原始提示词（支持中文）Enter your original prompt (supports Chinese)", "label": "用户提示词 User Prompt"}),
                 "user_requirement": ("STRING", {"multiline": True, "default": "", "placeholder": "请输入你的额外要求（可选，支持中文）Enter your extra requirements (optional, supports Chinese)", "label": "额外要求 Extra Requirement"}),
@@ -165,17 +203,19 @@ class Comfly_Prompt_Expand_From_Image:
             }
         }
 
-    def expand_prompt(self, image_prompt_preset, ref_image, base_url, api_key, model, system_prompt, user_prompt, user_requirement, temperature=0.7, seed=0, image_url="", top_p=0.8, max_tokens=400):
+    def expand_prompt(self, api_provider, image_prompt_preset, ref_image, base_url, api_key, model, system_prompt, user_prompt, user_requirement, temperature=0.7, seed=0, image_url="", top_p=0.8, max_tokens=400):
         import requests
-        config = self.get_comfly_config()
-        # 优先用config中模型专属base_url
-        model_base_url = ""
-        if "model_base_urls" in config and isinstance(config["model_base_urls"], dict):
-            model_base_url = config["model_base_urls"].get(model, "")
-        final_base_url = model_base_url or base_url.strip() or config.get("base_url", "")
+
+        # 根据API提供者获取配置
+        config = get_provider_config(api_provider)
+        _log_info(f"使用API提供者: {api_provider}")
+
+        # 从配置中获取URL和API key
+        final_base_url = base_url.strip() or config.get("url", "")
         final_api_key = api_key.strip() or config.get("api_key", "")
+
         if not final_base_url or not final_api_key:
-            return ("未检测到API Key或Base URL，请在节点输入框填写，或在ChatFly_config.json中配置base_url和api_key。\nAPI Key or Base URL not found. Please fill in the node input box, or configure base_url and api_key in ChatFly_config.json.",)
+            return (f"未检测到API Key或Base URL，请在节点输入框填写，或在ChatFly_config.json的prompt_api_providers中配置{api_provider}的url和api_key。\nAPI Key or Base URL not found. Please fill in the node input box, or configure url and api_key for {api_provider} in ChatFly_config.json's prompt_api_providers.",)
         api_url = final_base_url.rstrip("/") + "/chat/completions"
         headers = {
             "Authorization": f"Bearer {final_api_key}",
@@ -216,18 +256,18 @@ class Comfly_Prompt_Expand_From_Image:
             resp.raise_for_status()
             data = resp.json()
             expanded_prompt = data["choices"][0]["message"]["content"]
-            _log_info("Comfly API 扩写响应成功。")
+            _log_info(f"{api_provider} API 扩写响应成功。")
             return (expanded_prompt,)
         except Exception as e:
-            error_message = f"Comfly API 调用失败: {e}\nComfly API call failed: {e}"
+            error_message = f"{api_provider} API 调用失败: {e}\n{api_provider} API call failed: {e}"
             _log_error(error_message)
             return (error_message,)
 
-# --- 注册Comfly节点 ---
+# --- 注册节点 ---
 NODE_CLASS_MAPPINGS = {
     "Comfly_Prompt_Expand_From_Image": Comfly_Prompt_Expand_From_Image,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "Comfly_Prompt_Expand_From_Image": "Comfly扩写高质量提示词",
-} 
+    "Comfly_Prompt_Expand_From_Image": "扩写高质量提示词 (Comfly/T8)",
+}
