@@ -26,7 +26,7 @@
     "mirror_sites": {
         "nano-banana官方": {
             "url": "https://generativelanguage.googleapis.com",
-            "api_key": "AIzaSyCz-djNQfjoE-nU_F9eqBCPvvC2MpeSrh4",
+            "api_key": "",
             "api_format": "gemini",
             "models": [
                 "gemini-2.0-flash-lite",
