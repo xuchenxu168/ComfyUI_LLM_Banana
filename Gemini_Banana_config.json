@@ -1,6 +1,6 @@
 {
-    "api_key": "AIzaSyDmatBo7DB5WA0NUnNuAFt2AgQPgOYWZwg",
-    "multimodal_api_key": "AIzaSyB520RJ5-62BNePGpVwp_HzrbLLMVsG-80",
+    "api_key": "",
+    "multimodal_api_key": "",
     "base_url": "https://generativelanguage.googleapis.com",
     "proxy": "None",
     "default_model": {
@@ -46,25 +46,25 @@
         },
         "comfly": {
             "url": "https://ai.comfly.chat/v1",
-            "api_key": "sk-bXnweb9SnAddPUpI828280750b054b1cB6FbE0378544320e"
+            "api_key": ""
         },
         "T8的贞贞AI工坊": {
             "url": "https://ai.t8star.cn",
-            "api_key": "sk-hBhFzjZ6L2V6HKasOcwGLu6bTupl86mzan1Ki1q5TzpJPJeC",
+            "api_key": "",
             "api_format": "openai",
             "models": ["gemini-2.5-flash-image-preview"],
             "description": "T8贞贞的AI工坊镜像站，支持Gemini 2.5 Flash Image Preview模型，使用OpenAI兼容的API格式"
         },
         "API4GPT": {
             "url": "https://one.api4gpt.com",
-            "api_key": "sk-7vQ50rx6H3nYp5g0lBK81oJNZCcqAnJeNgOI6AEUEZncsOGB",
+            "api_key": "",
             "api_format": "openai",
             "models": ["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.5-flash-image-hd", "gemini-2.5-flash-image-vip"],
             "description": "API4GPT镜像站，使用OpenAI兼容格式，支持nano-banana图像生成服务"
         },
         "OpenRouter": {
             "url": "https://openrouter.ai/api/v1",
-            "api_key": "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",
+            "api_key": "",
             "api_format": "openrouter",
             "models": ["gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation", "google/gemini-2.5-flash-image-preview:free", "google/gemini-2.5-flash-image-preview"],
             "description": "OpenRouter镜像站，支持多种AI模型和图像生成服务"
