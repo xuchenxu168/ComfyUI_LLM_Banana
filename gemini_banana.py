@@ -18,7 +18,6 @@ from typing import Tuple, Optional
 # gemini_banana.py 已经包含了完整的nano-banana官方调用实现
 # 包括：generate_with_priority_api, generate_with_official_api, generate_with_rest_api 等
 NANO_BANANA_OFFICIAL_AVAILABLE = True
-print("✅ nano-banana官方调用方式已集成到gemini_banana模块")
 
 # 🌐 导入独立的翻译模块
 try:
@@ -28,7 +27,6 @@ try:
         NODE_DISPLAY_NAME_MAPPINGS as TRANSLATION_DISPLAY_MAPPINGS
     )
     TRANSLATION_MODULE_AVAILABLE = True
-    print("✅ 成功导入独立翻译模块")
 except ImportError:
     try:
         from .gemini_banana_translation import (
@@ -37,9 +35,7 @@ except ImportError:
             NODE_DISPLAY_NAME_MAPPINGS as TRANSLATION_DISPLAY_MAPPINGS
         )
         TRANSLATION_MODULE_AVAILABLE = True
-        print("✅ 成功导入独立翻译模块")
     except ImportError:
-        print("⚠️ 无法导入翻译模块，翻译功能将不可用")
         TRANSLATION_MODULE_AVAILABLE = False
         TranslationNode = None
         TRANSLATION_NODE_MAPPINGS = {}
@@ -51,40 +47,35 @@ def detect_available_upscale_models():
     自动检测可用的AI放大模型
     """
     available_models = []
-    
+
     # 检测 Real-ESRGAN
     try:
         import realesrgan
         available_models.append("Real-ESRGAN")
-        print(f"✅ 检测到 Real-ESRGAN 模型")
     except ImportError:
-        print(f"⚠️ Real-ESRGAN 模型未安装")
-    
+        pass
+
     # 检测 ESRGAN
     try:
         import esrgan
         available_models.append("ESRGAN")
-        print(f"✅ 检测到 ESRGAN 模型")
     except ImportError:
-        print(f"⚠️ ESRGAN 模型未安装")
-    
+        pass
+
     # 检测 Waifu2x
     try:
         import waifu2x
         available_models.append("Waifu2x")
-        print(f"✅ 检测到 Waifu2x 模型")
     except ImportError:
-        print(f"⚠️ Waifu2x 模型未安装")
-    
+        pass
+
     # 检测 GFPGAN
     try:
         import gfpgan
         available_models.append("GFPGAN")
-        print(f"✅ 检测到 GFPGAN 模型")
     except ImportError:
-        print(f"⚠️ GFPGAN 模型未安装")
-    
-    print(f"🔍 可用AI放大模型: {available_models}")
+        pass
+
     return available_models
 
 def ai_upscale_with_realesrgan(image, target_width, target_height, gigapixel_model="High Fidelity"):
@@ -96,26 +87,18 @@ def ai_upscale_with_realesrgan(image, target_width, target_height, gigapixel_mod
         res = _smart(image, target_width, target_height, gigapixel_model)
         if res is not None:
             return res
-        print(f"⚠️ 智能放大器不可用，使用高质量重采样")
         return image.resize((target_width, target_height), Image.Resampling.LANCZOS)
-    except Exception as e:
-        print(f"⚠️ 智能放大器失败，回退重采样: {e}")
+    except Exception:
         return image.resize((target_width, target_height), Image.Resampling.LANCZOS)
 def ai_upscale_with_esrgan(image, target_width, target_height):
     """
     使用 ESRGAN 进行AI高清放大
     """
     try:
-        print(f"🚀 使用 ESRGAN 进行AI高清放大...")
-        
         # ESRGAN 实现代码
         # 这里需要根据具体的ESRGAN实现来编写
-        
-        print(f"✅ ESRGAN AI放大完成")
         return image  # 临时返回原图
-        
     except Exception as e:
-        print(f"❌ ESRGAN 放大失败: {e}")
         raise e
 
 def ai_upscale_with_waifu2x(image, target_width, target_height):
@@ -123,16 +106,10 @@ def ai_upscale_with_waifu2x(image, target_width, target_height):
     使用 Waifu2x 进行AI高清放大
     """
     try:
-        print(f"🚀 使用 Waifu2x 进行AI高清放大...")
-        
         # Waifu2x 实现代码
         # 这里需要根据具体的Waifu2x实现来编写
-        
-        print(f"✅ Waifu2x AI放大完成")
         return image  # 临时返回原图
-        
     except Exception as e:
-        print(f"❌ Waifu2x 放大失败: {e}")
         raise e
 
 def smart_ai_upscale(image, target_width, target_height, gigapixel_model="High Fidelity"):
@@ -1290,7 +1267,107 @@ def prepare_media_content(image=None, audio=None):
     
     return content_parts
 
-def generate_with_official_api(api_key, model, content_parts, generation_config, max_retries=5, proxy=None):
+# ========================================
+# 安全设置预设配置
+# ========================================
+
+SAFETY_PRESETS = {
+    "default": None,  # 使用API默认设置
+    "strict": [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_LOW_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_LOW_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_LOW_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_LOW_AND_ABOVE"}
+    ],
+    "moderate": [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"}
+    ],
+    "permissive": [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"}
+    ],
+    "off": [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
+    ]
+}
+
+# ========================================
+# 系统指令预设模板
+# ========================================
+
+SYSTEM_INSTRUCTION_PRESETS = {
+    "none": "",
+    "image_generation": (
+        "You are an AI image generation assistant. Enhance user prompts with detailed descriptions "
+        "including composition, lighting, color palette, mood, and artistic style. "
+        "Be creative and help users achieve their vision."
+    ),
+    "image_editing": (
+        "You are an AI image editing assistant. Understand user intentions and provide precise "
+        "editing instructions. Focus on maintaining image quality and coherence. "
+        "Suggest improvements when appropriate."
+    ),
+    "creative_artist": (
+        "You are a creative AI artist. Be imaginative, artistic, and help users explore creative "
+        "possibilities. Provide vivid and inspiring descriptions. Think outside the box and "
+        "suggest unique artistic approaches."
+    ),
+    "technical_expert": (
+        "You are a technical AI assistant specialized in image generation. Be precise, detailed, "
+        "and focus on technical accuracy. Provide specific parameters, settings, and technical "
+        "guidance for optimal results."
+    ),
+    "friendly_helper": (
+        "You are a friendly and helpful AI assistant. Be encouraging, positive, and supportive. "
+        "Make the creative process enjoyable. Explain things clearly and patiently."
+    ),
+    "professional_photographer": (
+        "You are a professional photographer AI assistant. Provide expert advice on composition, "
+        "lighting, camera angles, and visual storytelling. Help users create professional-quality images."
+    )
+}
+
+def get_safety_settings(safety_level: str):
+    """
+    获取安全设置配置
+
+    Args:
+        safety_level: 安全级别 ("default", "strict", "moderate", "permissive", "off")
+
+    Returns:
+        安全设置列表或None
+    """
+    return SAFETY_PRESETS.get(safety_level, None)
+
+def get_system_instruction(preset: str, custom_instruction: str = ""):
+    """
+    获取系统指令
+
+    Args:
+        preset: 预设名称
+        custom_instruction: 自定义指令（优先级更高）
+
+    Returns:
+        系统指令文本或None
+    """
+    # 如果有自定义指令，优先使用
+    if custom_instruction and custom_instruction.strip():
+        return custom_instruction.strip()
+
+    # 否则使用预设
+    return SYSTEM_INSTRUCTION_PRESETS.get(preset, "")
+
+def generate_with_official_api(api_key, model, content_parts, generation_config,
+                               safety_settings=None, system_instruction=None,
+                               max_retries=5, proxy=None):
     """优先使用官方google.genai库调用API"""
     try:
         # 尝试导入官方库
@@ -1341,6 +1418,19 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         # 处理seed
         if 'seed' in generation_config and generation_config['seed'] > 0:
             config_params['seed'] = generation_config['seed']
+
+        # 🛡️ 处理安全设置
+        if safety_settings:
+            config_params['safety_settings'] = [
+                types.SafetySetting(
+                    category=setting['category'],
+                    threshold=setting['threshold']
+                ) for setting in safety_settings
+            ]
+
+        # 🎯 处理系统指令
+        if system_instruction:
+            config_params['system_instruction'] = system_instruction
 
         official_config = types.GenerateContentConfig(**config_params)
         
@@ -1420,14 +1510,16 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         else:
             os.environ.pop('HTTP_PROXY', None)
 
-def generate_with_rest_api(api_key, model, content_parts, generation_config, max_retries=5, proxy=None, base_url=None):
+def generate_with_rest_api(api_key, model, content_parts, generation_config,
+                          safety_settings=None, system_instruction=None,
+                          max_retries=5, proxy=None, base_url=None):
     """使用REST API的智能重试机制调用（回退方案）"""
-    
+
     # 构建API URL - 支持镜像站
     if base_url and base_url.strip():
         # 移除末尾的斜杠，确保URL格式正确
         base_url = base_url.rstrip('/')
-        
+
         # 如果用户提供的是完整URL，直接使用
         if '/models/' in base_url and ':generateContent' in base_url:
             url = base_url
@@ -1437,12 +1529,12 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config, max
         else:
             # 默认添加v1beta路径
             url = f"{base_url}/v1beta/models/{model}:generateContent"
-        
+
         _log_info(f"🔗 使用镜像站: {base_url}")
     else:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         _log_info(f"🌐 使用官方API: generativelanguage.googleapis.com")
-    
+
     # 构建请求数据
     request_data = {
         "contents": [{
@@ -1450,6 +1542,16 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config, max
         }],
         "generationConfig": generation_config
     }
+
+    # 🛡️ 添加安全设置
+    if safety_settings:
+        request_data["safetySettings"] = safety_settings
+
+    # 🎯 添加系统指令
+    if system_instruction:
+        request_data["system_instruction"] = {
+            "parts": [{"text": system_instruction}]
+        }
     
     # 设置请求头
     headers = {
@@ -1516,20 +1618,24 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config, max
     
     raise Exception("所有重试都失败了")
 
-def generate_with_priority_api(api_key, model, content_parts, generation_config, max_retries=5, proxy=None, base_url=None):
+def generate_with_priority_api(api_key, model, content_parts, generation_config,
+                               safety_settings=None, system_instruction=None,
+                               max_retries=5, proxy=None, base_url=None):
     """优先使用官方API，失败时回退到REST API"""
-    
+
     # 首先尝试官方API
     _log_info("🎯 优先尝试官方google.genai API")
-    result = generate_with_official_api(api_key, model, content_parts, generation_config, max_retries, proxy)
-    
+    result = generate_with_official_api(api_key, model, content_parts, generation_config,
+                                       safety_settings, system_instruction, max_retries, proxy)
+
     if result is not None:
         _log_info("✅ 官方API调用成功")
         return result
-    
+
     # 官方API失败，回退到REST API
     _log_info("🔄 官方API失败，回退到REST API")
-    return generate_with_rest_api(api_key, model, content_parts, generation_config, max_retries, proxy, base_url)
+    return generate_with_rest_api(api_key, model, content_parts, generation_config,
+                                  safety_settings, system_instruction, max_retries, proxy, base_url)
 
 def generate_with_priority_api_direct(api_key, model, request_data, max_retries=5, proxy=None, base_url=None):
     """优先使用官方API，失败时回退到直接REST API调用（用于多图像编辑）"""
@@ -1793,6 +1899,23 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                     "multiline": True,
                     "placeholder": "自定义指令和特殊要求（超越参考项目的功能）"
                 }),
+
+                # 🛡️ 安全设置
+                "safety_level": (["default", "strict", "moderate", "permissive", "off"], {
+                    "default": "default",
+                    "tooltip": "内容安全过滤级别：default=API默认, strict=严格, moderate=中等, permissive=宽松, off=关闭"
+                }),
+
+                # 🎯 系统指令
+                "system_instruction_preset": (["none", "image_generation", "creative_artist", "technical_expert", "friendly_helper", "professional_photographer"], {
+                    "default": "none",
+                    "tooltip": "系统指令预设模板，用于引导AI的行为和风格"
+                }),
+                "custom_system_instruction": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "placeholder": "自定义系统指令（优先级高于预设）"
+                }),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID"
@@ -1854,6 +1977,9 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         camera_control: str = "Auto Select",
         lighting_control: str = "Auto Settings",
         template_selection: str = "Auto Select",
+        safety_level: str = "default",
+        system_instruction_preset: str = "none",
+        custom_system_instruction: str = "",
         unique_id: str = "",
     ):
         try:
@@ -1934,17 +2060,30 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
             # 智能种子控制
             if seed > 0:
                 generation_config["seed"] = seed
-            
+
+            # 🛡️ 获取安全设置
+            safety_settings = get_safety_settings(safety_level)
+            if safety_settings:
+                _log_info(f"🛡️ 使用安全级别: {safety_level}")
+
+            # 🎯 获取系统指令
+            system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+            if system_instruction:
+                _log_info(f"🎯 使用系统指令: {system_instruction[:100]}...")
+
             # 准备内容
             content_parts = [{"text": enhanced_prompt}]
             # 注意：文本生成图像不需要输入图像
             _log_info(f"🔍 调试：content_parts结构: {[part.get('text', 'IMAGE_DATA') if 'text' in part else 'IMAGE_DATA' for part in content_parts]}")
-            
+
             # 使用REST API调用
             _log_info(f"🎨 使用模型 {model} 生成图像...")
             _log_info(f"📝 提示词: {enhanced_prompt[:100]}...")
-            
-            response_json = generate_with_priority_api(api_key, model, content_parts, generation_config, proxy=proxy, base_url=None)
+
+            response_json = generate_with_priority_api(api_key, model, content_parts, generation_config,
+                                                      safety_settings=safety_settings,
+                                                      system_instruction=system_instruction,
+                                                      proxy=proxy, base_url=None)
             
             # 处理响应
             raw_text = extract_text_from_response(response_json)
@@ -2152,12 +2291,29 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                     "multiline": True,
                     "placeholder": "自定义添加和特殊要求"
                 }),
+
+                # 🛡️ 安全设置
+                "safety_level": (["default", "strict", "moderate", "permissive", "off"], {
+                    "default": "default",
+                    "tooltip": "内容安全过滤级别：default=API默认, strict=严格, moderate=中等, permissive=宽松, off=关闭"
+                }),
+
+                # 🎯 系统指令
+                "system_instruction_preset": (["none", "image_generation", "image_editing", "creative_artist", "technical_expert", "friendly_helper", "professional_photographer"], {
+                    "default": "none",
+                    "tooltip": "系统指令预设模板，用于引导AI的行为和风格"
+                }),
+                "custom_system_instruction": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "placeholder": "自定义系统指令（优先级高于预设）"
+                }),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID"
             }
         }
-    
+
     RETURN_TYPES = ("STRING", "IMAGE")
     RETURN_NAMES = ("generation_text", "generated_image")
     FUNCTION = "transform_image"
@@ -2186,6 +2342,9 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         max_output_tokens,
         seed,
         custom_additions: str = "",
+        safety_level: str = "default",
+        system_instruction_preset: str = "none",
+        custom_system_instruction: str = "",
         unique_id: str = "",
     ):
         try:
@@ -2275,16 +2434,29 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
             # 智能种子控制
             if seed > 0:
                 generation_config["seed"] = seed
-            
+
+            # 🛡️ 获取安全设置
+            safety_settings = get_safety_settings(safety_level)
+            if safety_settings:
+                _log_info(f"🛡️ 使用安全级别: {safety_level}")
+
+            # 🎯 获取系统指令
+            system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+            if system_instruction:
+                _log_info(f"🎯 使用系统指令: {system_instruction[:100]}...")
+
             # 准备内容 - 文本 + 图像
             content_parts = [{"text": enhanced_prompt}]
             content_parts.extend(prepare_media_content(image=image))
-            
+
             # 使用优先API调用
             _log_info(f"🖼️ 使用模型 {model} 进行图像转换...")
             _log_info(f"📝 转换指令: {enhanced_prompt[:100]}...")
-            
-            response_json = generate_with_priority_api(api_key, model, content_parts, generation_config, proxy=proxy, base_url=None)
+
+            response_json = generate_with_priority_api(api_key, model, content_parts, generation_config,
+                                                      safety_settings=safety_settings,
+                                                      system_instruction=system_instruction,
+                                                      proxy=proxy, base_url=None)
             
             # 处理响应
             raw_text = extract_text_from_response(response_json)
@@ -2460,18 +2632,35 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
             "optional": {
                 "image": ("IMAGE",),
                 "audio": ("AUDIO",),
-                
+
                 # ✨ 自定义指令组
                 "custom_additions": ("STRING", {
                     "default": "",
                     "multiline": True,
                     "placeholder": "自定义分析要求和特殊指令"
                 }),
+
+                # 🛡️ 安全设置
+                "safety_level": (["default", "strict", "moderate", "permissive", "off"], {
+                    "default": "default",
+                    "tooltip": "内容安全过滤级别：default=API默认, strict=严格, moderate=中等, permissive=宽松, off=关闭"
+                }),
+
+                # 🎯 系统指令
+                "system_instruction_preset": (["none", "image_generation", "creative_artist", "technical_expert", "friendly_helper", "professional_photographer"], {
+                    "default": "none",
+                    "tooltip": "系统指令预设模板，用于引导AI的行为和风格"
+                }),
+                "custom_system_instruction": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "placeholder": "自定义系统指令（优先级高于预设）"
+                }),
             },
         }
-    
 
-    
+
+
     def analyze_multimodal(
         self,
         api_key,
@@ -2489,6 +2678,9 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
         image=None,
         audio=None,
         custom_additions="",
+        safety_level="default",
+        system_instruction_preset="none",
+        custom_system_instruction="",
     ):
         try:
             # 如果用户没有输入API密钥，自动从配置文件获取
@@ -2522,18 +2714,30 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
             
             if seed > 0:
                 generation_config["seed"] = seed
-            
 
-            
+            # 🛡️ 获取安全设置
+            safety_settings = get_safety_settings(safety_level)
+            if safety_settings:
+                _log_info(f"🛡️ 使用安全级别: {safety_level}")
+
+            # 🎯 获取系统指令
+            system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+            if system_instruction:
+                _log_info(f"🎯 使用系统指令: {system_instruction[:100]}...")
+
+
             # 准备内容 - 文本 + 多媒体
             content_parts = [{"text": prompt.strip()}]
             content_parts.extend(prepare_media_content(image=image, audio=audio))
-            
+
             # 使用REST API调用
             _log_info(f"🔍 使用模型 {model} 进行多模态分析...")
             _log_info(f"📝 分析提示: {prompt[:100]}...")
-            
-            response_json = generate_with_priority_api(api_key, model, content_parts, generation_config, proxy=proxy)
+
+            response_json = generate_with_priority_api(api_key, model, content_parts, generation_config,
+                                                      safety_settings=safety_settings,
+                                                      system_instruction=system_instruction,
+                                                      proxy=proxy)
             
             # 提取文本响应
             generated_text = extract_text_from_response(response_json)
@@ -2648,19 +2852,36 @@ class GeminiBananaMultiImageEditNode:
                 "image2": ("IMAGE",),
                 "image3": ("IMAGE",),
                 "image4": ("IMAGE",),
-                
+
                 # ✨ 自定义指令组
                 "custom_additions": ("STRING", {
                     "default": "",
                     "multiline": True,
                     "placeholder": "自定义添加和特殊要求"
                 }),
+
+                # 🛡️ 安全设置
+                "safety_level": (["default", "strict", "moderate", "permissive", "off"], {
+                    "default": "default",
+                    "tooltip": "内容安全过滤级别：default=API默认, strict=严格, moderate=中等, permissive=宽松, off=关闭"
+                }),
+
+                # 🎯 系统指令
+                "system_instruction_preset": (["none", "image_generation", "image_editing", "creative_artist", "technical_expert", "friendly_helper", "professional_photographer"], {
+                    "default": "none",
+                    "tooltip": "系统指令预设模板，用于引导AI的行为和风格"
+                }),
+                "custom_system_instruction": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "placeholder": "自定义系统指令（优先级高于预设）"
+                }),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID"
             }
         }
-    
+
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("edited_image", "response_text")
     FUNCTION = "edit_multiple_images"
@@ -2701,7 +2922,9 @@ class GeminiBananaMultiImageEditNode:
                            upscale_factor: str, gigapixel_model: str, quality: str, style: str, detail_level: str,
                            camera_control: str, lighting_control: str, template_selection: str, temperature: float, top_p: float,
                            top_k: int, max_output_tokens: int, seed: int, post_generation_control: str,
-                           image1=None, image2=None, image3=None, image4=None, custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
+                           image1=None, image2=None, image3=None, image4=None, custom_additions: str = "",
+                           safety_level: str = "default", system_instruction_preset: str = "none",
+                           custom_system_instruction: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用 Gemini API 进行多图像编辑"""
 
         # 如果用户没有输入API密钥，自动从配置文件获取
@@ -2863,34 +3086,54 @@ Execute the image editing task now and return the generated image."""
         if seed and seed > 0:
             generation_config["seed"] = seed
 
+        # 🛡️ 获取安全设置
+        safety_settings = get_safety_settings(safety_level)
+        if safety_settings:
+            print(f"🛡️ 使用安全级别: {safety_level}")
+
+        # 🎯 获取系统指令
+        system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+        if system_instruction:
+            print(f"🎯 使用系统指令: {system_instruction[:100]}...")
+
         request_data = {
             "contents": [{
                 "parts": content
             }],
             "generationConfig": generation_config
         }
-        
+
+        # 添加安全设置到请求数据
+        if safety_settings:
+            request_data["safetySettings"] = safety_settings
+
+        # 添加系统指令到请求数据
+        if system_instruction:
+            request_data["system_instruction"] = {
+                "parts": [{"text": system_instruction}]
+            }
+
         # 设置请求头
         headers = {
             "Content-Type": "application/json",
             "x-goog-api-key": api_key.strip()
         }
-        
+
         # 智能重试机制
         max_retries = 5
         timeout = 120
-        
+
         for attempt in range(max_retries):
             try:
                 print(f"🖼️ 正在编辑图片... (尝试 {attempt + 1}/{max_retries})")
                 print(f"📝 编辑指令: {enhanced_prompt[:100]}...")
                 print(f"🔗 使用模型: {model}")
-                
+
                 # 使用优先API调用
                 result = generate_with_priority_api_direct(
-                    api_key, 
-                    model, 
-                    request_data, 
+                    api_key,
+                    model,
+                    request_data,
                     max_retries=1,  # 在重试循环中只尝试一次
                     proxy=None,
                     base_url=get_gemini_banana_config().get('base_url', 'https://generativelanguage.googleapis.com')

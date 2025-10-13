@@ -41,7 +41,6 @@ def _models_dir() -> str:
 	# 定位到 ComfyUI 根目录，再进入 models/upscale_models
 	root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 	dir_path = os.path.join(root, 'models', 'upscale_models')
-	print(f"[Upscale] 模型目录: {dir_path}")
 	return dir_path
 
 
@@ -50,10 +49,7 @@ def _exists(*names: str) -> Optional[str]:
 	for n in names:
 		p = os.path.join(base, n)
 		if os.path.exists(p):
-			print(f"[Upscale] 找到模型: {p}")
 			return p
-		else:
-			print(f"[Upscale] 未找到: {p}")
 	return None
 
 

@@ -1618,7 +1618,9 @@ def format_error_message(error):
     """Format error message"""
     return str(error)
 
-def generate_with_official_api(api_key, model, content_parts, generation_config, max_retries=5, proxy=None):
+def generate_with_official_api(api_key, model, content_parts, generation_config,
+                               safety_settings=None, system_instruction=None,
+                               max_retries=5, proxy=None):
     """使用官方google.genai库调用API"""
     try:
         # 尝试导入官方库
@@ -1653,6 +1655,19 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         # 处理seed
         if 'seed' in generation_config and generation_config['seed'] > 0:
             config_params['seed'] = generation_config['seed']
+
+        # 🛡️ 处理安全设置
+        if safety_settings:
+            config_params['safety_settings'] = [
+                types.SafetySetting(
+                    category=setting['category'],
+                    threshold=setting['threshold']
+                ) for setting in safety_settings
+            ]
+
+        # 🎯 处理系统指令
+        if system_instruction:
+            config_params['system_instruction'] = system_instruction
 
         official_config = types.GenerateContentConfig(**config_params)
 
@@ -1738,7 +1753,9 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         print(f"🔍 详细错误信息: {traceback.format_exc()}")
         return None
 
-def generate_with_rest_api(api_key, model, content_parts, generation_config, max_retries=5, proxy=None, base_url=None):
+def generate_with_rest_api(api_key, model, content_parts, generation_config,
+                          safety_settings=None, system_instruction=None,
+                          max_retries=5, proxy=None, base_url=None):
     """使用REST API调用Gemini"""
     import requests
 
@@ -1752,6 +1769,16 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config, max
         }],
         "generationConfig": generation_config
     }
+
+    # 🛡️ 添加安全设置
+    if safety_settings:
+        request_data["safetySettings"] = safety_settings
+
+    # 🎯 添加系统指令
+    if system_instruction:
+        request_data["system_instruction"] = {
+            "parts": [{"text": system_instruction}]
+        }
 
     # 设置请求头
     headers = {
@@ -1797,12 +1824,15 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config, max
 
     return None
 
-def generate_with_priority_api(api_key, model, content_parts, generation_config, max_retries=5, proxy=None, base_url=None):
+def generate_with_priority_api(api_key, model, content_parts, generation_config,
+                               safety_settings=None, system_instruction=None,
+                               max_retries=5, proxy=None, base_url=None):
     """优先使用官方API，失败时回退到REST API"""
 
     # 首先尝试官方API
     print("🎯 优先尝试官方google.genai API")
-    result = generate_with_official_api(api_key, model, content_parts, generation_config, max_retries, proxy)
+    result = generate_with_official_api(api_key, model, content_parts, generation_config,
+                                       safety_settings, system_instruction, max_retries, proxy)
 
     if result is not None:
         print("✅ 官方API调用成功")
@@ -1810,7 +1840,8 @@ def generate_with_priority_api(api_key, model, content_parts, generation_config,
 
     # 官方API失败，回退到REST API
     print("🔄 官方API失败，回退到REST API")
-    return generate_with_rest_api(api_key, model, content_parts, generation_config, max_retries, proxy, base_url)
+    return generate_with_rest_api(api_key, model, content_parts, generation_config,
+                                  safety_settings, system_instruction, max_retries, proxy, base_url)
 
 def extract_text_from_response(response_json):
     """从响应中提取文本内容"""
@@ -1915,6 +1946,12 @@ def _normalize_model_name(model: str) -> str:
 def _is_comfly_base(url: str) -> bool:
     try:
         return isinstance(url, str) and ("ai.comfly.chat" in url or "comfly.chat" in url)
+    except Exception:
+        return False
+
+def _is_kuai_base(url: str) -> bool:
+    try:
+        return isinstance(url, str) and ("kuai.host" in url or "api.kuai.host" in url)
     except Exception:
         return False
 
@@ -2899,6 +2936,160 @@ def process_openrouter_stream(response) -> str:
         print(f"❌ 流式响应处理失败: {e}")
         return accumulated_content
 
+def normalize_response_modalities(modalities):
+    """
+    标准化 response_modalities 参数
+    支持多种输入格式，统一转换为API接受的标准格式（首字母大写）
+
+    Args:
+        modalities: 可以是以下格式之一：
+            - 字符串: "IMAGE_ONLY", "TEXT_AND_IMAGE"
+            - 列表: ["TEXT", "IMAGE"], ["Text", "Image"], ["text", "image"]
+
+    Returns:
+        标准化后的列表，格式为 ["Text", "Image"] 或 ["Image"]
+
+    Examples:
+        >>> normalize_response_modalities("IMAGE_ONLY")
+        ["Image"]
+        >>> normalize_response_modalities(["TEXT", "IMAGE"])
+        ["Text", "Image"]
+        >>> normalize_response_modalities(["text", "image"])
+        ["Text", "Image"]
+    """
+    # 处理字符串输入
+    if isinstance(modalities, str):
+        if modalities.upper() == "IMAGE_ONLY":
+            return ["Image"]
+        elif modalities.upper() == "TEXT_AND_IMAGE":
+            return ["Text", "Image"]
+        else:
+            # 默认返回文本+图像
+            return ["Text", "Image"]
+
+    # 处理列表输入，统一大小写为首字母大写
+    if isinstance(modalities, list):
+        # 如果是空列表，返回默认值
+        if not modalities:
+            return ["Text", "Image"]
+
+        normalized = []
+        for mod in modalities:
+            if isinstance(mod, str):
+                mod_upper = mod.upper()
+                if mod_upper == "TEXT":
+                    normalized.append("Text")
+                elif mod_upper == "IMAGE":
+                    normalized.append("Image")
+                else:
+                    # 保持原样，但首字母大写
+                    normalized.append(mod.capitalize())
+            else:
+                normalized.append(mod)
+        return normalized
+
+    # 默认返回文本+图像
+    return ["Text", "Image"]
+
+# ========================================
+# 安全设置预设配置
+# ========================================
+
+SAFETY_PRESETS = {
+    "default": None,  # 使用API默认设置
+    "strict": [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_LOW_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_LOW_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_LOW_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_LOW_AND_ABOVE"}
+    ],
+    "moderate": [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"}
+    ],
+    "permissive": [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"}
+    ],
+    "off": [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
+    ]
+}
+
+# ========================================
+# 系统指令预设模板
+# ========================================
+
+SYSTEM_INSTRUCTION_PRESETS = {
+    "none": "",
+    "image_generation": (
+        "You are an AI image generation assistant. Enhance user prompts with detailed descriptions "
+        "including composition, lighting, color palette, mood, and artistic style. "
+        "Be creative and help users achieve their vision."
+    ),
+    "image_editing": (
+        "You are an AI image editing assistant. Understand user intentions and provide precise "
+        "editing instructions. Focus on maintaining image quality and coherence. "
+        "Suggest improvements when appropriate."
+    ),
+    "creative_artist": (
+        "You are a creative AI artist. Be imaginative, artistic, and help users explore creative "
+        "possibilities. Provide vivid and inspiring descriptions. Think outside the box and "
+        "suggest unique artistic approaches."
+    ),
+    "technical_expert": (
+        "You are a technical AI assistant specialized in image generation. Be precise, detailed, "
+        "and focus on technical accuracy. Provide specific parameters, settings, and technical "
+        "guidance for optimal results."
+    ),
+    "friendly_helper": (
+        "You are a friendly and helpful AI assistant. Be encouraging, positive, and supportive. "
+        "Make the creative process enjoyable. Explain things clearly and patiently."
+    ),
+    "professional_photographer": (
+        "You are a professional photographer AI assistant. Provide expert advice on composition, "
+        "lighting, camera angles, and visual storytelling. Help users create professional-quality images."
+    )
+}
+
+def get_safety_settings(safety_level: str):
+    """
+    获取安全设置配置
+
+    Args:
+        safety_level: 安全级别 ("default", "strict", "moderate", "permissive", "off")
+
+    Returns:
+        安全设置列表或None
+    """
+    return SAFETY_PRESETS.get(safety_level, None)
+
+def get_system_instruction(preset: str, custom_instruction: str = ""):
+    """
+    获取系统指令
+
+    Args:
+        preset: 预设名称
+        custom_instruction: 自定义指令（优先级更高）
+
+    Returns:
+        系统指令文本或None
+    """
+    # 如果有自定义指令，优先使用
+    if custom_instruction and custom_instruction.strip():
+        return custom_instruction.strip()
+
+    # 否则使用预设
+    instruction = SYSTEM_INSTRUCTION_PRESETS.get(preset, "")
+    return instruction if instruction else None
+
 def validate_api_url(url):
     """验证API URL格式并自动补全"""
     if not url or not url.strip():
@@ -2965,7 +3156,15 @@ def build_api_url(base_url, model, api_format="gemini"):
         else:
             # 其他Comfly服务使用标准Gemini API格式
             return f"{base_url_clean}/v1/models/{normalized_model}:generateContent"
-    
+
+    # Kuai API镜像站特殊处理 - 使用标准Gemini API格式
+    if _is_kuai_base(base_url):
+        # 移除base_url末尾的/v1（如果有）
+        base_url_clean = base_url.rstrip('/v1').rstrip('/')
+
+        # Kuai API使用标准Gemini API格式
+        return f"{base_url_clean}/v1beta/models/{normalized_model}:generateContent"
+
     # API4GPT镜像站特殊处理
     if "www.api4gpt.com" in base_url:
         # API4GPT的URL构建在call_api4gpt_api函数中处理
@@ -3668,6 +3867,23 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "multiline": True,
                     "placeholder": "自定义添加和特殊要求"
                 }),
+
+                # 🛡️ 安全设置
+                "safety_level": (["default", "strict", "moderate", "permissive", "off"], {
+                    "default": "default",
+                    "tooltip": "内容安全过滤级别：default=API默认, strict=严格, moderate=中等, permissive=宽松, off=关闭"
+                }),
+
+                # 🎯 系统指令
+                "system_instruction_preset": (["none", "image_generation", "creative_artist", "technical_expert", "friendly_helper", "professional_photographer"], {
+                    "default": "none",
+                    "tooltip": "系统指令预设模板，用于引导AI的行为和风格"
+                }),
+                "custom_system_instruction": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "placeholder": "自定义系统指令（优先级高于预设）"
+                }),
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
         }
@@ -3729,7 +3945,11 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                       quality: str, style: str, detail_level: str, camera_control: str, lighting_control: str,
                       template_selection: str, temperature: float, top_p: float, top_k: int,
                       max_output_tokens: int, seed: int,
-                      custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
+                      custom_additions: str = "",
+                      safety_level: str = "default",
+                      system_instruction_preset: str = "none",
+                      custom_system_instruction: str = "",
+                      unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API生成图片"""
 
         # 🔧 确保requests模块可用
@@ -3810,11 +4030,12 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
         full_url = build_api_url(api_url, model)
         print(f"🌐 使用API地址: {full_url}")
         
-        # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → T8 → API4GPT → OpenRouter → OpenAI → custom
+        # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → custom
         is_nano_banana_official = mirror_site == "nano-banana官方"
         is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url
         is_api4gpt_mirror = "api4gpt.com" in api_url or "[API4GPT]" in model
         is_comfly_mirror = _is_comfly_base(api_url)
+        is_kuai_mirror = _is_kuai_base(api_url)
         is_openrouter_mirror = "openrouter.ai" in api_url or "[OpenRouter]" in model
         is_openai_mirror = "api.openai.com" in api_url or site_config.get("api_format") == "openai"
 
@@ -3872,6 +4093,16 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             if seed and seed > 0:
                 generation_config["seed"] = seed
 
+            # 🛡️ 添加安全设置
+            safety_settings = get_safety_settings(safety_level)
+            if safety_settings:
+                print(f"🛡️ 使用安全级别: {safety_level}")
+
+            # 🎯 添加系统指令
+            system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+            if system_instruction:
+                print(f"🎯 使用系统指令: {system_instruction[:100]}...")
+
             try:
                 # 使用优先API调用（官方API优先，失败时回退到REST API）
                 response_json = generate_with_priority_api(
@@ -3879,6 +4110,8 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     model=_normalize_model_name(model),
                     content_parts=content_parts,
                     generation_config=generation_config,
+                    safety_settings=safety_settings,
+                    system_instruction=system_instruction,
                     max_retries=5,
                     proxy=proxy
                 )
@@ -4133,7 +4366,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "topP": top_p,
                     "topK": top_k,
                     "maxOutputTokens": max_output_tokens,
-                    "responseModalities": ["TEXT", "IMAGE"]
+                    "responseModalities": normalize_response_modalities(["Text", "Image"])
                 }
 
                 # 📐 Aspect Ratio控制
@@ -4160,7 +4393,54 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "Authorization": f"Bearer {api_key.strip()}"
                 }
 
-        # 3. T8镜像站处理
+        # 3. Kuai API镜像站处理
+        elif is_kuai_mirror:
+            print("🔗 检测到Kuai API镜像站，使用Gemini原生API格式")
+
+            # 规范化模型名称（去除标记）
+            normalized_model = _normalize_model_name(model)
+
+            generation_config = {
+                "temperature": temperature,
+                "topP": top_p,
+                "topK": top_k,
+                "maxOutputTokens": max_output_tokens,
+                "responseModalities": normalize_response_modalities(["Text", "Image"])
+            }
+
+            # 📐 Aspect Ratio控制
+            if aspect_ratio and aspect_ratio != "1:1":
+                generation_config["imageConfig"] = {
+                    "aspectRatio": aspect_ratio
+                }
+                print(f"📐 设置宽高比: {aspect_ratio}")
+
+            # 添加seed（如果有效）
+            if seed and seed > 0:
+                generation_config["seed"] = seed
+
+            request_data = {
+                "model": normalized_model,
+                "contents": [{
+                    "parts": [{"text": enhanced_prompt}]
+                }],
+                "generationConfig": generation_config
+            }
+
+            # Kuai API使用URL参数传递API Key，而不是Header
+            # 在full_url后添加?key=参数
+            if "?" in full_url:
+                full_url = f"{full_url}&key={api_key.strip()}"
+            else:
+                full_url = f"{full_url}?key={api_key.strip()}"
+
+            print(f"🔑 Kuai API使用URL参数传递API Key")
+
+            headers = {
+                "Content-Type": "application/json"
+            }
+
+        # 4. T8镜像站处理
         elif is_t8_mirror:
             print("🔗 检测到T8镜像站，使用T8 API格式")
 
@@ -4313,7 +4593,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 "topP": top_p,
                 "topK": top_k,
                 "maxOutputTokens": max_output_tokens,
-                "responseModalities": ["TEXT", "IMAGE"]
+                "responseModalities": normalize_response_modalities(["Text", "Image"])
             }
 
             # 📐 Aspect Ratio控制
@@ -4836,10 +5116,27 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "multiline": True,
                     "placeholder": "自定义添加和特殊要求"
                 }),
+
+                # 🛡️ 安全设置
+                "safety_level": (["default", "strict", "moderate", "permissive", "off"], {
+                    "default": "default",
+                    "tooltip": "内容安全过滤级别：default=API默认, strict=严格, moderate=中等, permissive=宽松, off=关闭"
+                }),
+
+                # 🎯 系统指令
+                "system_instruction_preset": (["none", "image_editing", "creative_artist", "technical_expert", "friendly_helper", "professional_photographer"], {
+                    "default": "none",
+                    "tooltip": "系统指令预设模板，用于引导AI的行为和风格"
+                }),
+                "custom_system_instruction": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "placeholder": "自定义系统指令（优先级高于预设）"
+                }),
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
         }
-    
+
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("edited_image", "response_text")
     FUNCTION = "edit_image"
@@ -4896,7 +5193,11 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     proxy: str, aspect_ratio: str, response_modality: str, quality: str, style: str,
                     detail_level: str, camera_control: str, lighting_control: str, template_selection: str,
                     upscale_factor: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
-                    custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
+                    custom_additions: str = "",
+                    safety_level: str = "default",
+                    system_instruction_preset: str = "none",
+                    custom_system_instruction: str = "",
+                    unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API编辑图片"""
 
         # 🔧 确保requests模块可用
@@ -4986,11 +5287,12 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             else:
                 print("🔌 未指定代理（系统无代理）")
         
-        # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → T8 → API4GPT → OpenRouter → OpenAI → custom
+        # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → custom
         is_nano_banana_official = mirror_site == "nano-banana官方"
         is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url
         is_api4gpt_mirror = "api4gpt.com" in api_url or "[API4GPT]" in model
         is_comfly_mirror = _is_comfly_base(api_url)
+        is_kuai_mirror = _is_kuai_base(api_url)
         is_openrouter_mirror = "openrouter.ai" in api_url or "[OpenRouter]" in model
         is_openai_mirror = "api.openai.com" in api_url or site_config.get("api_format") == "openai"
 
@@ -5324,7 +5626,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "topP": top_p,
                     "topK": top_k,
                     "maxOutputTokens": max_output_tokens,
-                    "responseModalities": ["TEXT", "IMAGE"]
+                    "responseModalities": normalize_response_modalities(["Text", "Image"])
                 }
 
                 # 📐 Aspect Ratio控制
@@ -5358,8 +5660,62 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key.strip()}"
             }
-                
-        # 3. T8镜像站处理
+
+        # 3. Kuai API镜像站处理
+        elif is_kuai_mirror:
+            print("🔗 检测到Kuai API镜像站，使用Gemini原生API格式")
+
+            # 规范化模型名称（去除标记）
+            normalized_model = _normalize_model_name(model)
+
+            generation_config = {
+                "temperature": temperature,
+                "topP": top_p,
+                "topK": top_k,
+                "maxOutputTokens": max_output_tokens,
+                "responseModalities": normalize_response_modalities(["Text", "Image"])
+            }
+
+            # 📐 Aspect Ratio控制
+            if aspect_ratio and aspect_ratio != "1:1":
+                generation_config["imageConfig"] = {
+                    "aspectRatio": aspect_ratio
+                }
+                print(f"📐 设置宽高比: {aspect_ratio}")
+
+            # 添加seed（如果有效）
+            if seed and seed > 0:
+                generation_config["seed"] = seed
+
+            request_data = {
+                "model": normalized_model,
+                "contents": [{
+                    "parts": [
+                        {"text": enhanced_prompt},
+                        {
+                            "inline_data": {
+                                "mime_type": "image/jpeg",
+                                "data": image_base64
+                            }
+                        }
+                    ]
+                }],
+                "generationConfig": generation_config
+            }
+
+            # Kuai API使用URL参数传递API Key
+            if "?" in full_url:
+                full_url = f"{full_url}&key={api_key.strip()}"
+            else:
+                full_url = f"{full_url}?key={api_key.strip()}"
+
+            print(f"🔑 Kuai API使用URL参数传递API Key")
+
+            headers = {
+                "Content-Type": "application/json"
+            }
+
+        # 4. T8镜像站处理
         elif is_t8_mirror:
             print("🔗 检测到T8镜像站，使用T8 API格式")
 
@@ -5521,7 +5877,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "topP": top_p,
                     "topK": top_k,
                     "maxOutputTokens": max_output_tokens,
-                    "responseModalities": ["TEXT", "IMAGE"]
+                    "responseModalities": normalize_response_modalities(["Text", "Image"])
                 }
 
                 # 📐 Aspect Ratio控制
@@ -5767,7 +6123,7 @@ Execute the image editing task now and return the edited image."""
                     "topP": top_p,
                     "topK": top_k,
                     "maxOutputTokens": max_output_tokens,
-                    "responseModalities": ["TEXT", "IMAGE"],
+                    "responseModalities": normalize_response_modalities(["Text", "Image"]),
                     "seed": seed if seed and seed > 0 else None
                 }
             }
@@ -6252,6 +6608,23 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "multiline": True,
                     "placeholder": "自定义添加和特殊要求"
                 }),
+
+                # 🛡️ 安全设置
+                "safety_level": (["default", "strict", "moderate", "permissive", "off"], {
+                    "default": "default",
+                    "tooltip": "内容安全过滤级别：default=API默认, strict=严格, moderate=中等, permissive=宽松, off=关闭"
+                }),
+
+                # 🎯 系统指令
+                "system_instruction_preset": (["none", "image_editing", "creative_artist", "technical_expert", "friendly_helper", "professional_photographer"], {
+                    "default": "none",
+                    "tooltip": "系统指令预设模板，用于引导AI的行为和风格"
+                }),
+                "custom_system_instruction": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "placeholder": "自定义系统指令（优先级高于预设）"
+                }),
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
         }
@@ -6304,7 +6677,12 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                            proxy: str, aspect_ratio: str, response_modality: str, quality: str, style: str,
                            detail_level: str, camera_control: str, lighting_control: str, template_selection: str,
                            upscale_factor: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
-                           image1=None, image2=None, image3=None, image4=None, custom_additions: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
+                           image1=None, image2=None, image3=None, image4=None,
+                           custom_additions: str = "",
+                           safety_level: str = "default",
+                           system_instruction_preset: str = "none",
+                           custom_system_instruction: str = "",
+                           unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API进行多图像编辑"""
 
         # 🔧 确保requests模块可用
@@ -6503,11 +6881,12 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             else:
                 print("🔌 未指定代理（系统无代理）")
         
-        # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → T8 → API4GPT → OpenRouter → OpenAI → custom
+        # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → custom
         is_nano_banana_official = mirror_site == "nano-banana官方"
         is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url
         is_api4gpt_mirror = "api4gpt.com" in api_url or "[API4GPT]" in model
         is_comfly_mirror = _is_comfly_base(api_url)
+        is_kuai_mirror = _is_kuai_base(api_url)
         is_openrouter_mirror = "openrouter.ai" in api_url or "[OpenRouter]" in model
         is_openai_mirror = "api.openai.com" in api_url or site_config.get("api_format") == "openai"
 
@@ -6821,7 +7200,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "topP": top_p,
                     "topK": top_k,
                     "maxOutputTokens": max_output_tokens,
-                    "responseModalities": ["TEXT", "IMAGE"]
+                    "responseModalities": normalize_response_modalities(["Text", "Image"])
                 }
 
                 # 📐 Aspect Ratio控制
@@ -6847,8 +7226,54 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {api_key.strip()}"
                 }
-                
-        # 3. T8镜像站处理
+
+        # 3. Kuai API镜像站处理
+        elif is_kuai_mirror:
+            print("🔗 检测到Kuai API镜像站，使用Gemini原生API格式")
+
+            # 规范化模型名称（去除标记）
+            normalized_model = _normalize_model_name(model)
+
+            generation_config = {
+                "temperature": temperature,
+                "topP": top_p,
+                "topK": top_k,
+                "maxOutputTokens": max_output_tokens,
+                "responseModalities": normalize_response_modalities(["Text", "Image"])
+            }
+
+            # 📐 Aspect Ratio控制
+            if aspect_ratio and aspect_ratio != "1:1":
+                generation_config["imageConfig"] = {
+                    "aspectRatio": aspect_ratio
+                }
+                print(f"📐 设置宽高比: {aspect_ratio}")
+
+            # 添加seed（如果有效）
+            if seed and seed > 0:
+                generation_config["seed"] = seed
+
+            request_data = {
+                "model": normalized_model,
+                "contents": [{
+                    "parts": [{"text": full_prompt}] + all_image_parts
+                }],
+                "generationConfig": generation_config
+            }
+
+            # Kuai API使用URL参数传递API Key
+            if "?" in full_url:
+                full_url = f"{full_url}&key={api_key.strip()}"
+            else:
+                full_url = f"{full_url}?key={api_key.strip()}"
+
+            print(f"🔑 Kuai API使用URL参数传递API Key")
+
+            headers = {
+                "Content-Type": "application/json"
+            }
+
+        # 4. T8镜像站处理
         elif is_t8_mirror:
             print("🔗 检测到T8镜像站，使用T8 API格式")
 
@@ -7007,7 +7432,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "topP": top_p,
                     "topK": top_k,
                     "maxOutputTokens": max_output_tokens,
-                    "responseModalities": ["TEXT", "IMAGE"]
+                    "responseModalities": normalize_response_modalities(["Text", "Image"])
                 }
 
                 # 📐 Aspect Ratio控制
@@ -7337,7 +7762,7 @@ Execute the multi-image editing task now and return the edited image."""
                     "topP": top_p,
                     "topK": top_k,
                     "maxOutputTokens": max_output_tokens,
-                    "responseModalities": ["TEXT", "IMAGE"],
+                    "responseModalities": normalize_response_modalities(["Text", "Image"]),
                     "seed": seed if seed and seed > 0 else None
                 }
             }

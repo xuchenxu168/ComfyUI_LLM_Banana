@@ -120,39 +120,8 @@ def load_modules():
     except Exception as e:
         print(f"[LLM Prompt] Gemini Banana Mirror module loading failed: {e}")
 
-    # Try to import OpenRouter Banana module
-    try:
-        # Try relative import
-        try:
-            from . import openrouter_banana
-        except (ImportError, ValueError):
-            # If relative import fails, try absolute import
-            openrouter_banana = importlib.import_module('openrouter_banana')
-            
-        if hasattr(openrouter_banana, 'NODE_CLASS_MAPPINGS'):
-            NODE_CLASS_MAPPINGS.update(openrouter_banana.NODE_CLASS_MAPPINGS)
-        if hasattr(openrouter_banana, 'NODE_DISPLAY_NAME_MAPPINGS'):
-            NODE_DISPLAY_NAME_MAPPINGS.update(openrouter_banana.NODE_DISPLAY_NAME_MAPPINGS)
-        print("[LLM Prompt] OpenRouter Banana module loaded successfully")
-    except Exception as e:
-        print(f"[LLM Prompt] OpenRouter Banana module loading failed: {e}")
-
-    # Try to import Comfly Nano Banana module
-    try:
-        # Try relative import
-        try:
-            from . import comfly_nano_banana
-        except (ImportError, ValueError):
-            # If relative import fails, try absolute import
-            comfly_nano_banana = importlib.import_module('comfly_nano_banana')
-            
-        if hasattr(comfly_nano_banana, 'NODE_CLASS_MAPPINGS'):
-            NODE_CLASS_MAPPINGS.update(comfly_nano_banana.NODE_CLASS_MAPPINGS)
-        if hasattr(comfly_nano_banana, 'NODE_DISPLAY_NAME_MAPPINGS'):
-            NODE_DISPLAY_NAME_MAPPINGS.update(comfly_nano_banana.NODE_DISPLAY_NAME_MAPPINGS)
-        print("[LLM Prompt] Comfly Nano Banana module loaded successfully")
-    except Exception as e:
-        print(f"[LLM Prompt] Comfly Nano Banana module loading failed: {e}")
+    # Note: openrouter_banana and comfly_nano_banana modules are deprecated
+    # Their functionality has been integrated into gemini_banana_mirror.py
 
 
 
@@ -161,6 +130,4 @@ def load_modules():
 # Load modules immediately
 load_modules()
 
-print("[LLM Agent Assistant] Plugin loading completed!")
-print(f"[LLM Agent Assistant] Registered {len(NODE_CLASS_MAPPINGS)} nodes")
-print(f"[LLM Agent Assistant] Node list: {list(NODE_CLASS_MAPPINGS.keys())}")
+print(f"[LLM Agent Assistant] Plugin loaded successfully ({len(NODE_CLASS_MAPPINGS)} nodes)")
