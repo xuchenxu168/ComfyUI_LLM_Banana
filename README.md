@@ -729,7 +729,7 @@ def _log_warning(message):
 
 ### 💬 WeChat Contact
 
-<img src="https://github.com/xuchenxu168/images/blob/main/%E5%BE%AE%E4%BF%A1%E5%8F%B7.jpg" alt="WeChat QR Code" width="200px" />
+<img src="/image/微信图片_20250620124237.png" alt="WeChat QR Code" width="200px" />
 
 *Scan to add WeChat 扫码添加微信*
 
@@ -740,7 +740,7 @@ def _log_warning(message):
 
 ### ☕ Support Development
 
-<img src="https://github.com/xuchenxu168/images/blob/main/%E6%94%B6%E6%AC%BE%E7%A0%81.jpg" alt="Buy Me a Coffee" width="200px" />
+<img src="/image/微信图片_20250620124237.png" alt="Buy Me a Coffee" width="200px" />
 
 *Scan to buy me a coffee 扫码请我喝咖啡*
 
@@ -852,4 +852,3 @@ def _log_warning(message):
 **💡 提示**: 如果您觉得这个项目有用，请给我们一个⭐星标支持！
 
 <img src="/image/微信图片_20250620124237.png" alt="ComfyUI LLM Banana" width="200px" />
-

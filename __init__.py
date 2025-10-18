@@ -10,6 +10,9 @@ import os
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
+# 设置Web目录以加载前端资源
+WEB_DIRECTORY = "./web"
+
 # Delay module import to avoid startup import errors
 def load_modules():
     global NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS
@@ -131,3 +134,6 @@ def load_modules():
 load_modules()
 
 print(f"[LLM Agent Assistant] Plugin loaded successfully ({len(NODE_CLASS_MAPPINGS)} nodes)")
+
+# 导出WEB_DIRECTORY供ComfyUI使用
+__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', 'WEB_DIRECTORY']

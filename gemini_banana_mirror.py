@@ -1780,11 +1780,23 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
             "parts": [{"text": system_instruction}]
         }
 
-    # 设置请求头
-    headers = {
-        "Content-Type": "application/json",
-        "x-goog-api-key": api_key.strip()
-    }
+    # 🔑 根据 base_url 设置不同的认证方式
+    is_aabao = base_url and "aabao" in base_url.lower()
+
+    if is_aabao:
+        # api.aabao 使用 Authorization Bearer 认证
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key.strip()}"
+        }
+        print(f"🔑 REST API 使用 Authorization Bearer 认证（镜像站）")
+    else:
+        # Google 官方使用 x-goog-api-key 认证
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key.strip()
+        }
+        print(f"🔑 REST API 使用 x-goog-api-key 认证（官方）")
 
     # 设置代理
     proxies = None
@@ -4030,7 +4042,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
         full_url = build_api_url(api_url, model)
         print(f"🌐 使用API地址: {full_url}")
         
-        # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → custom
+        # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → Gemini → custom
         is_nano_banana_official = mirror_site == "nano-banana官方"
         is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url
         is_api4gpt_mirror = "api4gpt.com" in api_url or "[API4GPT]" in model
@@ -4038,6 +4050,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
         is_kuai_mirror = _is_kuai_base(api_url)
         is_openrouter_mirror = "openrouter.ai" in api_url or "[OpenRouter]" in model
         is_openai_mirror = "api.openai.com" in api_url or site_config.get("api_format") == "openai"
+        is_gemini_format = site_config.get("api_format") == "gemini"  # 支持通过配置指定 Gemini 格式
 
         # 如果检测到 OpenRouter 模型但 URL 不是 OpenRouter，自动切换到 OpenRouter
         if "[OpenRouter]" in model and "openrouter.ai" not in api_url:
@@ -4057,11 +4070,14 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             is_api4gpt_mirror = True
             print(f"🔄 检测到错误的 API4GPT URL，自动切换到正确的 URL: {api_url}")
 
-        # 按照优先级顺序处理镜像站：nano-banana官方 → Comfly → T8 → API4GPT → OpenRouter → OpenAI → custom
-        
-        # 1. nano-banana官方镜像站处理
-        if is_nano_banana_official:
-            print("🔗 检测到nano-banana官方镜像站，使用Google官方API")
+        # 按照优先级顺序处理镜像站：nano-banana官方/Gemini格式 → Comfly → T8 → API4GPT → OpenRouter → OpenAI → custom
+
+        # 1. nano-banana官方镜像站处理 或 Gemini 原生格式镜像站
+        if is_nano_banana_official or is_gemini_format:
+            if is_nano_banana_official:
+                print("🔗 检测到nano-banana官方镜像站，使用Google官方API")
+            else:
+                print(f"🔗 检测到 Gemini 原生格式镜像站（{mirror_site}），使用 Gemini 原生 API")
 
             # 构建内容部分
             content_parts = [{"text": enhanced_prompt}]
@@ -4083,7 +4099,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
             # 📐 Gemini官方API：Aspect Ratio控制
-            if aspect_ratio and aspect_ratio != "1:1":
+            if aspect_ratio:
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -4104,17 +4120,33 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 print(f"🎯 使用系统指令: {system_instruction[:100]}...")
 
             try:
-                # 使用优先API调用（官方API优先，失败时回退到REST API）
-                response_json = generate_with_priority_api(
-                    api_key=api_key,
-                    model=_normalize_model_name(model),
-                    content_parts=content_parts,
-                    generation_config=generation_config,
-                    safety_settings=safety_settings,
-                    system_instruction=system_instruction,
-                    max_retries=5,
-                    proxy=proxy
-                )
+                # 🔍 判断是否为镜像站（非官方）
+                if is_gemini_format and not is_nano_banana_official:
+                    # 镜像站直接使用 REST API（不尝试官方 SDK）
+                    print("🔗 镜像站使用 REST API 直接调用")
+                    response_json = generate_with_rest_api(
+                        api_key=api_key,
+                        model=_normalize_model_name(model),
+                        content_parts=content_parts,
+                        generation_config=generation_config,
+                        safety_settings=safety_settings,
+                        system_instruction=system_instruction,
+                        max_retries=5,
+                        proxy=proxy,
+                        base_url=api_url  # 使用镜像站 URL
+                    )
+                else:
+                    # nano-banana 官方使用优先API调用（官方API优先，失败时回退到REST API）
+                    response_json = generate_with_priority_api(
+                        api_key=api_key,
+                        model=_normalize_model_name(model),
+                        content_parts=content_parts,
+                        generation_config=generation_config,
+                        safety_settings=safety_settings,
+                        system_instruction=system_instruction,
+                        max_retries=5,
+                        proxy=proxy
+                    )
 
                 if response_json:
                     # 提取生成的图像
@@ -4370,7 +4402,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 }
 
                 # 📐 Aspect Ratio控制
-                if aspect_ratio and aspect_ratio != "1:1":
+                if aspect_ratio:
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -4409,7 +4441,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             }
 
             # 📐 Aspect Ratio控制
-            if aspect_ratio and aspect_ratio != "1:1":
+            if aspect_ratio:
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -4597,7 +4629,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             }
 
             # 📐 Aspect Ratio控制
-            if aspect_ratio and aspect_ratio != "1:1":
+            if aspect_ratio:
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -4730,7 +4762,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             }
 
             # 添加 image_config（包含 aspect_ratio）
-            if aspect_ratio and aspect_ratio != "1:1":
+            if aspect_ratio:
                 request_data["image_config"] = {
                     "aspect_ratio": aspect_ratio
                 }
@@ -4912,8 +4944,14 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 raise ValueError(f"统一请求发送失败: {e}")
 
         else:
-            # 其他镜像站处理
+            # 其他镜像站处理（包括 api.aabao）
             print(f"⚠️ 未知镜像站类型，尝试使用通用API格式")
+
+            # 🔍 检测是否为 api.aabao 镜像站
+            is_aabao = "aabao" in api_url.lower()
+
+            if is_aabao:
+                print(f"🌐 检测到 api.aabao 镜像站，使用 Gemini 原生格式")
 
             # 尝试使用通用格式调用
             try:
@@ -4932,13 +4970,20 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     generation_config["responseModalities"] = ["Text", "Image"]
 
                 # Aspect Ratio控制
-                if aspect_ratio and aspect_ratio != "1:1":
+                if aspect_ratio:
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
+                    print(f"🖼️  设置 aspect ratio: {aspect_ratio}")
 
                 if seed and seed != 0:
                     generation_config["seed"] = seed
+
+                # 🛡️ 添加安全设置
+                safety_settings = get_safety_settings(safety_level)
+
+                # 🎯 添加系统指令
+                system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
 
                 # 构建请求体
                 request_body = {
@@ -4950,22 +4995,53 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "generationConfig": generation_config
                 }
 
-                # 发送请求
-                headers = {
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": api_key
-                }
+                # 添加安全设置
+                if safety_settings:
+                    request_body["safetySettings"] = safety_settings
+
+                # 添加系统指令
+                if system_instruction:
+                    request_body["system_instruction"] = {
+                        "parts": [{"text": system_instruction}]
+                    }
+
+                # 🔑 根据镜像站类型设置不同的认证方式
+                if is_aabao:
+                    # api.aabao (One API 系统) 使用 Authorization Bearer 认证
+                    headers = {
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {api_key}"
+                    }
+                    print(f"🔑 api.aabao 使用 Authorization Bearer 认证")
+                else:
+                    # 其他镜像站使用 x-goog-api-key 认证
+                    headers = {
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": api_key
+                    }
+                    print(f"🔑 使用 x-goog-api-key 认证")
 
                 response = requests.post(
-                    api_url,
+                    full_url,  # 使用完整的 URL 而不是基础 URL
                     headers=headers,
                     json=request_body,
                     timeout=120,
                     verify=False
                 )
 
+                # 🔍 详细的响应调试信息
+                print(f"📥 响应状态码: {response.status_code}")
+                print(f"📥 响应头: {dict(response.headers)}")
+                print(f"📥 响应内容长度: {len(response.content)} 字节")
+                print(f"📥 响应内容前500字符: {response.text[:500]}")
+
                 if response.status_code == 200:
-                    response_json = response.json()
+                    try:
+                        response_json = response.json()
+                    except Exception as json_error:
+                        print(f"❌ JSON 解析失败: {json_error}")
+                        print(f"📄 完整响应内容: {response.text}")
+                        raise Exception(f"API 返回的不是有效的 JSON 格式: {json_error}")
 
                     # 提取生成的图像
                     generated_image = process_generated_image_from_response(response_json)
@@ -4997,6 +5073,9 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     else:
                         raise Exception("未能从响应中提取图像")
                 else:
+                    print(f"❌ API 调用失败")
+                    print(f"   状态码: {response.status_code}")
+                    print(f"   响应内容: {response.text}")
                     raise Exception(f"API调用失败: {response.status_code} - {response.text}")
 
             except Exception as e:
@@ -5047,8 +5126,9 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
         default_config = get_mirror_site_config(default_site)
         
         # 🚀 Gemini官方API图像控制预设
+        # 根据 Gemini API 官方文档，支持的 aspect ratio: "1:1", "3:4", "4:3", "9:16", "16:9"
         aspect_ratios = image_settings.get('aspect_ratios', [
-            "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
+            "1:1", "3:4", "4:3", "9:16", "16:9"
         ])
         response_modalities = image_settings.get('response_modalities', [
             "TEXT_AND_IMAGE", "IMAGE_ONLY"
@@ -5259,7 +5339,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             enhanced_prompt += f"\n\n{custom_additions.strip()}"
             print(f"📝 添加自定义指令: {custom_additions[:100]}...")
 
-        print(f"🎨 图像控制参数: 质量={controls['quality']}, 风格={controls['style']}")
+        print(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, 质量={controls['quality']}, 风格={controls['style']}")
         
         # 转换输入图片
         pil_image = tensor_to_pil(image)
@@ -5354,12 +5434,14 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 generation_config["responseModalities"] = ["Text", "Image"]
                 print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
-            # 📐 Gemini官方API：Aspect Ratio控制
-            if aspect_ratio and aspect_ratio != "1:1":
+            # 📐 Gemini官方API：Aspect Ratio控制（始终设置，即使是默认值）
+            if aspect_ratio and aspect_ratio.strip():
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
                 print(f"📐 设置宽高比: {aspect_ratio}")
+            else:
+                print("⚠️ aspect_ratio 为空，未设置 imageConfig")
 
             # 添加seed（如果有效）
             if seed and seed > 0:
@@ -5630,7 +5712,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 }
 
                 # 📐 Aspect Ratio控制
-                if aspect_ratio and aspect_ratio != "1:1":
+                if aspect_ratio:
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -5677,7 +5759,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             }
 
             # 📐 Aspect Ratio控制
-            if aspect_ratio and aspect_ratio != "1:1":
+            if aspect_ratio:
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -5881,7 +5963,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 }
 
                 # 📐 Aspect Ratio控制
-                if aspect_ratio and aspect_ratio != "1:1":
+                if aspect_ratio:
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -6055,7 +6137,7 @@ Execute the image editing task now and return the edited image."""
             }
 
             # 添加 image_config（包含 aspect_ratio）
-            if aspect_ratio and aspect_ratio != "1:1":
+            if aspect_ratio:
                 request_data["image_config"] = {
                     "aspect_ratio": aspect_ratio
                 }
@@ -6104,6 +6186,25 @@ Execute the image editing task now and return the edited image."""
             }
         else:
             # 标准Gemini API格式
+            generation_config = {
+                "temperature": temperature,
+                "topP": top_p,
+                "topK": top_k,
+                "maxOutputTokens": max_output_tokens,
+                "responseModalities": normalize_response_modalities(["Text", "Image"])
+            }
+
+            # 📐 添加 aspect_ratio 支持（根据官方示例）
+            if aspect_ratio and aspect_ratio.strip():
+                generation_config["imageConfig"] = {
+                    "aspectRatio": aspect_ratio
+                }
+                print(f"📐 设置宽高比: {aspect_ratio}")
+
+            # 添加 seed（如果有效）
+            if seed and seed > 0:
+                generation_config["seed"] = seed
+
             request_data = {
                 "contents": [{
                     "parts": [
@@ -6118,20 +6219,9 @@ Execute the image editing task now and return the edited image."""
                         }
                     ]
                 }],
-                "generationConfig": {
-                    "temperature": temperature,
-                    "topP": top_p,
-                    "topK": top_k,
-                    "maxOutputTokens": max_output_tokens,
-                    "responseModalities": normalize_response_modalities(["Text", "Image"]),
-                    "seed": seed if seed and seed > 0 else None
-                }
+                "generationConfig": generation_config
             }
-            
-            # 清理 None 值
-            if request_data["generationConfig"]["seed"] is None:
-                del request_data["generationConfig"]["seed"]
-            
+
             # 设置请求头
             headers = {
                 "Content-Type": "application/json",
@@ -6940,12 +7030,14 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 generation_config["responseModalities"] = ["Text", "Image"]
                 print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
-            # 📐 Gemini官方API：Aspect Ratio控制
-            if aspect_ratio and aspect_ratio != "1:1":
+            # 📐 Gemini官方API：Aspect Ratio控制（始终设置，即使是默认值）
+            if aspect_ratio and aspect_ratio.strip():
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
                 print(f"📐 设置宽高比: {aspect_ratio}")
+            else:
+                print("⚠️ aspect_ratio 为空，未设置 imageConfig")
 
             # 添加seed（如果有效）
             if seed and seed > 0:
@@ -7204,7 +7296,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 }
 
                 # 📐 Aspect Ratio控制
-                if aspect_ratio and aspect_ratio != "1:1":
+                if aspect_ratio:
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -7243,7 +7335,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             }
 
             # 📐 Aspect Ratio控制
-            if aspect_ratio and aspect_ratio != "1:1":
+            if aspect_ratio:
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -7436,7 +7528,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 }
 
                 # 📐 Aspect Ratio控制
-                if aspect_ratio and aspect_ratio != "1:1":
+                if aspect_ratio:
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -7700,7 +7792,7 @@ Execute the multi-image editing task now and return the edited image."""
             }
 
             # 添加 image_config（包含 aspect_ratio）
-            if aspect_ratio and aspect_ratio != "1:1":
+            if aspect_ratio:
                 request_data["image_config"] = {
                     "aspect_ratio": aspect_ratio
                 }
@@ -7749,6 +7841,25 @@ Execute the multi-image editing task now and return the edited image."""
             }
         else:
             # 标准Gemini API格式
+            generation_config = {
+                "temperature": temperature,
+                "topP": top_p,
+                "topK": top_k,
+                "maxOutputTokens": max_output_tokens,
+                "responseModalities": normalize_response_modalities(["Text", "Image"])
+            }
+
+            # 📐 添加 aspect_ratio 支持（根据官方示例）
+            if aspect_ratio and aspect_ratio.strip():
+                generation_config["imageConfig"] = {
+                    "aspectRatio": aspect_ratio
+                }
+                print(f"📐 设置宽高比: {aspect_ratio}")
+
+            # 添加 seed（如果有效）
+            if seed and seed > 0:
+                generation_config["seed"] = seed
+
             request_data = {
                 "contents": [{
                     "parts": [
@@ -7757,20 +7868,9 @@ Execute the multi-image editing task now and return the edited image."""
                         }
                     ] + all_image_parts  # 添加所有图片
                 }],
-                "generationConfig": {
-                    "temperature": temperature,
-                    "topP": top_p,
-                    "topK": top_k,
-                    "maxOutputTokens": max_output_tokens,
-                    "responseModalities": normalize_response_modalities(["Text", "Image"]),
-                    "seed": seed if seed and seed > 0 else None
-                }
+                "generationConfig": generation_config
             }
-            
-            # 清理 None 值
-            if request_data["generationConfig"]["seed"] is None:
-                del request_data["generationConfig"]["seed"]
-            
+
             # 设置请求头
             headers = {
                 "Content-Type": "application/json",
@@ -8207,13 +8307,17 @@ def parse_openai_compatible_response(response_data):
 NODE_CLASS_MAPPINGS = {
     "KenChenLLMGeminiBananaMirrorImageGenNode": KenChenLLMGeminiBananaMirrorImageGenNode,
     "KenChenLLMGeminiBananaMirrorImageEditNode": KenChenLLMGeminiBananaMirrorImageEditNode,
-    "GeminiBananaMirrorMultiImageEdit": KenChenLLMGeminiBananaMultiImageEditNode,
+    "KenChenLLMGeminiBananaMultiImageEditNode": KenChenLLMGeminiBananaMultiImageEditNode,  # ✅ 修正：使用类名作为注册键
+    # 向后兼容旧的注册键
+    "GeminiBananaMirrorMultiImageEdit": KenChenLLMGeminiBananaMultiImageEditNode,  # 兼容旧工作流
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "KenChenLLMGeminiBananaMirrorImageGenNode": "🍌 Gemini Banana 镜像图像生成",
     "KenChenLLMGeminiBananaMirrorImageEditNode": "🍌 Gemini Banana 镜像图片编辑",
-    "GeminiBananaMirrorMultiImageEdit": "🍌 Gemini Banana 镜像多图像编辑",
+    "KenChenLLMGeminiBananaMultiImageEditNode": "🍌 Gemini Banana 镜像多图像编辑",  # ✅ 修正：使用类名作为注册键
+    # 向后兼容旧的注册键
+    "GeminiBananaMirrorMultiImageEdit": "🍌 Gemini Banana 镜像多图像编辑",  # 兼容旧工作流
 }
 
 # 强制设置节点颜色
@@ -8222,6 +8326,16 @@ def setup_node_colors():
     orange_color = "#D2691E"  # 巧克力橙色
     brown_bgcolor = "#8B4513"  # 深棕色背景
     sand_groupcolor = "#CD853F"  # 沙棕色
+
+    def make_colored_init(original_init, color, bgcolor, groupcolor):
+        """创建带颜色设置的 __init__ 方法"""
+        def colored_init(self, *args, **kwargs):
+            if original_init:
+                original_init(self, *args, **kwargs)
+            self.color = color
+            self.bgcolor = bgcolor
+            self.groupcolor = groupcolor
+        return colored_init
 
     for node_class in [KenChenLLMGeminiBananaMirrorImageGenNode,
                        KenChenLLMGeminiBananaMirrorImageEditNode,
@@ -8233,15 +8347,7 @@ def setup_node_colors():
 
         # 确保实例也有这些颜色
         original_init = getattr(node_class, '__init__', None)
-
-        def colored_init(self, *args, **kwargs):
-            if original_init:
-                original_init(self, *args, **kwargs)
-            self.color = orange_color
-            self.bgcolor = brown_bgcolor
-            self.groupcolor = sand_groupcolor
-
-        node_class.__init__ = colored_init
+        node_class.__init__ = make_colored_init(original_init, orange_color, brown_bgcolor, sand_groupcolor)
 
 # 应用颜色设置
 setup_node_colors()

@@ -1802,13 +1802,17 @@ def generate_with_priority_api_direct(api_key, model, request_data, max_retries=
     raise Exception("所有重试都失败了")
 
 class KenChenLLMGeminiBananaTextToImageBananaNode:
-    CATEGORY = "Ken-Chen/LLM-Nano-Banana"
-    RETURN_TYPES = ("STRING", "IMAGE")
-    RETURN_NAMES = ("generation_text", "generated_image")
-    FUNCTION = "generate_image"
-    
+    """Gemini Banana 文字生成图像节点"""
 
-    
+    # 设置节点颜色为黄色/金色系
+    @classmethod
+    def get_node_color(cls):
+        return "#FFD700"  # 金色
+
+    @classmethod
+    def get_node_bgcolor(cls):
+        return "#DAA520"  # 深金色背景
+
     @classmethod
     def INPUT_TYPES(s):
         config = get_gemini_banana_config()
@@ -1921,8 +1925,22 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 "unique_id": "UNIQUE_ID"
             }
         }
-    
 
+    RETURN_TYPES = ("STRING", "IMAGE")
+    RETURN_NAMES = ("generation_text", "generated_image")
+    FUNCTION = "generate_image"
+    CATEGORY = "Ken-Chen/LLM-Nano-Banana"
+
+    # 设置节点颜色 - 使用ComfyUI标准属性
+    color = "#FFD700"  # 金色
+    bgcolor = "#DAA520"  # 深金色背景
+    groupcolor = "#F0E68C"  # 卡其色
+
+    def __init__(self):
+        # 强制设置颜色属性
+        self.color = "#FFD700"
+        self.bgcolor = "#DAA520"
+        self.groupcolor = "#F0E68C"
 
     def _push_chat(self, user_prompt: str, response_text: str, unique_id: str):
         if not PromptServer or not unique_id:
@@ -2193,13 +2211,17 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
             return (friendly_error, create_dummy_image())
 
 class KenChenLLMGeminiBananaImageToImageBananaNode:
-    CATEGORY = "Ken-Chen/LLM-Nano-Banana"
-    RETURN_TYPES = ("STRING", "IMAGE")
-    RETURN_NAMES = ("generation_text", "generated_image")
-    FUNCTION = "transform_image"
-    
+    """Gemini Banana 图像编辑节点"""
 
-    
+    # 设置节点颜色为黄色/金色系
+    @classmethod
+    def get_node_color(cls):
+        return "#FFD700"  # 金色
+
+    @classmethod
+    def get_node_bgcolor(cls):
+        return "#DAA520"  # 深金色背景
+
     @classmethod
     def INPUT_TYPES(s):
         config = get_gemini_banana_config()
@@ -2318,6 +2340,17 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
     RETURN_NAMES = ("generation_text", "generated_image")
     FUNCTION = "transform_image"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
+
+    # 设置节点颜色 - 使用ComfyUI标准属性
+    color = "#FFD700"  # 金色
+    bgcolor = "#DAA520"  # 深金色背景
+    groupcolor = "#F0E68C"  # 卡其色
+
+    def __init__(self):
+        # 强制设置颜色属性
+        self.color = "#FFD700"
+        self.bgcolor = "#DAA520"
+        self.groupcolor = "#F0E68C"
 
     def transform_image(
         self,
@@ -2577,13 +2610,17 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
             pass
 
 class KenChenLLMGeminiBananaMultimodalBananaNode:
-    CATEGORY = "Ken-Chen/LLM-Nano-Banana"
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("text",)
-    FUNCTION = "analyze_multimodal"
-    
+    """Gemini Banana 多模态分析节点"""
 
-    
+    # 设置节点颜色为黄色/金色系
+    @classmethod
+    def get_node_color(cls):
+        return "#FFD700"  # 金色
+
+    @classmethod
+    def get_node_bgcolor(cls):
+        return "#DAA520"  # 深金色背景
+
     @classmethod
     def INPUT_TYPES(s):
         config = get_gemini_banana_config()
@@ -2659,7 +2696,21 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
             },
         }
 
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text",)
+    FUNCTION = "analyze_multimodal"
+    CATEGORY = "Ken-Chen/LLM-Nano-Banana"
 
+    # 设置节点颜色 - 使用ComfyUI标准属性
+    color = "#FFD700"  # 金色
+    bgcolor = "#DAA520"  # 深金色背景
+    groupcolor = "#F0E68C"  # 卡其色
+
+    def __init__(self):
+        # 强制设置颜色属性
+        self.color = "#FFD700"
+        self.bgcolor = "#DAA520"
+        self.groupcolor = "#F0E68C"
 
     def analyze_multimodal(
         self,
@@ -2774,17 +2825,26 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
             
             return (friendly_error,)
 
-class GeminiBananaMultiImageEditNode:
+class KenChenLLMGeminiBananaMultiImageEditBananaNode:
     """
     Gemini Banana 多图像编辑节点
-    
+
     功能特性:
     - 支持多张输入图像（最多4张）
     - 专业的图像编辑提示词
     - 支持尺寸、质量、风格控制
     - 智能图像组合编辑
     """
-    
+
+    # 设置节点颜色为黄色/金色系
+    @classmethod
+    def get_node_color(cls):
+        return "#FFD700"  # 金色
+
+    @classmethod
+    def get_node_bgcolor(cls):
+        return "#DAA520"  # 深金色背景
+
     @classmethod
     def INPUT_TYPES(cls):
         config = get_gemini_banana_config()
@@ -2886,6 +2946,17 @@ class GeminiBananaMultiImageEditNode:
     RETURN_NAMES = ("edited_image", "response_text")
     FUNCTION = "edit_multiple_images"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
+
+    # 设置节点颜色 - 使用ComfyUI标准属性
+    color = "#FFD700"  # 金色
+    bgcolor = "#DAA520"  # 深金色背景
+    groupcolor = "#F0E68C"  # 卡其色
+
+    def __init__(self):
+        # 强制设置颜色属性
+        self.color = "#FFD700"
+        self.bgcolor = "#DAA520"
+        self.groupcolor = "#F0E68C"
 
     def _push_chat(self, user_prompt: str, response_text: str, unique_id: str):
         if not PromptServer or not unique_id:
@@ -3216,12 +3287,12 @@ Execute the image editing task now and return the generated image."""
 
                     # 转换为tensor
                     image_tensor = pil_to_tensor(edited_image)
-                    
+
                     print("✅ 多图像编辑完成")
                     print(f"📝 响应文本长度: {len(response_text)}")
                     print(f"📝 响应文本内容: {response_text[:200]}...")
                     self._push_chat(enhanced_prompt, response_text or "", unique_id)
-                    return (image_tensor, response_text)
+                    return (image_tensor, response_text)  # 修正：返回顺序应该是 (IMAGE, STRING)
                 
                 # 处理错误响应
                 else:
@@ -3255,7 +3326,7 @@ NODE_CLASS_MAPPINGS = {
     "KenChenLLMGeminiBananaTextToImageBananaNode": KenChenLLMGeminiBananaTextToImageBananaNode,
     "KenChenLLMGeminiBananaImageToImageBananaNode": KenChenLLMGeminiBananaImageToImageBananaNode,
     "KenChenLLMGeminiBananaMultimodalBananaNode": KenChenLLMGeminiBananaMultimodalBananaNode,
-    "GeminiBananaMultiImageEdit": GeminiBananaMultiImageEditNode,
+    "KenChenLLMGeminiBananaMultiImageEditBananaNode": KenChenLLMGeminiBananaMultiImageEditBananaNode,  # ✅ 修正：使用完整类名作为注册键
 }
 
 # 集成独立翻译模块
@@ -3263,13 +3334,47 @@ if TRANSLATION_MODULE_AVAILABLE:
     NODE_CLASS_MAPPINGS.update(TRANSLATION_NODE_MAPPINGS)
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "KenChenLLMGeminiBananaTextToImageBananaNode": "Gemini Banana Text to Image Banana",
-    "KenChenLLMGeminiBananaImageToImageBananaNode": "Gemini Banana Image to Image Banana",
-    "KenChenLLMGeminiBananaMultimodalBananaNode": "Gemini Banana Multimodal Banana",
-    "GeminiBananaMultiImageEdit": "Gemini Banana Multi Image Edit",
+    "KenChenLLMGeminiBananaTextToImageBananaNode": "🍌 Gemini Banana Text to Image",
+    "KenChenLLMGeminiBananaImageToImageBananaNode": "🍌 Gemini Banana Image Edit",
+    "KenChenLLMGeminiBananaMultimodalBananaNode": "🍌 Gemini Banana Multimodal",
+    "KenChenLLMGeminiBananaMultiImageEditBananaNode": "🍌 Gemini Banana Multi Image Edit",  # ✅ 修正：使用完整类名作为注册键
 }
 
 # 集成独立翻译模块显示名称
 if TRANSLATION_MODULE_AVAILABLE:
     NODE_DISPLAY_NAME_MAPPINGS.update(TRANSLATION_DISPLAY_MAPPINGS)
+
+# 强制设置节点颜色
+def setup_node_colors():
+    """为Gemini Banana节点设置黄色/金色主题"""
+    gold_color = "#FFD700"  # 金色
+    dark_gold_bgcolor = "#DAA520"  # 深金色背景
+    khaki_groupcolor = "#F0E68C"  # 卡其色
+
+    def make_colored_init(original_init, color, bgcolor, groupcolor):
+        """创建带颜色设置的 __init__ 方法"""
+        def colored_init(self, *args, **kwargs):
+            if original_init:
+                original_init(self, *args, **kwargs)
+            self.color = color
+            self.bgcolor = bgcolor
+            self.groupcolor = groupcolor
+        return colored_init
+
+    for node_class in [KenChenLLMGeminiBananaTextToImageBananaNode,
+                       KenChenLLMGeminiBananaImageToImageBananaNode,
+                       KenChenLLMGeminiBananaMultimodalBananaNode,
+                       KenChenLLMGeminiBananaMultiImageEditBananaNode]:
+        # 设置类级别的颜色属性
+        node_class.color = gold_color
+        node_class.bgcolor = dark_gold_bgcolor
+        node_class.groupcolor = khaki_groupcolor
+
+        # 确保实例也有这些颜色
+        original_init = getattr(node_class, '__init__', None)
+        node_class.__init__ = make_colored_init(original_init, gold_color, dark_gold_bgcolor, khaki_groupcolor)
+
+# 应用颜色设置
+setup_node_colors()
+print("🎨 已为Gemini Banana节点设置黄色/金色主题")
 

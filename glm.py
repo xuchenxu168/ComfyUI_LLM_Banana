@@ -140,6 +140,7 @@ class GLM_Prompt_Expand_From_Image:
         
         # 完整的模型列表（包含文本和视觉模型）
         glm_model_list = [
+            "glm-4.5v",  # 最新的视觉推理模型
             "glm-4", "glm-4v", "glm-4v-plus", "glm-4v-flash", "glm-4-air", "glm-3-turbo",
             "glm-4-flash-250414", "glm-4-0520", "glm-4v-plus-0111", "glm-4v-flash-250414",
             "glm-4-flash", "glm-4-plus", "glm-4-airx", "glm-4-flashx-250414", "glm-4-long",
