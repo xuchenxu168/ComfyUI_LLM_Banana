@@ -40,7 +40,7 @@
 
 ```bash
 cd ComfyUI/custom_nodes
-git clone https://github.com/your-repo/ComfyUI_LLM_Banana.git
+git clone https://github.com/xuchenxu168/ComfyUI_LLM_Banana
 cd ComfyUI_LLM_Banana
 pip install -r requirements.txt
 ```
@@ -852,4 +852,5 @@ def _log_warning(message):
 **💡 提示**: 如果您觉得这个项目有用，请给我们一个⭐星标支持！
 
 <img src="/image/微信图片_20250620124237.png" alt="ComfyUI LLM Banana" width="200px" />
+
 
