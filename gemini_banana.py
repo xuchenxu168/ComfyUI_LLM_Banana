@@ -14,6 +14,62 @@ import random
 import time
 from typing import Tuple, Optional
 
+# 视频处理相关导入
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    print("⚠️ opencv-python 未安装，视频处理功能将受限。请运行: pip install opencv-python")
+
+import re
+import random
+
+# --- Wildcard Processing ---
+def process_wildcards(prompt: str, wildcard_dir: str):
+    """Processes wildcards in the prompt string, e.g., __color__."""
+    if '__' not in prompt:
+        return prompt
+
+    _log_info(" wildcard processing...")
+
+    def replace_wildcard(match):
+        wildcard_name = match.group(1)
+        wildcard_path = os.path.join(wildcard_dir, f"{wildcard_name}.txt")
+
+        if os.path.exists(wildcard_path):
+            try:
+                with open(wildcard_path, 'r', encoding='utf-8') as f:
+                    lines = [line.strip() for line in f if line.strip()]
+                if lines:
+                    return random.choice(lines)
+                else:
+                    _log_warning(f"Wildcard file '{wildcard_path}' is empty.")
+            except Exception as e:
+                _log_error(f"Failed to read wildcard file '{wildcard_path}': {e}")
+        else:
+            _log_warning(f"Wildcard file not found: {wildcard_path}")
+
+        # If file not found or empty, return the original placeholder
+        return match.group(0)
+
+    # Regex to find all __word__ occurrences
+    processed_prompt = re.sub(r'__(\w+)__', replace_wildcard, prompt)
+
+    if prompt != processed_prompt:
+        _log_info(f"Wildcard processed prompt: {processed_prompt}")
+
+    return processed_prompt
+
+# Gemini SDK 导入
+try:
+    from google import genai
+    from google.genai import types
+    GENAI_SDK_AVAILABLE = True
+except ImportError:
+    GENAI_SDK_AVAILABLE = False
+    print("⚠️ google-genai SDK 未安装，将使用 REST API。建议运行: pip install google-genai")
+
 # 🚀 nano-banana官方调用方式已集成
 # gemini_banana.py 已经包含了完整的nano-banana官方调用实现
 # 包括：generate_with_priority_api, generate_with_official_api, generate_with_rest_api 等
@@ -143,7 +199,7 @@ def _log_error(message):
 def smart_retry_delay(attempt, error_code=None):
     """智能重试延迟 - 根据错误类型调整等待时间"""
     base_delay = 2 ** attempt  # 指数退避
-    
+
     if error_code == 429:  # 限流错误
         # 对于429错误，使用更长的等待时间
         rate_limit_delay = 60 + random.uniform(10, 30)  # 60-90秒随机等待
@@ -316,7 +372,7 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
     """
     🚀 直接目标尺寸扩图技术，按控制尺寸要求直接扩图
     彻底解决过度扩图问题，直接扩到目标尺寸
-    
+
     Args:
         image: 输入图像
         target_size: 目标尺寸 (width, height)
@@ -355,14 +411,14 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
         _log_info(f"🎯 比例相同，直接调整尺寸")
         resized_img = image.resize((target_width, target_height), Image.Resampling.LANCZOS)
         return resized_img
-    
+
     # 🎯 策略2：比例不同时
     _log_info(f"🎯 比例不同，选择合适策略")
-    
+
     # 默认智能策略：走 crop，避免重叠且无白边（参考官方分支）
     if fill_strategy == "smart":
         fill_strategy = "crop"
-    
+
     if fill_strategy == "extend":
         # 等比缩放至不超过目标尺寸
         scale_x = target_width / img_width
@@ -372,7 +428,7 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
         new_height = max(1, int(img_height * scale))
         _log_info(f"🎯 extend 缩放尺寸: {new_width}x{new_height} (scale={scale:.3f})")
         fg = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-        
+
         # 背景：先按 cover 生成一张铺满目标的背景，再高斯模糊，避免白边
         cover_scale = max(scale_x, scale_y)
         bg_w = max(1, int(img_width * cover_scale))
@@ -386,7 +442,7 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
             bg = bg.filter(ImageFilter.GaussianBlur(radius=24))
         except Exception:
             pass
-        
+
         # 将前景等比缩放图粘贴到中心（确保完全覆盖背景，避免重叠）
         paste_x = (target_width - new_width) // 2
         paste_y = (target_height - new_height) // 2
@@ -443,37 +499,37 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
 
         _log_info(f"✅ extend 完成：无白边、不变形，输出 {result.size}")
         return result
-    
+
     if fill_strategy in ["direct"]:
         # 🎯 直接扩图模式：直接扩到目标尺寸（可能变形，谨慎使用）
         _log_info(f"⚠️ direct 模式：直接缩放到目标，可能变形")
         final_image = image.resize((target_width, target_height), Image.Resampling.LANCZOS)
         return final_image
-        
+
     elif fill_strategy == "crop":
         # 🎯 裁剪模式：使用高清无损放大到最大边，然后智能裁剪
         _log_info(f"🎯 裁剪模式：高清无损放大到最大边，然后智能裁剪")
-        
+
         # 🚀 高清无损放大（保持原始比例，不拉伸变形）
         # 计算最佳缩放比例，使用max确保完全覆盖目标区域
         scale_x = target_width / img_width      # 宽度比例
         scale_y = target_height / img_height    # 高度比例
         scale = max(scale_x, scale_y)  # 使用较大的缩放比例，确保完全覆盖
-        
+
         # 计算放大后的尺寸（保持原始比例，确保覆盖目标区域）
         enlarged_width = int(img_width * scale)
         enlarged_height = int(img_height * scale)
-        
+
         _log_info(f"🔧 高清无损放大: {img_width}x{img_height} -> {enlarged_width}x{enlarged_height}")
         _log_info(f"🔧 缩放比例: {scale:.3f} (使用max确保完全覆盖，然后智能裁剪)")
         _log_info(f"🔧 关键：直接放大到最大边，保持图像清晰度和比例")
-        
+
         # 🎯 使用AI放大模型进行高清无损放大（保持比例）
         # 优先使用AI模型，回退到高质量重采样
         try:
             _log_info(f"🔧 尝试使用AI放大模型进行高清放大...")
             ai_upscaled_image = smart_ai_upscale(image, enlarged_width, enlarged_height, gigapixel_model)
-            
+
             if ai_upscaled_image is not None:
                 # 如果AI放大成功，调整到目标尺寸
                 if ai_upscaled_image.size != (enlarged_width, enlarged_height):
@@ -485,51 +541,51 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
             else:
                 _log_warning(f"⚠️ AI放大模型不可用，使用高质量重采样")
                 enlarged_image = image.resize((enlarged_width, enlarged_height), Image.Resampling.LANCZOS)
-                
+
         except Exception as e:
             _log_warning(f"⚠️ AI放大模型失败，使用高质量重采样: {e}")
             # 回退到 LANCZOS 算法
             enlarged_image = image.resize((enlarged_width, enlarged_height), Image.Resampling.LANCZOS)
-        
+
         # 🎯 智能裁剪 - 从高清放大的图像中裁剪出目标尺寸
         if enlarged_width >= target_width and enlarged_height >= target_height:
             _log_info(f"🔧 智能裁剪：从高清放大图像中裁剪目标尺寸，确保主体居中")
-            
+
             # 🎯 精确计算裁剪区域，确保主体完全居中
             crop_x = (enlarged_width - target_width) // 2
             crop_y = (enlarged_height - target_height) // 2
-            
+
             # 🎯 微调偏移，确保完全居中（避免奇数像素偏差）
             if (enlarged_width - target_width) % 2 == 1:
                 crop_x += 1
             if (enlarged_height - target_height) % 2 == 1:
                 crop_y += 1
-            
+
             _log_info(f"🔧 精确居中裁剪区域: ({crop_x}, {crop_y}) -> ({crop_x + target_width}, {crop_y + target_height})")
             _log_info(f"🔧 确保主体在裁剪后图像的正中心位置")
-            
+
             # 从高清放大的图像中裁剪出目标尺寸
             final_image = enlarged_image.crop((crop_x, crop_y, crop_x + target_width, crop_y + target_height))
-            
+
             _log_info(f"✅ 高清无损放大 + 智能裁剪完成")
             _log_info(f"✅ 结果：无白色填充，完全不变形，主体精确居中，保持最高清晰度")
             _log_info(f"✅ 图像质量：高清无损，比例完美，主体可见")
-            
+
             return final_image
-            
+
         else:
             _log_warning(f"⚠️ 高清放大后尺寸不足，使用智能填充（避免拉伸变形）")
             # 创建目标尺寸的画布，使用填充色
             final_image = Image.new('RGB', (target_width, target_height), fill_color)
-            
+
             # 将高清放大的图像居中放置
             paste_x = (target_width - enlarged_width) // 2
             paste_y = (target_height - enlarged_height) // 2
             final_image.paste(enlarged_image, (paste_x, paste_y))
-            
+
             _log_info(f"✅ 智能填充完成：高清放大图像居中放置，边缘用填充色")
             return final_image
-    
+
     else:
         # 🎯 粘贴模式：使用min(scale_x, scale_y)保护主体，留边（可能出现填充色）
         scale_x = target_width / img_width
@@ -751,7 +807,7 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
     - 艺术风格增强
     - 专业摄影参数
     """
-    
+
     # 🚀 超越参考项目的完整风格模板系统
     style_templates = {
         # 基础风格（超越参考项目）
@@ -769,7 +825,7 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
             "camera_settings": "Natural color balance and realistic exposure.",
             "lighting": "Soft, natural lighting with subtle shadows."
         },
-        
+
         # 🎨 专业艺术风格（参考项目核心功能）
         "professional_portrait": {
             "prefix": "Create a professional portrait photograph of",
@@ -856,10 +912,10 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
             "lighting": "Soft, appetizing lighting with food-appropriate shadows."
         }
     }
-    
+
     # 获取风格配置
     style_config = style_templates.get(controls['style'], style_templates["natural"])
-    
+
     # 🚀 构建超越参考项目的增强提示词
     # 🎯 平衡修复：适度的构图控制，避免主体过大或过小
     enhanced_parts = [
@@ -875,14 +931,14 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
         "Show meaningful background elements and environmental details.",
         "Avoid extreme close-ups that eliminate all background context."
     ]
-    
+
     # 🎨 添加参考项目的专业控制参数（超越参考项目）
     if "camera_settings" in style_config:
         enhanced_parts.append(f"Camera Settings: {style_config['camera_settings']}")
-    
+
     if "lighting" in style_config:
         enhanced_parts.append(f"Lighting: {style_config['lighting']}")
-    
+
     # 添加质量控制
     if controls['quality'] == "hd":
         enhanced_parts.append(style_config["quality_boost"])
@@ -890,11 +946,11 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
     elif controls['quality'] == "ultra_hd":
         enhanced_parts.append(style_config["quality_boost"])
         enhanced_parts.append("Generate in ultra-high definition with exceptional detail and professional quality.")
-    
+
     # 🎯 关键指令：必须生成图像而不是描述
     enhanced_parts.append("CRITICAL: You MUST return an actual generated image, not just a description.")
     enhanced_parts.append("Use your image generation capabilities to create the visual content.")
-    
+
     # 🎨 应用所有界面参数
     if detail_level != "Auto Select":
         detail_instructions = {
@@ -904,7 +960,7 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
             "Masterpiece Level": "Create a masterpiece with extraordinary detail and artistic excellence."
         }
         enhanced_parts.append(f"Detail Level: {detail_level} - {detail_instructions.get(detail_level, '')}")
-    
+
     if camera_control != "Auto Select":
         camera_instructions = {
             "Wide-angle Lens": "Use wide-angle perspective for expansive composition.",
@@ -915,7 +971,7 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
             "Medium Shot": "Use medium framing for balanced composition."
         }
         enhanced_parts.append(f"Camera Control: {camera_control} - {camera_instructions.get(camera_control, '')}")
-    
+
     if lighting_control != "Auto Settings":
         lighting_instructions = {
             "Natural Light": "Use natural lighting with soft, diffused illumination",
@@ -926,7 +982,7 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
             "Blue Hour": "Use blue hour lighting with cool, atmospheric tones"
         }
         enhanced_parts.append(f"Lighting Control: {lighting_control} - {lighting_instructions.get(lighting_control, '')}")
-    
+
     if template_selection != "Auto Select":
         template_instructions = {
             "Professional Portrait": "Apply professional portrait photography techniques and composition",
@@ -943,15 +999,15 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
             "Gourmet Food Photography": "Use gourmet food photography techniques and appetizing lighting"
         }
         enhanced_parts.append(f"Template: {template_selection} - {template_instructions.get(template_selection, 'Follow professional composition guidelines')}")
-    
+
     # 🚀 处理质量增强开关（参考项目功能）
     if quality_enhancement:
         enhanced_parts.append("Quality Enhancement: ENABLED - Apply advanced image quality improvements including sharpening, contrast enhancement, and color optimization.")
         _log_info("✨ 质量增强已启用")
-    
+
     if enhance_quality:
         enhanced_parts.append("Apply enhanced image quality processing for professional output.")
-    
+
     if smart_resize:
         enhanced_parts.append("Use intelligent resizing with proper padding and composition.")
 
@@ -1057,18 +1113,18 @@ def tensor_to_pil(image_tensor):
         # Handle 4D tensor (batch)
         if image_tensor.dim() == 4:
             image_tensor = image_tensor[0]  # Take the first image
-        
+
         # Convert CHW to HWC format
         if image_tensor.shape[0] in [1, 3, 4]:  # CHW format
             image_np = image_tensor.permute(1, 2, 0).cpu().numpy()
         else:  # Already HWC format
             image_np = image_tensor.cpu().numpy()
-        
+
         # Normalize and convert to uint8
         if image_np.max() > 1.0:
             image_np = image_np / 255.0
         image_np = (image_np * 255).astype(np.uint8)
-        
+
         # Handle channels
         if len(image_np.shape) == 3:
             if image_np.shape[2] == 1:
@@ -1077,12 +1133,12 @@ def tensor_to_pil(image_tensor):
                 image_np = image_np[:, :, :3]  # RGBA to RGB
         elif len(image_np.shape) == 2:
             image_np = np.stack([image_np] * 3, axis=2)  # Grayscale to RGB
-        
+
         pil_image = Image.fromarray(image_np)
-        
+
         # Resize if too large for API
         pil_image = resize_image_for_api(pil_image)
-        
+
         return pil_image
     except Exception as e:
         _log_error(f"Failed to convert tensor to PIL: {e}")
@@ -1094,18 +1150,18 @@ def process_input_image(image_tensor):
         # Handle 4D tensor (batch)
         if image_tensor.dim() == 4:
             image_tensor = image_tensor[0]  # Take the first image
-        
+
         # Convert CHW to HWC format
         if image_tensor.shape[0] in [1, 3, 4]:  # CHW format
             image_np = image_tensor.permute(1, 2, 0).cpu().numpy()
         else:  # Already HWC format
             image_np = image_tensor.cpu().numpy()
-        
+
         # Normalize and convert to uint8
         if image_np.max() > 1.0:
             image_np = image_np / 255.0
         image_np = (image_np * 255).astype(np.uint8)
-        
+
         # Handle channels
         if len(image_np.shape) == 3:
             if image_np.shape[2] == 1:
@@ -1114,12 +1170,12 @@ def process_input_image(image_tensor):
                 image_np = image_np[:, :, :3]  # RGBA to RGB
         elif len(image_np.shape) == 2:
             image_np = np.stack([image_np] * 3, axis=2)  # Grayscale to RGB
-        
+
         pil_image = Image.fromarray(image_np)
-        
+
         # Resize if too large for API
         pil_image = resize_image_for_api(pil_image)
-        
+
         return pil_image
     except Exception as e:
         _log_error(f"Failed to process input image: {e}")
@@ -1129,7 +1185,7 @@ def image_to_base64(image, format='JPEG', quality=95):
     """Convert PIL Image to base64 string"""
     try:
         buffer = io.BytesIO()
-        
+
         # Handle alpha channel for JPEG
         if format.upper() == 'JPEG' and image.mode in ('RGBA', 'LA', 'P'):
             background = Image.new('RGB', image.size, (255, 255, 255))
@@ -1138,7 +1194,7 @@ def image_to_base64(image, format='JPEG', quality=95):
             if image.mode in ('RGBA', 'LA'):
                 background.paste(image, mask=image.split()[-1])
                 image = background
-        
+
         image.save(buffer, format=format, quality=quality)
         return base64.b64encode(buffer.getvalue()).decode('utf-8')
     except Exception as e:
@@ -1190,20 +1246,20 @@ def extract_text_from_response(response_json):
     """从REST API响应中提取文本"""
     try:
         response_text = ""
-        
+
         if "candidates" not in response_json:
             return "No valid response received"
-        
+
         for candidate in response_json["candidates"]:
             if "content" not in candidate or "parts" not in candidate["content"]:
                 continue
-                
+
             for part in candidate["content"]["parts"]:
                 if "text" in part:
                     response_text += part["text"] + "\n"
-        
+
         return response_text.strip() if response_text.strip() else "Response received but no text content"
-        
+
     except Exception as e:
         _log_error(f"提取文本失败: {e}")
         return "Failed to extract text from response"
@@ -1214,10 +1270,145 @@ def create_dummy_image(width=512, height=512):
     dummy_tensor = torch.from_numpy(dummy_array).float() / 255.0
     return dummy_tensor.unsqueeze(0)
 
-def prepare_media_content(image=None, audio=None):
-    """Prepare multimedia content for API calls"""
+def save_video_tensor_to_mp4(video_tensor, output_path, fps=30):
+    """
+    将 ComfyUI 的 VIDEO tensor 保存为 MP4 文件
+
+    Args:
+        video_tensor: torch.Tensor, shape [frames, channels, height, width]
+        output_path: str, 输出 MP4 文件路径
+        fps: int, 帧率（默认 30）
+
+    Returns:
+        str: 输出文件路径，如果失败返回 None
+    """
+    if not CV2_AVAILABLE:
+        _log_error("opencv-python 未安装，无法保存视频为 MP4")
+        return None
+
+    try:
+        frames_count = video_tensor.shape[0]
+        height = video_tensor.shape[2]
+        width = video_tensor.shape[3]
+
+        _log_info(f"📹 保存视频: {frames_count} 帧, {width}x{height}, {fps} FPS")
+
+        # 创建视频写入器 (使用 mp4v 编码器)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+        if not out.isOpened():
+            _log_error(f"无法创建视频写入器: {output_path}")
+            return None
+
+        for i in range(frames_count):
+            frame = video_tensor[i]
+
+            # 转换为 numpy 数组 (HWC 格式)
+            if frame.shape[0] in [1, 3, 4]:  # CHW 格式
+                frame_np = frame.permute(1, 2, 0).cpu().numpy()
+            else:  # HWC 格式
+                frame_np = frame.cpu().numpy()
+
+            # 转换为 uint8
+            if frame_np.max() <= 1.0:
+                frame_np = (frame_np * 255).astype(np.uint8)
+            else:
+                frame_np = frame_np.astype(np.uint8)
+
+            # 处理通道数
+            if frame_np.shape[2] == 1:  # 灰度
+                frame_np = cv2.cvtColor(frame_np, cv2.COLOR_GRAY2BGR)
+            elif frame_np.shape[2] == 3:  # RGB -> BGR
+                frame_np = cv2.cvtColor(frame_np, cv2.COLOR_RGB2BGR)
+            elif frame_np.shape[2] == 4:  # RGBA -> BGR
+                frame_np = cv2.cvtColor(frame_np, cv2.COLOR_RGBA2BGR)
+
+            out.write(frame_np)
+
+        out.release()
+        _log_info(f"✅ 视频保存成功: {output_path}")
+        return output_path
+
+    except Exception as e:
+        _log_error(f"保存视频失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def upload_video_to_gemini_file_api(video_path, api_key, display_name="video"):
+    """
+    使用 Gemini File API 上传视频文件
+
+    Args:
+        video_path: str, 视频文件路径
+        api_key: str, Gemini API 密钥
+        display_name: str, 显示名称
+
+    Returns:
+        dict: 包含 file_uri 和 mime_type 的字典，如果失败返回 None
+    """
+    if not GENAI_SDK_AVAILABLE:
+        _log_error("google-genai SDK 未安装，无法使用 File API")
+        return None
+
+    try:
+        _log_info(f"📤 上传视频到 Gemini File API: {video_path}")
+
+        # 创建客户端
+        client = genai.Client(api_key=api_key)
+
+        # 上传文件
+        uploaded_file = client.files.upload(file=video_path)
+
+        _log_info(f"⏳ 等待文件处理... (文件名: {uploaded_file.name})")
+
+        # 等待文件处理完成
+        max_wait = 60  # 最多等待 60 秒
+        wait_time = 0
+        while uploaded_file.state.name == "PROCESSING":
+            if wait_time >= max_wait:
+                _log_error(f"文件处理超时 ({max_wait}秒)")
+                return None
+
+            time.sleep(1)
+            wait_time += 1
+            uploaded_file = client.files.get(name=uploaded_file.name)
+
+        if uploaded_file.state.name == "FAILED":
+            _log_error(f"文件处理失败: {uploaded_file.name}")
+            return None
+
+        _log_info(f"✅ 视频上传成功! URI: {uploaded_file.uri}")
+
+        return {
+            "file_uri": uploaded_file.uri,
+            "mime_type": uploaded_file.mime_type,
+            "file_name": uploaded_file.name
+        }
+
+    except Exception as e:
+        _log_error(f"上传视频到 File API 失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def prepare_media_content(image=None, audio=None, video=None, max_video_frames=10):
+    """Prepare multimedia content for API calls
+
+    支持多种格式:
+    - image: IMAGE 类型 (torch.Tensor)
+    - audio: AUDIO 类型 (torch.Tensor)
+    - video: VIDEO 类型 (torch.Tensor 或 dict)
+    - max_video_frames: 视频最大帧数限制
+
+    注意: 此函数现在返回 (content_parts, video_file_info)
+    - content_parts: 图片和音频的内容部分
+    - video_file_info: 视频文件信息（如果有视频）
+    """
     content_parts = []
-    
+    video_file_info = None  # 用于存储视频文件信息
+
     if image is not None:
         pil_image = process_input_image(image)
         if pil_image:
@@ -1229,7 +1420,7 @@ def prepare_media_content(image=None, audio=None):
                         "data": img_base64
                     }
                 })
-    
+
     if audio is not None:
         # Process audio data
         try:
@@ -1237,7 +1428,7 @@ def prepare_media_content(image=None, audio=None):
                 audio_np = audio.cpu().numpy()
             else:
                 audio_np = np.array(audio)
-            
+
             # Create temporary WAV file
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
                 # Assume sample rate of 16000
@@ -1247,25 +1438,94 @@ def prepare_media_content(image=None, audio=None):
                     wav_file.setsampwidth(2)  # 16-bit
                     wav_file.setframerate(sample_rate)
                     wav_file.writeframes((audio_np * 32767).astype(np.int16).tobytes())
-                
+
                 # Read audio file and encode
                 with open(temp_file.name, 'rb') as f:
                     audio_data = base64.b64encode(f.read()).decode()
-                
+
                 content_parts.append({
                     "inline_data": {
                         "mime_type": "audio/wav",
                         "data": audio_data
                     }
                 })
-                
+
                 # Clean up temporary file
                 os.unlink(temp_file.name)
-                
+
         except Exception as e:
             _log_error(f"Failed to process audio data: {e}")
-    
-    return content_parts
+
+    if video is not None:
+        # 🎬 新的视频处理方式：保存为 MP4 并返回文件信息
+        # 不再将视频拆分成图片帧，而是保存为完整的 MP4 文件
+        try:
+            # 检查视频类型，忽略字符串和其他无效类型
+            if isinstance(video, str):
+                _log_warning(f"视频输入是字符串类型，跳过处理: {video}")
+                video = None
+            elif not isinstance(video, (dict, torch.Tensor)):
+                _log_warning(f"视频输入类型不支持: {type(video)}, 期望 dict 或 torch.Tensor")
+                video = None
+
+            if video is not None:
+                video_frames = None
+
+                # 支持多种 VIDEO 类型格式
+                if isinstance(video, dict):
+                    # Load_AF_Video 输出格式: {"video": tensor, ...}
+                    if "video" in video:
+                        video_frames = video["video"]
+                    elif "frames" in video:
+                        video_frames = video["frames"]
+                    else:
+                        # 尝试获取第一个 tensor 值
+                        for key, value in video.items():
+                            if isinstance(value, torch.Tensor):
+                                video_frames = value
+                                break
+                elif isinstance(video, torch.Tensor):
+                    # 直接的 tensor 格式
+                    video_frames = video
+
+                if video_frames is not None and isinstance(video_frames, torch.Tensor):
+                    _log_info(f"🎬 处理视频，形状: {video_frames.shape}, 数据类型: {video_frames.dtype}")
+
+                    # 检查视频维度 [frames, channels, height, width]
+                    if video_frames.dim() == 4:
+                        frames_count = video_frames.shape[0]
+                        _log_info(f"📊 视频帧数: {frames_count}")
+
+                        # 保存视频为临时 MP4 文件
+                        temp_video_file = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
+                        temp_video_path = temp_video_file.name
+                        temp_video_file.close()
+
+                        # 计算 FPS（假设原始视频是 30 FPS）
+                        fps = 30
+
+                        # 保存视频
+                        saved_path = save_video_tensor_to_mp4(video_frames, temp_video_path, fps=fps)
+
+                        if saved_path:
+                            # 返回视频文件信息，而不是图片帧
+                            video_file_info = {
+                                "path": saved_path,
+                                "frames_count": frames_count,
+                                "fps": fps
+                            }
+                            _log_info(f"✅ 视频已保存为 MP4 文件，准备上传到 Gemini File API")
+                        else:
+                            _log_error("保存视频失败，无法使用 File API")
+                    else:
+                        _log_warning(f"视频维度不正确: {video_frames.dim()}, 期望4维")
+
+        except Exception as e:
+            _log_error(f"处理视频数据失败: {e}")
+            import traceback
+            traceback.print_exc()
+
+    return content_parts, video_file_info
 
 # ========================================
 # 安全设置预设配置
@@ -1373,9 +1633,9 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         # 尝试导入官方库
         from google import genai
         from google.genai import types
-        
+
         _log_info(f"🚀 使用官方google.genai库调用模型: {model}")
-        
+
         # 代理处理：有效则设置，无效/未填则清除，避免残留环境变量影响请求
         if proxy and proxy.strip() and "None" not in proxy:
             _log_info(f"🔌 使用代理: {proxy.strip()}")
@@ -1389,10 +1649,10 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
             old_https_proxy = os.environ.get('HTTPS_PROXY')
             old_http_proxy = os.environ.get('HTTP_PROXY')
             # 不清理环境变量，使用系统代理
-        
+
         # 创建客户端
         client = genai.Client(api_key=api_key)
-        
+
         # 转换generation_config格式
         config_params = {
             'temperature': generation_config.get('temperature', 0.7),
@@ -1433,7 +1693,7 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
             config_params['system_instruction'] = system_instruction
 
         official_config = types.GenerateContentConfig(**config_params)
-        
+
         # 转换content_parts格式
         official_parts = []
         for part in content_parts:
@@ -1446,16 +1706,16 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
                         "data": part['inline_data']['data']
                     }
                 })
-        
+
         official_contents = [{"parts": official_parts}]
-        
+
         # 调用官方API
         response = client.models.generate_content(
             model=model,
             contents=official_contents,
             config=official_config
         )
-        
+
         # 处理响应
         if hasattr(response, 'candidates') and response.candidates:
             candidate = response.candidates[0]
@@ -1471,14 +1731,14 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
                             data_b64 = base64.b64encode(part.inline_data.data).decode('utf-8')
                         else:
                             data_b64 = part.inline_data.data
-                        
+
                         result_parts.append({
                             'inline_data': {
                                 'mime_type': 'image/png',
                                 'data': data_b64
                             }
                         })
-                
+
                 return {
                     'candidates': [{
                         'content': {
@@ -1486,10 +1746,10 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
                         }
                     }]
                 }
-        
+
         _log_warning("官方API返回了空响应")
         return None
-        
+
     except ImportError:
         _log_warning("google.genai库未安装，将使用REST API")
         return None
@@ -1552,13 +1812,13 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
         request_data["system_instruction"] = {
             "parts": [{"text": system_instruction}]
         }
-    
+
     # 设置请求头
     headers = {
         "Content-Type": "application/json",
         "x-goog-api-key": api_key.strip()
     }
-    
+
     # 处理代理设置
     proxies = None
     if proxy and proxy.strip() and "None" not in proxy:
@@ -1567,28 +1827,28 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
             "https": proxy.strip()
         }
         _log_info(f"🔌 使用代理: {proxy.strip()}")
-    
+
     # 设置合理的超时：连接超时10秒，读取超时60秒
     timeout = (10, 60)  # (connect_timeout, read_timeout)
-    
+
     for attempt in range(max_retries):
         try:
             _log_info(f"🌐 REST API调用 ({attempt + 1}/{max_retries}) 模型: {model}")
-            
+
             # 发送请求
             response = requests.post(url, headers=headers, json=request_data, timeout=timeout, proxies=proxies)
-            
+
             # 成功响应
             if response.status_code == 200:
                 return response.json()
-            
+
             # 处理错误响应
             else:
                 _log_error(f"HTTP状态码: {response.status_code}")
                 try:
                     error_detail = response.json()
                     _log_error(f"错误详情: {json.dumps(error_detail, indent=2, ensure_ascii=False)}")
-                    
+
                     # 检查是否是配额错误
                     if response.status_code == 429:
                         error_message = error_detail.get("error", {}).get("message", "")
@@ -1596,16 +1856,16 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
                             _log_warning("检测到配额限制错误")
                 except:
                     _log_error(f"错误文本: {response.text}")
-                
+
                 # 如果是最后一次尝试，抛出异常
                 if attempt == max_retries - 1:
                     response.raise_for_status()
-                
+
                 # 智能等待
                 delay = smart_retry_delay(attempt, response.status_code)
                 _log_info(f"🔄 等待 {delay:.1f} 秒后重试...")
                 time.sleep(delay)
-                
+
         except requests.exceptions.RequestException as e:
             error_msg = str(e)
             _log_error(f"请求失败: {error_msg}")
@@ -1615,7 +1875,7 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
                 delay = smart_retry_delay(attempt)
                 _log_info(f"🔄 等待 {delay:.1f} 秒后重试...")
                 time.sleep(delay)
-    
+
     raise Exception("所有重试都失败了")
 
 def generate_with_priority_api(api_key, model, content_parts, generation_config,
@@ -1639,21 +1899,21 @@ def generate_with_priority_api(api_key, model, content_parts, generation_config,
 
 def generate_with_priority_api_direct(api_key, model, request_data, max_retries=5, proxy=None, base_url=None):
     """优先使用官方API，失败时回退到直接REST API调用（用于多图像编辑）"""
-    
+
     # 首先尝试官方API
     try:
         from google import genai
         from google.genai import types
-        
+
         _log_info("🎯 优先尝试官方google.genai API (多图像编辑)")
-        
+
         # 创建客户端
         client = genai.Client(api_key=api_key)
-        
+
         # 转换请求数据格式
         contents = request_data.get('contents', [])
         generation_config = request_data.get('generationConfig', {})
-        
+
         # 转换generation_config
         config_params = {
             'temperature': generation_config.get('temperature', 0.7),
@@ -1679,7 +1939,7 @@ def generate_with_priority_api_direct(api_key, model, request_data, max_retries=
             config_params['seed'] = generation_config['seed']
 
         official_config = types.GenerateContentConfig(**config_params)
-        
+
         # 转换contents格式
         official_contents = []
         for content in contents:
@@ -1696,14 +1956,14 @@ def generate_with_priority_api_direct(api_key, model, request_data, max_retries=
                         }
                     })
             official_contents.append({"parts": official_parts})
-        
+
         # 调用官方API
         response = client.models.generate_content(
             model=model,
             contents=official_contents,
             config=official_config
         )
-        
+
         # 转换响应格式
         if hasattr(response, 'candidates') and response.candidates:
             candidate = response.candidates[0]
@@ -1719,14 +1979,14 @@ def generate_with_priority_api_direct(api_key, model, request_data, max_retries=
                             data_b64 = base64.b64encode(part.inline_data.data).decode('utf-8')
                         else:
                             data_b64 = part.inline_data.data
-                        
+
                         result_parts.append({
                             'inline_data': {
                                 'mime_type': 'image/png',
                                 'data': data_b64
                             }
                         })
-                
+
                 return {
                     'candidates': [{
                         'content': {
@@ -1734,17 +1994,17 @@ def generate_with_priority_api_direct(api_key, model, request_data, max_retries=
                         }
                     }]
                 }
-        
+
         _log_warning("官方API返回了空响应")
-        
+
     except ImportError:
         _log_warning("google.genai库未安装，将使用REST API")
     except Exception as e:
         _log_error(f"官方API调用失败: {str(e)}")
-    
+
     # 官方API失败，回退到直接REST API调用
     _log_info("🔄 官方API失败，回退到直接REST API调用")
-    
+
     # 构建API URL
     if base_url and base_url.strip():
         base_url = base_url.rstrip('/')
@@ -1756,13 +2016,13 @@ def generate_with_priority_api_direct(api_key, model, request_data, max_retries=
             url = f"{base_url}/v1beta/models/{model}:generateContent"
     else:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-    
+
     # 设置请求头
     headers = {
         "Content-Type": "application/json",
         "x-goog-api-key": api_key.strip()
     }
-    
+
     # 处理代理设置
     proxies = None
     if proxy and proxy.strip() and "None" not in proxy:
@@ -1770,26 +2030,26 @@ def generate_with_priority_api_direct(api_key, model, request_data, max_retries=
             "http": proxy.strip(),
             "https": proxy.strip()
         }
-    
+
     timeout = (10, 120)
-    
+
     for attempt in range(max_retries):
         try:
             _log_info(f"🌐 REST API调用 ({attempt + 1}/{max_retries}) 模型: {model}")
-            
+
             response = requests.post(url, headers=headers, json=request_data, timeout=timeout, proxies=proxies)
-            
+
             if response.status_code == 200:
                 return response.json()
             else:
                 _log_error(f"HTTP状态码: {response.status_code}")
                 if attempt == max_retries - 1:
                     response.raise_for_status()
-                
+
                 delay = smart_retry_delay(attempt, response.status_code)
                 _log_info(f"🔄 等待 {delay:.1f} 秒后重试...")
                 time.sleep(delay)
-                
+
         except requests.exceptions.RequestException as e:
             _log_error(f"请求失败: {str(e)}")
             if attempt == max_retries - 1:
@@ -1798,7 +2058,7 @@ def generate_with_priority_api_direct(api_key, model, request_data, max_retries=
                 delay = smart_retry_delay(attempt)
                 _log_info(f"🔄 等待 {delay:.1f} 秒后重试...")
                 time.sleep(delay)
-    
+
     raise Exception("所有重试都失败了")
 
 class KenChenLLMGeminiBananaTextToImageBananaNode:
@@ -1818,7 +2078,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         config = get_gemini_banana_config()
         default_params = config.get('default_params', {})
         image_settings = config.get('image_settings', {})
-        
+
         # Get image generation models from config, with fallback to core Banana models
         models = config.get('models', {}).get('image_gen_models', [])
         if not models:
@@ -1828,13 +2088,13 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 "gemini-2.0-flash-preview-image-generation",
                 "nano-banana"
             ]
-        
+
         # Get default model from config, prioritize latest Banana model
         default_model = config.get('default_model', {}).get('image_gen', "gemini-2.5-flash-image-preview")
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
-        
+
         # Get image control presets - Enhanced with Gemini official API features
-        aspect_ratios = image_settings.get('aspect_ratios', [
+        aspect_ratios = ["Auto"] + image_settings.get('aspect_ratios', [
             "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
         ])
         response_modalities = image_settings.get('response_modalities', [
@@ -1846,15 +2106,16 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
-        
+
         return {
             "required": {
                 "api_key": ("STRING", {
-                    "default": "", 
+                    "default": "",
                     "multiline": False,
                     "placeholder": "API密钥（留空时自动从配置文件读取）"
                 }),
                 "prompt": ("STRING", {"default": "A beautiful landscape with mountains and lake", "multiline": True}),
+                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
                 "model": (
                     models,
                     {"default": default_model},
@@ -1863,7 +2124,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
 
                 # 📐 Gemini官方API图像控制参数
                 "aspect_ratio": (aspect_ratios, {
-                    "default": image_settings.get('default_aspect_ratio', "1:1"),
+                    "default": "Auto",
                     "tooltip": "图像宽高比 (Gemini官方API支持)"
                 }),
                 "response_modality": (response_modalities, {
@@ -1889,7 +2150,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
                 "lighting_control": (["Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
                 "template_selection": (["Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
-                
+
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
                 "top_k": ("INT", {"default": default_params.get('top_k', 40), "min": 0, "max": 100}),
@@ -1949,17 +2210,34 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
             # 限制提示词长度，避免过长文本导致显示问题
             max_prompt_length = 500
             max_response_length = 1000
-            
+
             # 截断过长的提示词和响应
             display_prompt = user_prompt[:max_prompt_length] + ("..." if len(user_prompt) > max_prompt_length else "")
             display_response = response_text[:max_response_length] + ("..." if len(response_text) > max_response_length else "")
-            
+
+
+
+
+
+
             render_spec = {
                 "node_id": unique_id,
                 "component": "ChatHistoryWidget",
+
+
+
+
+
+
+
+
+
                 "props": {
                     "history": json.dumps([
                         {
+
+
+
                             "prompt": display_prompt,
                             "response": display_response,
                             "response_id": str(random.randint(100000, 999999)),
@@ -1977,6 +2255,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         self,
         api_key,
         prompt,
+        negative_prompt,
         model,
         proxy,
         aspect_ratio,
@@ -2001,6 +2280,10 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         unique_id: str = "",
     ):
         try:
+            # Process wildcards in the prompt
+            wildcard_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wildcards")
+            prompt = process_wildcards(prompt, wildcard_dir)
+
             # 如果用户没有输入API密钥，自动从配置文件获取
             if not api_key or not api_key.strip():
                 config = get_gemini_banana_config()
@@ -2012,7 +2295,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                     error_msg = "API密钥不能为空，请在配置文件中设置api_key或手动输入"
                     _log_error(error_msg)
                     return (error_msg, create_dummy_image())
-            
+
             # 验证提示词
             if not prompt.strip():
                 error_msg = "提示词不能为空"
@@ -2043,6 +2326,12 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
 
             _log_info(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
 
+
+            # 负向提示词处理
+            if negative_prompt and negative_prompt.strip():
+                enhanced_prompt += f"\n\nNegative Prompt: {negative_prompt.strip()}"
+                _log_info(f"🚫 添加负向提示词: {negative_prompt[:100]}...")
+
             # 代理处理：有效则设置，None或无效时使用系统代理
             if proxy and proxy.strip() and "None" not in proxy:
                 os.environ['HTTPS_PROXY'] = proxy.strip()
@@ -2051,7 +2340,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
             else:
                 # 当代理为None或无效时，不清理环境变量，使用系统代理
                 _log_info("🔌 使用系统代理 (保持现有环境变量)")
-            
+
             # 构建生成配置
             generation_config = {
                 "temperature": temperature,
@@ -2069,7 +2358,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 _log_info("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
             # 📐 Gemini官方API：Aspect Ratio控制
-            if aspect_ratio and aspect_ratio != "1:1":
+            if aspect_ratio and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -2102,11 +2391,11 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                                                       safety_settings=safety_settings,
                                                       system_instruction=system_instruction,
                                                       proxy=proxy, base_url=None)
-            
+
             # 处理响应
             raw_text = extract_text_from_response(response_json)
             generated_image = process_generated_image_from_response(response_json)
-            
+
             # 简化图像处理流程
             if generated_image is not None:
                 try:
@@ -2129,7 +2418,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
 
                         pil_image = Image.fromarray(img_array)
                         generated_image = pil_image
-                    
+
                     # 🔍 Topaz Gigapixel AI智能放大
                     if upscale_factor and upscale_factor != "1x (不放大)" and isinstance(generated_image, Image.Image):
                         try:
@@ -2169,31 +2458,31 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                     # 确保在异常情况下也转换为tensor格式
                     if isinstance(generated_image, Image.Image):
                         generated_image = pil_to_tensor(generated_image)
-            
+
             if not raw_text or raw_text == "Response received but no text content":
                 assistant_text = "遵命！这是你所要求的图片："
             else:
                 assistant_text = raw_text.strip()
-            
+
             self._push_chat(enhanced_prompt, assistant_text, unique_id)
-            
+
             # 确保返回tensor格式
             if isinstance(generated_image, Image.Image):
                 generated_image = pil_to_tensor(generated_image)
-            
+
             _log_info("✅ 图像生成成功完成")
             return (assistant_text, generated_image)
-            
+
         except Exception as e:
             error_msg = str(e)
             _log_error(f"图像生成失败: {error_msg}")
-            
+
             # 增强的错误分类处理
             if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
                 friendly_error = (
                     "API配额超限。解决方案:\n"
                     "1. 等待配额重置（通常24小时）\n"
-                    "2. 升级到付费账户\n" 
+                    "2. 升级到付费账户\n"
                     "3. 使用免费模型\n"
                     "4. 检查计费设置"
                 )
@@ -2207,7 +2496,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 friendly_error = "内容被安全过滤器阻止，请修改提示词"
             else:
                 friendly_error = f"生成失败: {error_msg}"
-            
+
             return (friendly_error, create_dummy_image())
 
 class KenChenLLMGeminiBananaImageToImageBananaNode:
@@ -2227,7 +2516,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         config = get_gemini_banana_config()
         default_params = config.get('default_params', {})
         image_settings = config.get('image_settings', {})
-        
+
         # Get image generation models from config, with fallback to core Banana models
         models = config.get('models', {}).get('image_gen_models', [])
         if not models:
@@ -2237,13 +2526,13 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 "gemini-2.0-flash-preview-image-generation",
                 "nano-banana"
             ]
-        
+
         # Get default model from config, prioritize latest Banana model
         default_model = config.get('default_model', {}).get('image_gen', "gemini-2.5-flash-image-preview")
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
-        
+
         # 🚀 Gemini官方API图像控制预设
-        aspect_ratios = image_settings.get('aspect_ratios', [
+        aspect_ratios = ["Auto"] + image_settings.get('aspect_ratios', [
             "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
         ])
         response_modalities = image_settings.get('response_modalities', [
@@ -2255,15 +2544,16 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
-        
+
         return {
             "required": {
                 "api_key": ("STRING", {
-                    "default": "", 
+                    "default": "",
                     "multiline": False,
                     "placeholder": "API密钥（留空时自动从配置文件读取）"
                 }),
                 "prompt": ("STRING", {"default": "Transform this image", "multiline": True}),
+                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
                 "image": ("IMAGE",),
                 "model": (
                     models,
@@ -2273,7 +2563,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
 
                 # 📐 Gemini官方API图像控制参数
                 "aspect_ratio": (aspect_ratios, {
-                    "default": image_settings.get('default_aspect_ratio', "1:1"),
+                    "default": "Auto",
                     "tooltip": "图像宽高比 (Gemini官方API支持)"
                 }),
                 "response_modality": (response_modalities, {
@@ -2336,12 +2626,21 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
             }
         }
 
+
+
+
     RETURN_TYPES = ("STRING", "IMAGE")
     RETURN_NAMES = ("generation_text", "generated_image")
     FUNCTION = "transform_image"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
 
+
+
+
+
     # 设置节点颜色 - 使用ComfyUI标准属性
+
+
     color = "#FFD700"  # 金色
     bgcolor = "#DAA520"  # 深金色背景
     groupcolor = "#F0E68C"  # 卡其色
@@ -2356,6 +2655,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         self,
         api_key,
         prompt,
+        negative_prompt,
         image,
         model,
         proxy,
@@ -2381,6 +2681,10 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         unique_id: str = "",
     ):
         try:
+            # Process wildcards in the prompt
+            wildcard_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wildcards")
+            prompt = process_wildcards(prompt, wildcard_dir)
+
             # 如果用户没有输入API密钥，自动从配置文件获取
             if not api_key or not api_key.strip():
                 config = get_gemini_banana_config()
@@ -2392,7 +2696,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                     error_msg = "API密钥不能为空，请在配置文件中设置api_key或手动输入"
                     _log_error(error_msg)
                     return (error_msg, create_dummy_image())
-            
+
             # 验证提示词
             if not prompt.strip():
                 error_msg = "提示词不能为空"
@@ -2410,11 +2714,16 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 camera_control,
                 lighting_control,
                 template_selection,
-                quality_enhancement="Auto",  # 默认值
-                enhance_quality=True,  # 默认值
-                smart_resize=True,  # 默认值
-                fill_color="white"  # 默认值
+                quality_enhancement="Auto",
+                enhance_quality=True,
+                smart_resize=True,
+                fill_color="white"
             )
+
+            # 负向提示词处理
+            if negative_prompt and negative_prompt.strip():
+                enhanced_prompt += f"\n\nNegative Prompt: {negative_prompt.strip()}"
+                _log_info(f"🚫 添加负向提示词: {negative_prompt[:100]}...")
 
             # 处理自定义指令
             if custom_additions and custom_additions.strip():
@@ -2422,16 +2731,16 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 _log_info(f"📝 添加自定义指令: {custom_additions[:100]}...")
 
             _log_info(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
-            
+
             # 转换输入图片
             pil_image = tensor_to_pil(image)
-            
+
             # 调整图像尺寸以符合API要求
             pil_image = resize_image_for_api(pil_image)
-            
+
             # 转换为base64
             image_base64 = image_to_base64(pil_image, format='JPEG')
-            
+
             # 代理处理：有效则设置，None或无效时使用系统代理
             if proxy and proxy.strip() and "None" not in proxy:
                 os.environ['HTTPS_PROXY'] = proxy.strip()
@@ -2440,7 +2749,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
             else:
                 # 当代理为None或无效时，不清理环境变量，使用系统代理
                 _log_info("🔌 使用系统代理 (保持现有环境变量)")
-            
+
             # 构建生成配置
             generation_config = {
                 "temperature": temperature,
@@ -2458,7 +2767,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 _log_info("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
             # 📐 Gemini官方API：Aspect Ratio控制
-            if aspect_ratio and aspect_ratio != "1:1":
+            if aspect_ratio and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -2480,7 +2789,8 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
 
             # 准备内容 - 文本 + 图像
             content_parts = [{"text": enhanced_prompt}]
-            content_parts.extend(prepare_media_content(image=image))
+            media_parts, _ = prepare_media_content(image=image)
+            content_parts.extend(media_parts)
 
             # 使用优先API调用
             _log_info(f"🖼️ 使用模型 {model} 进行图像转换...")
@@ -2490,11 +2800,11 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                                                       safety_settings=safety_settings,
                                                       system_instruction=system_instruction,
                                                       proxy=proxy, base_url=None)
-            
+
             # 处理响应
             raw_text = extract_text_from_response(response_json)
             edited_image = process_generated_image_from_response(response_json)
-            
+
             # 如果没有编辑后的图片，返回原图片
             if edited_image is None:
                 _log_warning("未检测到编辑后的图片，返回原图片")
@@ -2546,7 +2856,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 _log_info("📝 使用默认响应文本")
             else:
                 response_text = raw_text.strip()
-            
+
             # 转换为tensor
             if isinstance(edited_image, Image.Image):
                 image_tensor = pil_to_tensor(edited_image)
@@ -2556,18 +2866,18 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 _log_error(f"未知的图像类型: {type(edited_image)}")
                 # 创建一个默认的黑色图像tensor
                 image_tensor = torch.zeros((1, 512, 512, 3), dtype=torch.float32)
-            
+
             _log_info("✅ 图片编辑完成")
             _log_info(f"📝 响应文本长度: {len(response_text)}")
             _log_info(f"📝 响应文本内容: {response_text[:200]}...")
             self._push_chat(enhanced_prompt, response_text or "", unique_id) # 使用增强后的提示词
-            
+
             return (response_text, image_tensor)
-            
+
         except Exception as e:
             error_msg = str(e)
             _log_error(f"图像转换失败: {error_msg}")
-            
+
             # 增强的错误分类处理
             if "API key" in error_msg or "401" in error_msg or "403" in error_msg:
                 friendly_error = "API密钥无效，请检查配置"
@@ -2575,9 +2885,9 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 friendly_error = "内容被安全过滤器阻止，请修改提示词"
             else:
                 friendly_error = f"转换失败: {error_msg}"
-            
+
             return (friendly_error, create_dummy_image())
-    
+
     def _push_chat(self, user_prompt: str, response_text: str, unique_id: str):
         if not PromptServer or not unique_id:
             return
@@ -2585,20 +2895,20 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
             # 限制提示词长度，避免过长文本导致显示问题
             max_prompt_length = 500
             max_response_length = 1000
-            
+
             # 截断过长的提示词和响应
             display_prompt = user_prompt[:max_prompt_length] + ("..." if len(user_prompt) > max_prompt_length else "")
             display_response = response_text[:max_response_length] + ("..." if len(response_text) > max_response_length else "")
-            
+
             render_spec = {
                 "node_id": unique_id,
                 "component": "ChatHistoryWidget",
                 "props": {
                     "history": json.dumps([
                         {
-                            "prompt": display_prompt, 
-                            "response": display_response, 
-                            "response_id": str(random.randint(100000, 999999)), 
+                            "prompt": display_prompt,
+                            "response": display_response,
+                            "response_id": str(random.randint(100000, 999999)),
                             "timestamp": time.time()
                         }
                     ], ensure_ascii=False)
@@ -2625,7 +2935,7 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
     def INPUT_TYPES(s):
         config = get_gemini_banana_config()
         default_params = config.get('default_params', {})
-        
+
         # Get multimodal models from config, with fallback to latest models
         models = config.get('models', {}).get('multimodal_models', [])
         if not models:
@@ -2636,15 +2946,15 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
                 "gemini-2.5-pro-preview-05-06",  # Supports image+text
                 "gemini-2.0-flash-exp-image-generation",  # Supports image+text
             ]
-        
+
         # Get default model from config, prioritize latest models
         default_model = config.get('default_model', {}).get('multimodal', "gemini-2.5-pro-exp-03-25")
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
-        
+
         return {
             "required": {
                 "api_key": ("STRING", {
-                    "default": "", 
+                    "default": "",
                     "multiline": False,
                     "placeholder": "API密钥（留空时自动从配置文件读取，建议保持为空以确保安全）"
                 }),
@@ -2659,7 +2969,7 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
                 "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
                 "analysis_mode": (["Auto Select", "Visual Analysis", "Audio Analysis", "Combined Analysis", "Detailed Description", "Summary Report"], {"default": "Auto Select"}),
                 "output_format": (["Natural Language", "Structured Report", "Technical Analysis", "Creative Description", "Professional Summary"], {"default": "Natural Language"}),
-                
+
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
                 "top_k": ("INT", {"default": default_params.get('top_k', 40), "min": 0, "max": 100}),
@@ -2669,6 +2979,7 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
             "optional": {
                 "image": ("IMAGE",),
                 "audio": ("AUDIO",),
+                "video": ("VIDEO",),
 
                 # ✨ 自定义指令组
                 "custom_additions": ("STRING", {
@@ -2692,6 +3003,14 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
                     "default": "",
                     "multiline": True,
                     "placeholder": "自定义系统指令（优先级高于预设）"
+                }),
+
+                # 📹 视频处理设置
+                "max_video_frames": ("INT", {
+                    "default": 10,
+                    "min": 1,
+                    "max": 100,
+                    "tooltip": "视频处理时最多提取的帧数。增加此值会提高视频分析质量，但会增加API成本和处理时间。建议值: 10-30"
                 }),
             },
         }
@@ -2728,10 +3047,12 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
         seed,
         image=None,
         audio=None,
+        video=None,
         custom_additions="",
         safety_level="default",
         system_instruction_preset="none",
         custom_system_instruction="",
+        max_video_frames=10,
     ):
         try:
             # 如果用户没有输入API密钥，自动从配置文件获取
@@ -2745,7 +3066,7 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
                     error_msg = "API密钥不能为空，请在配置文件中设置multimodal_api_key或手动输入"
                     _log_error(error_msg)
                     return (error_msg,)
-            
+
             # 设置代理
             # 代理处理：使用 proxies 参数，不设置环境变量，避免冲突
             if proxy and proxy.strip() and "None" not in proxy:
@@ -2753,7 +3074,7 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
                 _log_info(f"使用代理: {proxy.strip()}")
             else:
                 _log_info("🔌 使用系统代理")
-            
+
             # 构建生成配置（多模态分析只需要TEXT输出）
             generation_config = {
                 "temperature": temperature,
@@ -2762,7 +3083,7 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
                 "maxOutputTokens": max_output_tokens,
                 "responseModalities": ["TEXT"]  # 只需要文本输出
             }
-            
+
             if seed > 0:
                 generation_config["seed"] = seed
 
@@ -2779,9 +3100,108 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
 
             # 准备内容 - 文本 + 多媒体
             content_parts = [{"text": prompt.strip()}]
-            content_parts.extend(prepare_media_content(image=image, audio=audio))
 
-            # 使用REST API调用
+            # 准备媒体内容
+            media_parts, video_file_info = prepare_media_content(image=image, audio=audio, video=video, max_video_frames=max_video_frames)
+
+            # 🎬 如果有视频，使用 File API
+            uploaded_video_file = None
+            temp_video_path = None
+
+            if video_file_info is not None:
+                _log_info("🎬 检测到视频输入，使用 Gemini File API 上传视频")
+
+                temp_video_path = video_file_info["path"]
+
+                # 上传视频到 File API
+                uploaded_video_file = upload_video_to_gemini_file_api(
+                    temp_video_path,
+                    api_key,
+                    display_name="comfyui_video"
+                )
+
+                if uploaded_video_file:
+                    # 使用 File API 的方式添加视频
+                    _log_info(f"✅ 视频已上传，使用 File URI: {uploaded_video_file['file_uri']}")
+                    # 注意：File API 需要使用不同的格式
+                    # 我们需要使用 SDK 而不是 REST API
+                else:
+                    _log_error("视频上传失败，将跳过视频分析")
+                    video_file_info = None
+
+            # 添加其他媒体内容（图片、音频）
+            content_parts.extend(media_parts)
+
+            # 🎬 如果有视频文件，使用 SDK 调用
+            if uploaded_video_file and GENAI_SDK_AVAILABLE:
+                _log_info(f"🔍 使用 Gemini SDK 进行视频分析...")
+                _log_info(f"📝 分析提示: {prompt[:100]}...")
+
+                try:
+                    # 使用 SDK 调用
+                    client = genai.Client(api_key=api_key)
+
+                    # 构建内容
+                    sdk_contents = [
+                        types.Part(text=prompt.strip()),
+                        types.Part(
+                            file_data=types.FileData(
+                                file_uri=uploaded_video_file['file_uri'],
+                                mime_type=uploaded_video_file['mime_type']
+                            )
+                        )
+                    ]
+
+                    # 添加其他媒体（如果有）
+                    for part in media_parts:
+                        if "inline_data" in part:
+                            sdk_contents.append(
+                                types.Part(
+                                    inline_data=types.Blob(
+                                        data=base64.b64decode(part["inline_data"]["data"]),
+                                        mime_type=part["inline_data"]["mime_type"]
+                                    )
+                                )
+                            )
+
+                    # 调用 API
+                    response = client.models.generate_content(
+                        model=model,
+                        contents=types.Content(parts=sdk_contents),
+                        config=types.GenerateContentConfig(
+                            temperature=generation_config.get("temperature"),
+                            top_p=generation_config.get("top_p"),
+                            top_k=generation_config.get("top_k"),
+                            max_output_tokens=generation_config.get("max_output_tokens"),
+                            safety_settings=safety_settings,
+                            system_instruction=system_instruction
+                        )
+                    )
+
+                    generated_text = response.text
+
+                    # 清理临时文件
+                    if temp_video_path and os.path.exists(temp_video_path):
+                        try:
+                            os.unlink(temp_video_path)
+                            _log_info("🗑️ 临时视频文件已删除")
+                        except:
+                            pass
+
+                    _log_info("✅ 视频分析成功完成")
+                    return (generated_text,)
+
+                except Exception as sdk_error:
+                    _log_error(f"SDK 调用失败: {sdk_error}")
+                    # 清理临时文件
+                    if temp_video_path and os.path.exists(temp_video_path):
+                        try:
+                            os.unlink(temp_video_path)
+                        except:
+                            pass
+                    raise
+
+            # 如果没有视频或 SDK 不可用，使用 REST API
             _log_info(f"🔍 使用模型 {model} 进行多模态分析...")
             _log_info(f"📝 分析提示: {prompt[:100]}...")
 
@@ -2789,20 +3209,28 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
                                                       safety_settings=safety_settings,
                                                       system_instruction=system_instruction,
                                                       proxy=proxy)
-            
+
+            # 清理临时文件
+            if temp_video_path and os.path.exists(temp_video_path):
+                try:
+                    os.unlink(temp_video_path)
+                    _log_info("🗑️ 临时视频文件已删除")
+                except:
+                    pass
+
             # 提取文本响应
             generated_text = extract_text_from_response(response_json)
-            
+
             if not generated_text or generated_text == "Response received but no text content":
                 generated_text = "模型未返回有效的分析结果"
-            
+
             _log_info("✅ 多模态分析成功完成")
             return (generated_text,)
-            
+
         except Exception as e:
             error_msg = str(e)
             _log_error(f"多模态分析失败: {error_msg}")
-            
+
             # 增强的错误分类处理
             if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
                 friendly_error = (
@@ -2822,7 +3250,7 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
                 friendly_error = "内容被安全过滤器阻止，请修改提示词或媒体内容"
             else:
                 friendly_error = f"分析失败: {error_msg}"
-            
+
             return (friendly_error,)
 
 class KenChenLLMGeminiBananaMultiImageEditBananaNode:
@@ -2850,9 +3278,9 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
         config = get_gemini_banana_config()
         default_params = config.get('default_params', {})
         image_settings = config.get('image_settings', {})
-        
+
         # 🚀 Gemini官方API图像控制预设
-        aspect_ratios = image_settings.get('aspect_ratios', [
+        aspect_ratios = ["Auto"] + image_settings.get('aspect_ratios', [
             "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
         ])
         response_modalities = image_settings.get('response_modalities', [
@@ -2864,16 +3292,17 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
-        
+
         return {
             "required": {
                 "api_key": ("STRING", {"default": "", "multiline": False}),
                 "prompt": ("STRING", {"default": "请根据这些图片进行专业的图像编辑", "multiline": True}),
+                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
                 "model": (["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.0-flash"], {"default": "gemini-2.5-flash-image"}),
 
                 # 📐 Gemini官方API图像控制参数
                 "aspect_ratio": (aspect_ratios, {
-                    "default": image_settings.get('default_aspect_ratio', "1:1"),
+                    "default": "Auto",
                     "tooltip": "图像宽高比 (Gemini官方API支持)"
                 }),
                 "response_modality": (response_modalities, {
@@ -2950,35 +3379,45 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
     # 设置节点颜色 - 使用ComfyUI标准属性
     color = "#FFD700"  # 金色
     bgcolor = "#DAA520"  # 深金色背景
+
+
+
     groupcolor = "#F0E68C"  # 卡其色
 
     def __init__(self):
         # 强制设置颜色属性
+
+
+
         self.color = "#FFD700"
         self.bgcolor = "#DAA520"
         self.groupcolor = "#F0E68C"
+
+
 
     def _push_chat(self, user_prompt: str, response_text: str, unique_id: str):
         if not PromptServer or not unique_id:
             return
         try:
             # 限制提示词长度，避免过长文本导致显示问题
+
+
             max_prompt_length = 500
             max_response_length = 1000
-            
+
             # 截断过长的提示词和响应
             display_prompt = user_prompt[:max_prompt_length] + ("..." if len(user_prompt) > max_prompt_length else "")
             display_response = response_text[:max_response_length] + ("..." if len(response_text) > max_response_length else "")
-            
+
             render_spec = {
                 "node_id": unique_id,
                 "component": "ChatHistoryWidget",
                 "props": {
                     "history": json.dumps([
                         {
-                            "prompt": display_prompt, 
-                            "response": display_response, 
-                            "response_id": str(random.randint(100000, 999999)), 
+                            "prompt": display_prompt,
+                            "response": display_response,
+                            "response_id": str(random.randint(100000, 999999)),
                             "timestamp": time.time()
                         }
                     ], ensure_ascii=False)
@@ -2989,7 +3428,7 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
             _log_error(f"Chat push failed: {e}")
             pass
 
-    def edit_multiple_images(self, api_key: str, prompt: str, model: str, aspect_ratio: str, response_modality: str,
+    def edit_multiple_images(self, api_key: str, prompt: str, negative_prompt: str, model: str, aspect_ratio: str, response_modality: str,
                            upscale_factor: str, gigapixel_model: str, quality: str, style: str, detail_level: str,
                            camera_control: str, lighting_control: str, template_selection: str, temperature: float, top_p: float,
                            top_k: int, max_output_tokens: int, seed: int, post_generation_control: str,
@@ -2997,6 +3436,10 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
                            safety_level: str = "default", system_instruction_preset: str = "none",
                            custom_system_instruction: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用 Gemini API 进行多图像编辑"""
+
+        # Process wildcards in the prompt
+        wildcard_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wildcards")
+        prompt = process_wildcards(prompt, wildcard_dir)
 
         # 如果用户没有输入API密钥，自动从配置文件获取
         if not api_key or not api_key.strip():
@@ -3011,7 +3454,7 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
         # 验证API密钥
         if not validate_api_key(api_key):
             raise ValueError("API Key格式无效或为空")
-        
+
         # 验证提示词
         if not prompt.strip():
             raise ValueError("提示词不能为空")
@@ -3027,11 +3470,16 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
             camera_control,
             lighting_control,
             template_selection,
-            quality_enhancement="Auto",  # 默认值
-            enhance_quality=True,  # 默认值
-            smart_resize=True,  # 默认值
-            fill_color="white"  # 默认值
+            quality_enhancement="Auto",
+            enhance_quality=True,
+            smart_resize=True,
+            fill_color="white"
         )
+
+        # 负向提示词处理
+        if negative_prompt and negative_prompt.strip():
+            enhanced_prompt += f"\n\nNegative Prompt: {negative_prompt.strip()}"
+            print(f"🚫 添加负向提示词: {negative_prompt[:100]}...")
 
         # 处理自定义指令
         if custom_additions and custom_additions.strip():
@@ -3039,11 +3487,11 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
             print(f"📝 添加自定义指令: {custom_additions[:100]}...")
 
         print(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
-        
+
         # 收集所有输入的图像
         all_input_pils = []
         input_images = [image1, image2, image3, image4]
-        
+
         for i, img_tensor in enumerate(input_images):
             if img_tensor is not None:
                 try:
@@ -3053,12 +3501,12 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
                         print(f"📸 添加输入图像 {i+1}: {pil_image.size}")
                 except Exception as e:
                     print(f"⚠️ 图像 {i+1} 处理失败: {e}")
-        
+
         if not all_input_pils:
             raise ValueError("错误：请输入至少一张要编辑的图像")
-        
+
         print(f"🖼️ 总共收集到 {len(all_input_pils)} 张输入图像")
-        
+
         # 🚀 应用真正的图形增强技术
         # 1. 对输入图像进行预处理增强
         enhanced_input_pils = []
@@ -3091,7 +3539,7 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
                     "data": image_base64
                 }
             })
-        
+
         # 3. 最后添加强制图像生成指令（参考项目的核心技术）
         if len(all_input_pils) == 1:
             # 单图编辑
@@ -3127,9 +3575,9 @@ REQUIREMENTS:
 6. Maintain high quality and natural appearance
 
 Execute the image editing task now and return the generated image."""
-        
+
         content.append({"type": "text", "text": image_edit_instruction})
-        
+
         # 构建请求数据
         generation_config = {
             "temperature": temperature,
@@ -3147,7 +3595,7 @@ Execute the image editing task now and return the generated image."""
             print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
         # 📐 Gemini官方API：Aspect Ratio控制
-        if aspect_ratio and aspect_ratio != "1:1":
+        if aspect_ratio and aspect_ratio != "Auto":
             generation_config["imageConfig"] = {
                 "aspectRatio": aspect_ratio
             }
@@ -3209,15 +3657,15 @@ Execute the image editing task now and return the generated image."""
                     proxy=None,
                     base_url=get_gemini_banana_config().get('base_url', 'https://generativelanguage.googleapis.com')
                 )
-                
+
                 # 成功响应
                 if result:
                     print(f"📋 API响应结构: {list(result.keys())}")
-                    
+
                     # 提取文本响应和编辑后的图片
                     response_text = ""
                     edited_image = None
-                    
+
                     if "candidates" in result and result["candidates"]:
                         candidate = result["candidates"][0]
                         if "content" in candidate and "parts" in candidate["content"]:
@@ -3225,7 +3673,7 @@ Execute the image editing task now and return the generated image."""
                                 # 提取文本
                                 if "text" in part:
                                     response_text += part["text"]
-                                
+
                                 # 提取编辑后的图片
                                 if "inline_data" in part or "inlineData" in part:
                                     inline_data = part.get("inline_data") or part.get("inlineData")
@@ -3238,7 +3686,7 @@ Execute the image editing task now and return the generated image."""
                                             print("✅ 成功提取编辑后的图片")
                                         except Exception as e:
                                             print(f"⚠️ 解码图片失败: {e}")
-                    
+
                     # 如果没有编辑后的图片，返回原图片
                     if edited_image is None:
                         print("⚠️ 未检测到编辑后的图片，返回原图片")
@@ -3293,20 +3741,20 @@ Execute the image editing task now and return the generated image."""
                     print(f"📝 响应文本内容: {response_text[:200]}...")
                     self._push_chat(enhanced_prompt, response_text or "", unique_id)
                     return (image_tensor, response_text)  # 修正：返回顺序应该是 (IMAGE, STRING)
-                
+
                 # 处理错误响应
                 else:
                     print(f"❌ API调用失败: 未收到有效响应")
-                    
+
                     # 如果是最后一次尝试，抛出异常
                     if attempt == max_retries - 1:
                         raise ValueError("API调用失败: 未收到有效响应")
-                    
+
                     # 智能等待
                     delay = smart_retry_delay(attempt, 500)  # 使用通用错误码
                     print(f"🔄 等待 {delay:.1f} 秒后重试...")
                     time.sleep(delay)
-                    
+
             except Exception as e:
                 error_msg = format_error_message(e)
                 print(f"❌ 请求失败: {error_msg}")
@@ -3376,5 +3824,4 @@ def setup_node_colors():
 
 # 应用颜色设置
 setup_node_colors()
-print("🎨 已为Gemini Banana节点设置黄色/金色主题")
 

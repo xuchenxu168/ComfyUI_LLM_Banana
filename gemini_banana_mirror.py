@@ -27,6 +27,45 @@ except ImportError:
         @staticmethod
         def instance():
             return None
+
+import re
+import random
+
+# --- Wildcard Processing ---
+def process_wildcards(prompt: str, wildcard_dir: str):
+    """Processes wildcards in the prompt string, e.g., __color__."""
+    if '__' not in prompt:
+        return prompt
+
+    print(" wildcard processing...")
+
+    def replace_wildcard(match):
+        wildcard_name = match.group(1)
+        wildcard_path = os.path.join(wildcard_dir, f"{wildcard_name}.txt")
+
+        if os.path.exists(wildcard_path):
+            try:
+                with open(wildcard_path, 'r', encoding='utf-8') as f:
+                    lines = [line.strip() for line in f if line.strip()]
+                if lines:
+                    return random.choice(lines)
+                else:
+                    print(f"Wildcard file '{wildcard_path}' is empty.")
+            except Exception as e:
+                print(f"Failed to read wildcard file '{wildcard_path}': {e}")
+        else:
+            print(f"Wildcard file not found: {wildcard_path}")
+
+        # If file not found or empty, return the original placeholder
+        return match.group(0)
+
+    # Regex to find all __word__ occurrences
+    processed_prompt = re.sub(r'__(\\w+)__', replace_wildcard, prompt)
+
+    if prompt != processed_prompt:
+        print(f"Wildcard processed prompt: {processed_prompt}")
+
+    return processed_prompt
 import sys
 from io import BytesIO
 from PIL import Image, ImageFilter
@@ -37,7 +76,7 @@ def detect_available_upscale_models():
     自动检测可用的AI放大模型
     """
     available_models = []
-    
+
     # 检测 Real-ESRGAN
     try:
         import realesrgan
@@ -45,7 +84,7 @@ def detect_available_upscale_models():
         print(f"✅ 检测到 Real-ESRGAN 模型")
     except ImportError:
         print(f"⚠️ Real-ESRGAN 模型未安装")
-    
+
     # 检测 ESRGAN
     try:
         import esrgan
@@ -53,7 +92,7 @@ def detect_available_upscale_models():
         print(f"✅ 检测到 ESRGAN 模型")
     except ImportError:
         print(f"⚠️ ESRGAN 模型未安装")
-    
+
     # 检测 Waifu2x
     try:
         import waifu2x
@@ -61,7 +100,7 @@ def detect_available_upscale_models():
         print(f"✅ 检测到 Waifu2x 模型")
     except ImportError:
         print(f"⚠️ Waifu2x 模型未安装")
-    
+
     # 检测 GFPGAN
     try:
         import gfpgan
@@ -69,7 +108,7 @@ def detect_available_upscale_models():
         print(f"✅ 检测到 GFPGAN 模型")
     except ImportError:
         print(f"⚠️ GFPGAN 模型未安装")
-    
+
     print(f"🔍 可用AI放大模型: {available_models}")
     return available_models
 
@@ -96,13 +135,13 @@ def ai_upscale_with_esrgan(image, target_width, target_height):
     """
     try:
         print(f"🚀 使用 ESRGAN 进行AI高清放大...")
-        
+
         # ESRGAN 实现代码
         # 这里需要根据具体的ESRGAN实现来编写
-        
+
         print(f"✅ ESRGAN AI放大完成")
         return image  # 临时返回原图
-        
+
     except Exception as e:
         print(f"❌ ESRGAN 放大失败: {e}")
         raise e
@@ -113,13 +152,13 @@ def ai_upscale_with_waifu2x(image, target_width, target_height):
     """
     try:
         print(f"🚀 使用 Waifu2x 进行AI高清放大...")
-        
+
         # Waifu2x 实现代码
         # 这里需要根据具体的Waifu2x实现来编写
-        
+
         print(f"✅ Waifu2x AI放大完成")
         return image  # 临时返回原图
-        
+
     except Exception as e:
         print(f"❌ Waifu2x 放大失败: {e}")
         raise e
@@ -304,7 +343,7 @@ def detect_image_foreground_subject(image):
 
         except Exception as e:
             print(f"⚠️ 肤色检测失败: {e}")
-        
+
         # 🎯 方法3：改进的边缘检测（专注于人物轮廓）
         print(f"🔍 [DEBUG] 开始尝试边缘检测方法...")
         try:
@@ -461,7 +500,7 @@ def detect_image_foreground_subject(image):
 
         print(f"🎯 安全策略主体位置: ({safe_x}, {safe_y}), 尺寸({safe_w}x{safe_h}), 中心({safe_center_x}, {safe_center_y})")
         return (safe_x, safe_y, safe_w, safe_h), (safe_center_x, safe_center_y)
-        
+
     except ImportError:
         print("⚠️ OpenCV未安装，无法进行智能主体检测")
         # 🚀 关键修复：返回安全的图像中心位置
@@ -2169,7 +2208,7 @@ def _comfly_nano_banana_edit(api_url: str, api_key: str, model: str, prompt: str
     }
     # 构建content数组，包含文本和所有图像
     content = [{"type": "text", "text": prompt}]
-    
+
     # 添加所有输入图像（使用原图尺寸与无损PNG编码）
     for pil_image in pil_images:
         if pil_image is not None:
@@ -2188,13 +2227,13 @@ def _comfly_nano_banana_edit(api_url: str, api_key: str, model: str, prompt: str
                     print(f"[ComflyNanoBananaMirror] Image encode error: {str(e)}")
                 except Exception:
                     pass
-    
+
     # 构建nano-banana的图像编辑请求格式
     messages = [{
         "role": "user",
         "content": content
     }]
-    
+
     payload = {
         "model": str(model),
         "messages": messages,
@@ -2203,10 +2242,10 @@ def _comfly_nano_banana_edit(api_url: str, api_key: str, model: str, prompt: str
         "max_tokens": int(max_tokens),
         "stream": True
     }
-    
+
     if seed > 0:
         payload["seed"] = seed
-    
+
     # 调试信息
     try:
         print(f"[ComflyNanoBananaMirror] Building payload: model={model}, max_tokens={max_tokens}, seed={seed}")
@@ -2753,7 +2792,7 @@ def get_mirror_site_config(mirror_site_name: str) -> Dict[str, str]:
             from gemini_banana import get_gemini_banana_config
         config = get_gemini_banana_config()
         mirror_sites = config.get('mirror_sites', {})
-        
+
         if mirror_site_name in mirror_sites:
             site_config = mirror_sites[mirror_site_name]
             return {
@@ -2790,17 +2829,17 @@ def validate_openrouter_config(api_url: str, api_key: str, model: str) -> Dict[s
         "suggestions": [],
         "optimized_params": {}
     }
-    
+
     # 验证API URL
     if not api_url or "openrouter.ai" not in api_url:
         validation_result["is_valid"] = False
         validation_result["warnings"].append("OpenRouter API URL 无效")
         return validation_result
-    
+
     # 验证API Key
     if not api_key or not api_key.startswith("sk-or-v1-"):
         validation_result["warnings"].append("OpenRouter API Key 格式可能不正确")
-    
+
     # 验证模型名称
     if "dall-e" in model.lower():
         validation_result["optimized_params"]["size"] = ["1024x1024", "1792x1024", "1024x1792"]
@@ -2809,7 +2848,7 @@ def validate_openrouter_config(api_url: str, api_key: str, model: str) -> Dict[s
         validation_result["suggestions"].append("Stable Diffusion 模型尺寸会自动调整为8的倍数")
     elif "gemini" in model.lower():
         validation_result["suggestions"].append("Gemini 模型支持多种尺寸和质量设置")
-    
+
     return validation_result
 
 def process_openrouter_stream(response) -> str:
@@ -2819,35 +2858,35 @@ def process_openrouter_stream(response) -> str:
     empty_chunks = 0
     content_chunks = 0
     last_content_chunk = 0
-    
+
     print(f"🔄 开始处理OpenRouter流式响应...")
-    
+
     try:
         for line in response.iter_lines(decode_unicode=True, chunk_size=None):
             if line and line.startswith('data: '):
                 chunk_count += 1
                 data_content = line[6:]  # Remove 'data: ' prefix
-                
+
                 print(f"📦 处理第{chunk_count}个数据块...")
-                
+
                 if data_content.strip() == '[DONE]':
                     print(f"✅ 收到结束信号[DONE]")
                     break
-                
+
                 try:
                     # 尝试解析JSON
                     chunk_data = json.loads(data_content)
                     print(f"🔍 数据块结构: {list(chunk_data.keys())}")
-                    
+
                     # 提取内容
                     if 'choices' in chunk_data and chunk_data['choices']:
                         choice = chunk_data['choices'][0]
                         print(f"🔍 选择项结构: {list(choice.keys())}")
-                        
+
                         if 'delta' in choice:
                             delta = choice['delta']
                             print(f"🔍 Delta结构: {list(delta.keys())}")
-                            
+
                             # 检查images字段（OpenRouter可能在这里返回图像数据）
                             if 'images' in delta and delta['images']:
                                 print(f"🖼️ 检测到OpenRouter images字段！")
@@ -2855,7 +2894,7 @@ def process_openrouter_stream(response) -> str:
                                 print(f"🔍 Images字段类型: {type(images_data)}")
                                 # print(f"🔍 Images字段内容: {str(images_data)[:200]}...")  # 注释掉可能包含base64数据的输出
                                 print(f"🔍 Images字段长度: {len(str(images_data))} 字符")
-                                
+
                                 # 使用参考项目的方法：直接搜索data:image/字符串
                                 import re
                                 chunk_str = str(images_data)
@@ -2878,10 +2917,10 @@ def process_openrouter_stream(response) -> str:
                                             accumulated_content += " " + extracted_data
                                 else:
                                     print(f"⚠️ 未找到data:image/标记")
-                                
+
                                 content_chunks += 1
                                 last_content_chunk = chunk_count
-                            
+
                             # 检查content字段
                             if 'content' in delta and delta['content']:
                                 content = delta['content']
@@ -2889,27 +2928,27 @@ def process_openrouter_stream(response) -> str:
                                 content_chunks += 1
                                 last_content_chunk = chunk_count
                                 print(f"📝 添加内容: {len(content)}字符 (累计: {len(accumulated_content)}字符)")
-                                
+
                                 # 检查是否包含图像数据
                                 if '![image]' in content:
                                     print("🖼️ 检测到图像数据标记！")
-                            
+
                             # 如果既没有images也没有content，标记为空块
                             if not ('images' in delta and delta['images']) and not ('content' in delta and delta['content']):
                                 empty_chunks += 1
                                 print(f"⚠️ 空的delta块 (无images和content字段) - 这是正常的，OpenRouter用空块保持连接")
-                        
+
                         elif 'message' in choice:
                             message = choice['message']
                             print(f"🔍 Message结构: {list(message.keys())}")
-                            
+
                             if 'content' in message and message['content']:
                                 content = message['content']
                                 accumulated_content += content
                                 content_chunks += 1
                                 last_content_chunk = chunk_count
                                 print(f"📝 添加消息内容: {len(content)}字符 (累计: {len(accumulated_content)}字符)")
-                                
+
                                 # 检查是否包含图像数据
                                 if '![image]' in content:
                                     print("🖼️ 检测到图像数据标记！")
@@ -2922,17 +2961,17 @@ def process_openrouter_stream(response) -> str:
                     else:
                         empty_chunks += 1
                         print(f"⚠️ 数据块中没有choices字段")
-                
+
                 except json.JSONDecodeError as e:
                     print(f"⚠️ JSON解析失败: {e}, 跳过此块")
                     continue
-        
+
         print(f"✅ 流式响应处理完成:")
         print(f"   📊 总块数: {chunk_count}")
         print(f"   📝 内容块数: {content_chunks}")
         print(f"   ⚠️ 空块数: {empty_chunks}")
         print(f"   📏 总内容长度: {len(accumulated_content)}")
-        
+
         if accumulated_content:
             # print(f"   🔍 内容预览: {accumulated_content[:200]}{'...' if len(accumulated_content) > 200 else ''}")  # 注释掉可能包含base64数据的输出
             print(f"   🔍 内容类型: {'包含图像数据' if 'data:image/' in accumulated_content else '纯文本内容'}")
@@ -2941,9 +2980,9 @@ def process_openrouter_stream(response) -> str:
         else:
             print(f"   ⚠️ 警告: 没有提取到任何内容！")
             print(f"   💡 建议: 检查OpenRouter API响应格式或模型配置")
-        
+
         return accumulated_content
-        
+
     except Exception as e:
         print(f"❌ 流式响应处理失败: {e}")
         return accumulated_content
@@ -3106,9 +3145,9 @@ def validate_api_url(url):
     """验证API URL格式并自动补全"""
     if not url or not url.strip():
         return False
-    
+
     url = url.strip()
-    
+
     # 如果已经是完整URL格式，直接返回True
     if url.startswith(('http://', 'https://')):
         url_pattern = re.compile(
@@ -3119,7 +3158,7 @@ def validate_api_url(url):
             r'(?::\d+)?'  # optional port
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
         return url_pattern.match(url) is not None
-    
+
     # 如果不是完整URL，检查是否为有效域名/IP
     domain_pattern = re.compile(
         r'^(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
@@ -3127,7 +3166,7 @@ def validate_api_url(url):
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
         r'(?::\d+)?'  # optional port
         r'(?:/?|[/?]\S+)?$', re.IGNORECASE)
-    
+
     return domain_pattern.match(url) is not None
 
 def build_api_url(base_url, model, api_format="gemini"):
@@ -3181,32 +3220,32 @@ def build_api_url(base_url, model, api_format="gemini"):
     if "www.api4gpt.com" in base_url:
         # API4GPT的URL构建在call_api4gpt_api函数中处理
         return base_url
-    
+
     # 如果用户提供的是完整URL，直接使用
     if '/models/' in base_url and ':generateContent' in base_url:
         return base_url
-    
+
     # 如果是基础URL，构建完整路径
     if base_url.endswith('/v1beta') or base_url.endswith('/v1'):
         return f"{base_url}/models/{model}:generateContent"
-    
+
     # 默认添加v1beta路径
     return f"{base_url}/v1beta/models/{model}:generateContent"
 
 def build_t8_api_request(model, prompt, image_base64=None, temperature=0.9, max_tokens=2048):
     """构建T8镜像站的API请求格式
-    
+
     T8镜像站使用OpenAI兼容的API格式，但需要特殊处理
     """
     # 构建消息内容
     content = []
-    
+
     # 添加文本内容
     content.append({
         "type": "text",
         "text": prompt
     })
-    
+
     # 如果有图像，添加图像内容
     if image_base64:
         content.append({
@@ -3215,7 +3254,7 @@ def build_t8_api_request(model, prompt, image_base64=None, temperature=0.9, max_
                 "url": f"data:image/jpeg;base64,{image_base64}"
             }
         })
-    
+
     # 构建请求数据
     request_data = {
         "model": _normalize_model_name(model),
@@ -3229,7 +3268,7 @@ def build_t8_api_request(model, prompt, image_base64=None, temperature=0.9, max_
         "max_tokens": max_tokens,
         "stream": False
     }
-    
+
     return request_data
 
 def call_t8_api(url, api_key, request_data, timeout=300):
@@ -3238,7 +3277,7 @@ def call_t8_api(url, api_key, request_data, timeout=300):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key.strip()}"
     }
-    
+
     try:
         response = requests.post(url, headers=headers, json=request_data, timeout=timeout, verify=False)
         response.raise_for_status()
@@ -3250,7 +3289,7 @@ def call_t8_api(url, api_key, request_data, timeout=300):
 
 def build_api4gpt_request(service_type, model, prompt, image_base64=None, size="1024x1024", quality="hd", style="natural", temperature=0.9, max_tokens=2048):
     """构建API4GPT的API请求格式
-    
+
     API4GPT支持多种图像服务，包括nano-banana、DALL-E 3、Stable-Diffusion、Flux等
     根据官方文档：https://doc.api4gpt.com/api-341609441
     """
@@ -3261,14 +3300,14 @@ def build_api4gpt_request(service_type, model, prompt, image_base64=None, size="
             "n": 1,
             "model": "gemini-2.5-flash-image"
         }
-        
+
         # 如果有图像，添加图像内容（用于图像编辑）
         if image_base64:
             # 对于图像编辑，使用multipart/form-data格式
             # 这里返回一个标记，表示需要使用multipart格式
             request_data["_multipart"] = True
             request_data["image"] = image_base64
-            
+
     elif service_type == "dall-e-3":
         # DALL-E 3服务使用OpenAI格式
         request_data = {
@@ -3280,7 +3319,7 @@ def build_api4gpt_request(service_type, model, prompt, image_base64=None, size="
             "style": style,
             "response_format": "b64_json"
         }
-        
+
     elif service_type == "stable-diffusion":
         # Stable-Diffusion服务
         request_data = {
@@ -3292,7 +3331,7 @@ def build_api4gpt_request(service_type, model, prompt, image_base64=None, size="
             "guidance_scale": 7.5,
             "num_images_per_prompt": 1
         }
-        
+
     elif service_type == "flux":
         # Flux服务
         request_data = {
@@ -3304,7 +3343,7 @@ def build_api4gpt_request(service_type, model, prompt, image_base64=None, size="
             "num_inference_steps": 20,
             "guidance_scale": 7.5
         }
-        
+
     else:
         # 默认使用nano-banana格式
         request_data = {
@@ -3312,12 +3351,12 @@ def build_api4gpt_request(service_type, model, prompt, image_base64=None, size="
             "n": 1,
             "model": "gemini-2.5-flash-image"
         }
-    
+
     return request_data
 
 def call_api4gpt_api(url, api_key, service_type, request_data, timeout=300):
     """调用API4GPT API
-    
+
     根据官方文档：https://doc.api4gpt.com/api-341609441
     """
     # 根据服务类型构建不同的API端点
@@ -3332,40 +3371,40 @@ def call_api4gpt_api(url, api_key, service_type, request_data, timeout=300):
         api_endpoint = f"{url}/v1/images/generations"
     else:
         api_endpoint = f"{url}/v1/images/generations"
-    
+
     # 检查是否需要使用multipart格式
     if request_data.get("_multipart") and service_type == "nano-banana":
         # 对于图像编辑，使用multipart/form-data格式
         print("🔗 使用API4GPT multipart格式进行图像编辑")
-        
+
         # 准备multipart数据
         files = {}
         data = {}
-        
+
         # 添加图像文件
         if "image" in request_data:
             # 将base64转换为文件对象
             image_data = base64.b64decode(request_data["image"])
             files["image"] = ("image.jpg", image_data, "image/jpeg")
-        
+
         # 添加其他参数
         data["prompt"] = request_data["prompt"]
         data["n"] = request_data["n"]
         data["model"] = request_data["model"]
-        
+
         # 使用multipart端点
         edit_endpoint = f"{url}/v1/images/edits"
-        
+
         headers = {
             "Authorization": f"Bearer {api_key.strip()}"
         }
-        
+
         try:
             response = requests.post(
-                edit_endpoint, 
-                headers=headers, 
-                files=files, 
-                data=data, 
+                edit_endpoint,
+                headers=headers,
+                files=files,
+                data=data,
                 timeout=timeout
             )
             response.raise_for_status()
@@ -3380,7 +3419,7 @@ def call_api4gpt_api(url, api_key, service_type, request_data, timeout=300):
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key.strip()}"
         }
-        
+
         try:
             response = requests.post(api_endpoint, headers=headers, json=request_data, timeout=timeout)
             response.raise_for_status()
@@ -3392,14 +3431,14 @@ def call_api4gpt_api(url, api_key, service_type, request_data, timeout=300):
 
 def parse_api4gpt_response(response_data, service_type):
     """解析API4GPT的响应数据
-    
+
     根据官方文档：https://doc.api4gpt.com/api-341609441
     """
     if service_type == "nano-banana":
         # 解析nano-banana响应（官方文档格式）
         response_text = "nano-banana图像生成完成"
         generated_image = None
-        
+
         # 根据官方文档，响应格式为：
         # {
         #   "created": 1745711868,
@@ -3410,14 +3449,14 @@ def parse_api4gpt_response(response_data, service_type):
         #     }
         #   ]
         # }
-        
+
         if "data" in response_data and response_data["data"]:
             image_data = response_data["data"][0]
-            
+
             # 提取修订后的提示词
             if "revised_prompt" in image_data:
                 response_text = f"图像生成完成。修订后的提示词: {image_data['revised_prompt']}"
-            
+
             # 提取图像URL
             if "url" in image_data:
                 image_url = image_data["url"]
@@ -3432,14 +3471,14 @@ def parse_api4gpt_response(response_data, service_type):
                         print(f"⚠️ 图像下载失败，状态码: {response.status_code}")
                 except Exception as e:
                     print(f"⚠️ 图像下载失败: {e}")
-        
+
         return response_text, generated_image
-        
+
     elif service_type == "dall-e-3":
         # 解析DALL-E 3响应
         response_text = "DALL-E 3图像生成完成"
         generated_image = None
-        
+
         if "data" in response_data and response_data["data"]:
             image_data = response_data["data"][0]
             if "url" in image_data:
@@ -3455,14 +3494,14 @@ def parse_api4gpt_response(response_data, service_type):
                         print(f"⚠️ 图像下载失败，状态码: {response.status_code}")
                 except Exception as e:
                     print(f"⚠️ 图像下载失败: {e}")
-        
+
         return response_text, generated_image
-        
+
     elif service_type == "stable-diffusion":
         # 解析Stable-Diffusion响应
         response_text = "Stable-Diffusion图像生成完成"
         generated_image = None
-        
+
         if "images" in response_data and response_data["images"]:
             image_data = response_data["images"][0]
             if image_data:
@@ -3472,14 +3511,14 @@ def parse_api4gpt_response(response_data, service_type):
                     print("✅ 成功解析Stable-Diffusion图像数据")
                 except Exception as e:
                     print(f"⚠️ Stable-Diffusion图像数据解析失败: {e}")
-        
+
         return response_text, generated_image
-        
+
     elif service_type == "flux":
         # 解析Flux响应
         response_text = "Flux图像生成完成"
         generated_image = None
-        
+
         if "images" in response_data and response_data["images"]:
             image_data = response_data["images"][0]
             if image_data:
@@ -3489,9 +3528,9 @@ def parse_api4gpt_response(response_data, service_type):
                     print("✅ 成功解析Flux图像数据")
                 except Exception as e:
                     print(f"⚠️ Flux图像数据解析失败: {e}")
-        
+
         return response_text, generated_image
-        
+
     else:
         # 默认返回空结果
         return "", None
@@ -3499,7 +3538,7 @@ def parse_api4gpt_response(response_data, service_type):
 def smart_retry_delay(attempt, error_code=None):
     """智能重试延迟 - 根据错误类型调整等待时间"""
     base_delay = 2 ** attempt  # 指数退避
-    
+
     if error_code == 429:  # 限流错误
         rate_limit_delay = 60 + random.uniform(10, 30)  # 60-90秒随机等待
         return max(base_delay, rate_limit_delay)
@@ -3796,22 +3835,22 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
         default_params = config.get('default_params', {})
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
         image_settings = config.get('image_settings', {})
-        
+
         # 获取镜像站配置
         mirror_sites = config.get('mirror_sites', {})
-        
+
         # 不再重复添加T8镜像站配置，因为配置文件中已经有了
-        
+
         mirror_options = list(mirror_sites.keys())
         if not mirror_options:
             mirror_options = ["official", "comfly", "custom"]
-        
+
         # 获取默认镜像站配置
         default_site = "comfly" if "comfly" in mirror_options else mirror_options[0] if mirror_options else "official"
         default_config = get_mirror_site_config(default_site)
-        
+
         # 🚀 Gemini官方API图像控制预设
-        aspect_ratios = image_settings.get('aspect_ratios', [
+        aspect_ratios = ["Auto"] + image_settings.get('aspect_ratios', [
             "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
         ])
         response_modalities = image_settings.get('response_modalities', [
@@ -3823,7 +3862,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
-        
+
         return {
             "required": {
                 "mirror_site": (mirror_options, {"default": default_site}),
@@ -3833,13 +3872,14 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "placeholder": "镜像站API密钥（可选，留空时自动获取）"
                 }),
                 "prompt": ("STRING", {"default": "A beautiful mountain landscape at sunset", "multiline": True}),
+                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
                 # 支持多种AI模型和图像生成服务: nano-banana支持Comfly和T8镜像站, [All]支持所有镜像站, API4GPT模型, OpenRouter模型
                 "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "gemini-2.5-flash-image [All]", "gemini-2.5-flash-image-preview [All]", "gemini-2.0-flash-preview-image-generation", "gemini-2.5-flash-image-hd [API4GPT]", "gemini-2.5-flash-image-vip [API4GPT]", "google/gemini-2.5-flash-image [OpenRouter]", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
 
                 # 📐 Gemini官方API图像控制参数
                 "aspect_ratio": (aspect_ratios, {
-                    "default": image_settings.get('default_aspect_ratio', "1:1"),
+                    "default": "Auto",
                     "tooltip": "图像宽高比 (Gemini官方API支持)"
                 }),
                 "response_modality": (response_modalities, {
@@ -3899,7 +3939,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
         }
-    
+
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("image", "response_text")
     FUNCTION = "generate_image"
@@ -3915,7 +3955,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
         self.color = "#D2691E"
         self.bgcolor = "#8B4513"
         self.groupcolor = "#CD853F"
-    
+
     def _push_chat(self, user_prompt: str, response_text: str, unique_id: str):
         if not PromptServer or not unique_id:
             print(f"⚠️ 无法推送对话: PromptServer={PromptServer is not None}, unique_id={unique_id}")
@@ -3951,8 +3991,8 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             import traceback
             traceback.print_exc()
             pass
-    
-    def generate_image(self, mirror_site: str, api_key: str, prompt: str, model: str,
+
+    def generate_image(self, mirror_site: str, api_key: str, prompt: str, negative_prompt: str, model: str,
                       proxy: str, aspect_ratio: str, response_modality: str, upscale_factor: str, gigapixel_model: str,
                       quality: str, style: str, detail_level: str, camera_control: str, lighting_control: str,
                       template_selection: str, temperature: float, top_p: float, top_k: int,
@@ -3964,12 +4004,16 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                       unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API生成图片"""
 
+        # Process wildcards in the prompt
+        wildcard_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wildcards")
+        prompt = process_wildcards(prompt, wildcard_dir)
+
         # 🔧 确保requests模块可用
         import requests
 
         # 🚀 立即规范化模型名称，去除UI标识
         model = _normalize_model_name(model)
-        
+
         # 根据镜像站从配置获取URL和API Key
         site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
         api_url = site_config.get("url", "").strip()
@@ -3979,15 +4023,15 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
         if not api_url:
             raise ValueError("配置文件中缺少该镜像站的API URL")
         print(f"🔗 自动使用镜像站URL: {api_url}")
-        
+
         # 验证API URL
         if not validate_api_url(api_url):
             raise ValueError("API URL格式无效，请检查配置文件")
-        
+
         # 验证API密钥
         if not validate_api_key(api_key):
             raise ValueError("API Key格式无效或为空")
-        
+
         # 验证提示词
         if not prompt.strip():
             raise ValueError("提示词不能为空")
@@ -3997,7 +4041,6 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             from .gemini_banana import process_image_controls, enhance_prompt_with_controls
         except ImportError:
             from gemini_banana import process_image_controls, enhance_prompt_with_controls
-
         controls = process_image_controls(quality, style)
 
         # 使用enhance_prompt_with_controls函数进行完整的提示词增强
@@ -4008,11 +4051,16 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             camera_control,
             lighting_control,
             template_selection,
-            quality_enhancement="Auto",  # 默认值
-            enhance_quality=True,  # 默认值
-            smart_resize=True,  # 默认值
-            fill_color="white"  # 默认值
+            quality_enhancement="Auto",
+            enhance_quality=True,
+            smart_resize=True,
+            fill_color="white"
         )
+
+        # 负向提示词处理
+        if negative_prompt and negative_prompt.strip():
+            enhanced_prompt += f"\n\nNegative Prompt: {negative_prompt.strip()}"
+            print(f"🚫 添加负向提示词: {negative_prompt[:100]}...")
 
         # 处理自定义指令
         if custom_additions and custom_additions.strip():
@@ -4037,11 +4085,11 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 print(f"🔌 未指定代理，沿用系统代理: {existing}")
             else:
                 print("🔌 未指定代理（系统无代理）")
-        
+
         # 构建完整的API URL
         full_url = build_api_url(api_url, model)
         print(f"🌐 使用API地址: {full_url}")
-        
+
         # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → Gemini → custom
         is_nano_banana_official = mirror_site == "nano-banana官方"
         is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url
@@ -4099,7 +4147,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
             # 📐 Gemini官方API：Aspect Ratio控制
-            if aspect_ratio:
+            if aspect_ratio and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -4208,7 +4256,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             except Exception as e:
                 print(f"❌ nano-banana官方API调用失败: {e}")
                 raise e
-            
+
         # 2. Comfly镜像站处理
         elif is_comfly_mirror:
             print("🔗 检测到Comfly镜像站，使用Comfly API格式")
@@ -4402,7 +4450,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 }
 
                 # 📐 Aspect Ratio控制
-                if aspect_ratio:
+                if aspect_ratio and aspect_ratio != "Auto":
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -4441,7 +4489,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             }
 
             # 📐 Aspect Ratio控制
-            if aspect_ratio:
+            if aspect_ratio and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -4629,7 +4677,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             }
 
             # 📐 Aspect Ratio控制
-            if aspect_ratio:
+            if aspect_ratio and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -4651,7 +4699,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key.strip()}"
             }
-            
+
         # 4. API4GPT镜像站处理（使用标准 OpenAI 兼容格式）
         elif is_api4gpt_mirror:
             print("🔗 检测到API4GPT镜像站，使用 OpenAI 兼容格式")
@@ -4762,7 +4810,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             }
 
             # 添加 image_config（包含 aspect_ratio）
-            if aspect_ratio:
+            if aspect_ratio and aspect_ratio != "Auto":
                 request_data["image_config"] = {
                     "aspect_ratio": aspect_ratio
                 }
@@ -4894,22 +4942,24 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     if "candidates" in result and result["candidates"]:
                         candidate = result["candidates"][0]
                         if "content" in candidate and "parts" in candidate["content"]:
-                            for part in candidate["content"]["parts"]:
-                                # 提取文本
-                                if "text" in part:
-                                    response_text += part["text"]
+                            parts = candidate["content"]["parts"]
+                            if parts is not None:  # 检查parts是否为None
+                                for part in parts:
+                                    # 提取文本
+                                    if "text" in part:
+                                        response_text += part["text"]
 
-                                # 提取生成的图片（支持inline_data和inlineData两种格式）
-                                inline_data = part.get("inline_data") or part.get("inlineData")
-                                if inline_data and "data" in inline_data:
-                                    try:
-                                        import io, base64
-                                        image_data = inline_data["data"]
-                                        image_bytes = base64.b64decode(image_data)
-                                        generated_image = Image.open(io.BytesIO(image_bytes))
-                                        print(f"✅ 成功提取生成的图像: {generated_image.size}")
-                                    except Exception as e:
-                                        print(f"⚠️ 解码图片失败: {e}")
+                                    # 提取生成的图片（支持inline_data和inlineData两种格式）
+                                    inline_data = part.get("inline_data") or part.get("inlineData")
+                                    if inline_data and "data" in inline_data:
+                                        try:
+                                            import io, base64
+                                            image_data = inline_data["data"]
+                                            image_bytes = base64.b64decode(image_data)
+                                            generated_image = Image.open(io.BytesIO(image_bytes))
+                                            print(f"✅ 成功提取生成的图像: {generated_image.size}")
+                                        except Exception as e:
+                                            print(f"⚠️ 解码图片失败: {e}")
 
                     if generated_image:
                         # 🔍 Topaz Gigapixel AI智能放大
@@ -4970,7 +5020,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     generation_config["responseModalities"] = ["Text", "Image"]
 
                 # Aspect Ratio控制
-                if aspect_ratio:
+                if aspect_ratio and aspect_ratio != "Auto":
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -5114,20 +5164,20 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
         default_params = config.get('default_params', {})
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
         image_settings = config.get('image_settings', {})
-        
+
         # 获取镜像站配置
         mirror_sites = config.get('mirror_sites', {})
         mirror_options = list(mirror_sites.keys())
         if not mirror_options:
             mirror_options = ["official", "comfly", "custom"]
-        
+
         # 获取默认镜像站配置
         default_site = "comfly" if "comfly" in mirror_options else mirror_options[0] if mirror_options else "official"
         default_config = get_mirror_site_config(default_site)
-        
+
         # 🚀 Gemini官方API图像控制预设
         # 根据 Gemini API 官方文档，支持的 aspect ratio: "1:1", "3:4", "4:3", "9:16", "16:9"
-        aspect_ratios = image_settings.get('aspect_ratios', [
+        aspect_ratios = ["Auto"] + image_settings.get('aspect_ratios', [
             "1:1", "3:4", "4:3", "9:16", "16:9"
         ])
         response_modalities = image_settings.get('response_modalities', [
@@ -5139,7 +5189,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
-        
+
         return {
             "required": {
                 "mirror_site": (mirror_options, {"default": default_site}),
@@ -5150,13 +5200,14 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 }),
                 "image": ("IMAGE",),
                 "prompt": ("STRING", {"default": "Can you add a llama next to me?", "multiline": True}),
+                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
                 # 支持多种AI模型和图像编辑服务: nano-banana支持Comfly和T8镜像站, [All]支持所有镜像站, API4GPT模型, OpenRouter模型
                 "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "gemini-2.5-flash-image [All]", "gemini-2.5-flash-image-preview [All]", "gemini-2.0-flash-preview-image-generation", "gemini-2.5-flash-image-hd [API4GPT]", "gemini-2.5-flash-image-vip [API4GPT]", "google/gemini-2.5-flash-image [OpenRouter]", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
 
                 # 📐 Gemini官方API图像控制参数
                 "aspect_ratio": (aspect_ratios, {
-                    "default": image_settings.get('default_aspect_ratio', "1:1"),
+                    "default": "Auto",
                     "tooltip": "图像宽高比 (Gemini官方API支持)"
                 }),
                 "response_modality": (response_modalities, {
@@ -5232,7 +5283,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
         self.color = "#D2691E"
         self.bgcolor = "#8B4513"
         self.groupcolor = "#CD853F"
-    
+
     def _push_chat(self, user_prompt: str, response_text: str, unique_id: str):
         if not PromptServer or not unique_id:
             print(f"⚠️ 无法推送对话: PromptServer={PromptServer is not None}, unique_id={unique_id}")
@@ -5268,8 +5319,8 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             import traceback
             traceback.print_exc()
             pass
-    
-    def edit_image(self, mirror_site: str, api_key: str, image: torch.Tensor, prompt: str, model: str,
+
+    def edit_image(self, mirror_site: str, api_key: str, image: torch.Tensor, prompt: str, negative_prompt: str, model: str,
                     proxy: str, aspect_ratio: str, response_modality: str, quality: str, style: str,
                     detail_level: str, camera_control: str, lighting_control: str, template_selection: str,
                     upscale_factor: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
@@ -5280,12 +5331,16 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API编辑图片"""
 
+        # Process wildcards in the prompt
+        wildcard_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wildcards")
+        prompt = process_wildcards(prompt, wildcard_dir)
+
         # 🔧 确保requests模块可用
         import requests
-        
+
         # 🚀 立即规范化模型名称，去除UI标识
         model = _normalize_model_name(model)
-        
+
         # 根据镜像站从配置获取URL和API Key
         site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
         api_url = site_config.get("url", "").strip()
@@ -5295,18 +5350,18 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
         if not api_url:
             raise ValueError("配置文件中缺少该镜像站的API URL")
         print(f"🔗 自动使用镜像站URL: {api_url}")
-        
+
         if not validate_api_url(api_url):
             raise ValueError("API URL格式无效，请检查配置文件")
-        
+
         # 验证API密钥
         if not validate_api_key(api_key):
             raise ValueError("API Key格式无效或为空")
-        
+
         # 验证提示词
         if not prompt.strip():
             raise ValueError("提示词不能为空")
-        
+
         # 处理图像控制参数
         try:
             from .gemini_banana import process_image_controls, enhance_prompt_with_controls
@@ -5328,11 +5383,17 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             camera_control,
             lighting_control,
             template_selection,
-            quality_enhancement="Auto",  # 默认值
-            enhance_quality=True,  # 默认值
-            smart_resize=True,  # 默认值
-            fill_color="white"  # 默认值
+            quality_enhancement="Auto",
+            enhance_quality=True,
+            smart_resize=True,
+            fill_color="white"
         )
+
+
+        # 负向提示词处理
+        if negative_prompt and negative_prompt.strip():
+            enhanced_prompt += f"\n\nNegative Prompt: {negative_prompt.strip()}"
+            print(f"🚫 添加负向提示词: {negative_prompt[:100]}...")
 
         # 处理自定义指令
         if custom_additions and custom_additions.strip():
@@ -5340,13 +5401,13 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             print(f"📝 添加自定义指令: {custom_additions[:100]}...")
 
         print(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, 质量={controls['quality']}, 风格={controls['style']}")
-        
+
         # 转换输入图片
         pil_image = tensor_to_pil(image)
-        
+
         # 调整图像尺寸以符合API要求
         pil_image = resize_image_for_api(pil_image)
-        
+
         # 转换为base64
         image_base64 = image_to_base64(pil_image, format='JPEG')
 
@@ -5366,7 +5427,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 print(f"🔌 未指定代理，沿用系统代理: {existing}")
             else:
                 print("🔌 未指定代理（系统无代理）")
-        
+
         # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → custom
         is_nano_banana_official = mirror_site == "nano-banana官方"
         is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url
@@ -5400,9 +5461,9 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             print(f"🌐 使用API地址: {full_url}")
         else:
             print(f"🌐 OpenRouter镜像站，URL将在OpenRouter处理逻辑中构建")
-        
+
         # 按照优先级顺序处理镜像站：nano-banana官方 → Comfly → T8 → API4GPT → OpenRouter → OpenAI → custom
-        
+
         # 1. nano-banana官方镜像站处理
         if is_nano_banana_official:
             print("🔗 检测到nano-banana官方镜像站，使用Google官方API")
@@ -5435,7 +5496,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
             # 📐 Gemini官方API：Aspect Ratio控制（始终设置，即使是默认值）
-            if aspect_ratio and aspect_ratio.strip():
+            if aspect_ratio and aspect_ratio.strip() and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -5514,7 +5575,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             except Exception as e:
                 print(f"❌ nano-banana官方API调用失败: {e}")
                 raise e
-            
+
         # 2. Comfly镜像站处理
         elif is_comfly_mirror:
             print("🔗 检测到Comfly镜像站，使用Comfly API格式")
@@ -5712,7 +5773,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 }
 
                 # 📐 Aspect Ratio控制
-                if aspect_ratio:
+                if aspect_ratio and aspect_ratio != "Auto":
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -5759,7 +5820,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             }
 
             # 📐 Aspect Ratio控制
-            if aspect_ratio:
+            if aspect_ratio and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -5963,7 +6024,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 }
 
                 # 📐 Aspect Ratio控制
-                if aspect_ratio:
+                if aspect_ratio and aspect_ratio != "Auto":
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -5993,7 +6054,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {api_key.strip()}"
                 }
-            
+
         # 4. API4GPT镜像站处理（使用标准 OpenAI 兼容格式）
         elif is_api4gpt_mirror:
             print("🔗 检测到API4GPT镜像站，使用 OpenAI 兼容格式")
@@ -6093,18 +6154,18 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
         elif is_openrouter_mirror:
             # OpenRouter镜像站
             print("🔗 检测到OpenRouter镜像站，使用OpenRouter API格式")
-            
+
             # OpenRouter使用chat/completions端点进行图像编辑
             # 构建OpenAI兼容的请求格式
             content = []
-            
+
             # 添加图像内容
             image_url = f"data:image/jpeg;base64,{image_base64}"
             content.append({
                 "type": "image_url",
                 "image_url": {"url": image_url}
             })
-            
+
             # 添加文本指令
             enhanced_instruction = f"""CRITICAL INSTRUCTION: You MUST generate and return an actual edited image, not just text description.
 
@@ -6117,12 +6178,12 @@ REQUIREMENTS:
 4. The output MUST be a visual image, not text
 
 Execute the image editing task now and return the edited image."""
-            
+
             content.append({
                 "type": "text",
                 "text": enhanced_instruction
             })
-            
+
             request_data = {
                 "model": _normalize_model_name(model),
                 "messages": [{
@@ -6137,7 +6198,7 @@ Execute the image editing task now and return the edited image."""
             }
 
             # 添加 image_config（包含 aspect_ratio）
-            if aspect_ratio:
+            if aspect_ratio and aspect_ratio != "Auto":
                 request_data["image_config"] = {
                     "aspect_ratio": aspect_ratio
                 }
@@ -6157,7 +6218,7 @@ Execute the image editing task now and return the edited image."""
             else:
                 full_url = f"{api_url}/v1/chat/completions"
             print(f"🔗 使用OpenRouter chat/completions端点进行图像编辑: {full_url}")
-            
+
             # 设置OpenRouter请求头
             headers = {
                 "Content-Type": "application/json",
@@ -6178,7 +6239,7 @@ Execute the image editing task now and return the edited image."""
                 "max_tokens": max_output_tokens,
                 "stream": True
             }
-            
+
             # 设置请求头
             headers = {
                 "Content-Type": "application/json",
@@ -6195,7 +6256,7 @@ Execute the image editing task now and return the edited image."""
             }
 
             # 📐 添加 aspect_ratio 支持（根据官方示例）
-            if aspect_ratio and aspect_ratio.strip():
+            if aspect_ratio and aspect_ratio.strip() and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -6227,20 +6288,20 @@ Execute the image editing task now and return the edited image."""
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key.strip()}"
             }
-        
+
         # 智能重试机制 - 完全移植参考项目
         max_retries = 5
         timeout = 120
-        
+
         for attempt in range(max_retries):
             try:
                 print(f"🖼️ 正在编辑图片... (尝试 {attempt + 1}/{max_retries})")
                 print(f"📝 编辑指令: {enhanced_prompt[:100]}...") # 使用增强后的提示词
                 print(f"🔗 镜像站: {api_url}")
-                
+
                 # 发送请求 - 添加SSL配置以解决连接问题
                 response = requests.post(full_url, headers=headers, json=request_data, timeout=timeout, stream=True, verify=False)
-                
+
                 # 检查响应状态
                 if response.status_code != 200:
                     print(f"📡 HTTP状态码: {response.status_code}")
@@ -6251,7 +6312,7 @@ Execute the image editing task now and return the edited image."""
                     # 提取文本响应和编辑后的图片
                     response_text = ""
                     edited_image = None
-                    
+
                     # 为所有镜像站定义 result 变量
                     if not is_api4gpt_mirror and not is_openrouter_mirror and not is_t8_mirror and not is_openai_mirror:
                         # 标准 Gemini API 镜像站（如 Comfy API）
@@ -6277,23 +6338,23 @@ Execute the image editing task now and return the edited image."""
                         except Exception as e:
                             print(f"⚠️ OpenAI 镜像站响应解析失败: {e}")
                             result = {}
-                    
+
                     if is_api4gpt_mirror:
                         # API4GPT镜像站响应处理
                         print("🔗 处理API4GPT镜像站响应")
-                        
+
                         try:
                             # 尝试解析JSON响应
                             result = response.json()
                             print(f"📋 API4GPT响应结构: {list(result.keys())}")
-                            
+
                             if api4gpt_service == "nano-banana":
                                 # nano-banana使用OpenAI兼容格式
                                 response_text, edited_image = parse_openai_compatible_response(result)
                             else:
                                 # 其他服务使用原有的解析逻辑
                                 response_text, edited_image = parse_api4gpt_response(result, api4gpt_service)
-                            
+
                             if edited_image:
                                 print(f"✅ 成功提取API4GPT编辑后的图像")
                             else:
@@ -6309,10 +6370,10 @@ Execute the image editing task now and return the edited image."""
                     elif is_openrouter_mirror:
                         # OpenRouter镜像站响应处理 - 使用流式响应
                         print("🔗 处理OpenRouter镜像站流式响应")
-                        
+
                         # 处理流式响应
                         response_text = process_openrouter_stream(response)
-                        
+
                         # 检查响应文本中是否包含图像数据
                         if "data:image/" in response_text:
                             print("🖼️ 检测到OpenRouter返回的图像数据")
@@ -6325,7 +6386,7 @@ Execute the image editing task now and return the edited image."""
                                     # 取第一个匹配的图像数据
                                     image_url = image_matches[0]
                                     print(f"🎯 成功匹配OpenRouter图像数据，长度: {len(image_url)}字符")
-                                    
+
                                     # 提取base64部分
                                     if ';base64,' in image_url:
                                         import io
@@ -6333,7 +6394,7 @@ Execute the image editing task now and return the edited image."""
                                         image_bytes = base64.b64decode(base64_data)
                                         edited_image = Image.open(io.BytesIO(image_bytes))
                                         print(f"✅ 成功提取OpenRouter编辑后的图像: {edited_image.size}")
-                                        
+
                                         # 清理响应文本，移除base64数据
                                         response_text = re.sub(base64_pattern, '[图像已编辑]', response_text)
                                     else:
@@ -6348,7 +6409,7 @@ Execute the image editing task now and return the edited image."""
                                 print(f"⚠️ OpenRouter图像数据解析失败: {e}")
                                 edited_image = pil_image
                                 response_text = f"OpenRouter图像编辑完成，但解析失败: {e}"
-                        
+
                         # 如果没有成功提取图像，返回原图片
                         if not edited_image:
                             print("⚠️ OpenRouter未返回编辑后的图像数据，返回原图片")
@@ -6389,22 +6450,24 @@ Execute the image editing task now and return the edited image."""
                             if "candidates" in result and result["candidates"]:
                                 candidate = result["candidates"][0]
                                 if "content" in candidate and "parts" in candidate["content"]:
-                                    for part in candidate["content"]["parts"]:
-                                        # 提取文本
-                                        if "text" in part:
-                                            response_text += part["text"]
+                                    parts = candidate["content"]["parts"]
+                                    if parts is not None:  # 检查parts是否为None
+                                        for part in parts:
+                                            # 提取文本
+                                            if "text" in part:
+                                                response_text += part["text"]
 
-                                        # 提取编辑后的图片（支持inline_data和inlineData两种格式）
-                                        inline_data = part.get("inline_data") or part.get("inlineData")
-                                        if inline_data and "data" in inline_data:
-                                            try:
-                                                import io
-                                                image_data = inline_data["data"]
-                                                image_bytes = base64.b64decode(image_data)
-                                                edited_image = Image.open(io.BytesIO(image_bytes))
-                                                print(f"✅ 成功提取T8镜像站编辑后的图像: {edited_image.size}")
-                                            except Exception as e:
-                                                print(f"⚠️ T8镜像站图像数据解析失败: {e}")
+                                            # 提取编辑后的图片（支持inline_data和inlineData两种格式）
+                                            inline_data = part.get("inline_data") or part.get("inlineData")
+                                            if inline_data and "data" in inline_data:
+                                                try:
+                                                    import io
+                                                    image_data = inline_data["data"]
+                                                    image_bytes = base64.b64decode(image_data)
+                                                    edited_image = Image.open(io.BytesIO(image_bytes))
+                                                    print(f"✅ 成功提取T8镜像站编辑后的图像: {edited_image.size}")
+                                                except Exception as e:
+                                                    print(f"⚠️ T8镜像站图像数据解析失败: {e}")
 
                         # 如果没有成功提取图像，返回原图片
                         if not edited_image:
@@ -6425,7 +6488,7 @@ Execute the image editing task now and return the edited image."""
                             "max_tokens": max_output_tokens,
                             "stream": True
                         }
-                        
+
                         # 设置请求头
                         headers = {
                             "Content-Type": "application/json",
@@ -6441,25 +6504,27 @@ Execute the image editing task now and return the edited image."""
                         if "candidates" in result and result["candidates"]:
                             candidate = result["candidates"][0]
                             if "content" in candidate and "parts" in candidate["content"]:
-                                for part in candidate["content"]["parts"]:
-                                    # 提取文本
-                                    if "text" in part:
-                                        response_text += part["text"]
-                                    
-                                    # 提取编辑后的图片
-                                    if "inline_data" in part or "inlineData" in part:
-                                        inline_data = part.get("inline_data") or part.get("inlineData")
-                                        if inline_data and "data" in inline_data:
-                                            try:
-                                                # 解码图片数据
-                                                import io
-                                                image_data = inline_data["data"]
-                                                image_bytes = base64.b64decode(image_data)
-                                                edited_image = Image.open(io.BytesIO(image_bytes))
-                                                print("✅ 成功提取编辑后的图片")
-                                            except Exception as e:
-                                                print(f"⚠️ 解码图片失败: {e}")
-                    
+                                parts = candidate["content"]["parts"]
+                                if parts is not None:  # 检查parts是否为None
+                                    for part in parts:
+                                        # 提取文本
+                                        if "text" in part:
+                                            response_text += part["text"]
+
+                                        # 提取编辑后的图片
+                                        if "inline_data" in part or "inlineData" in part:
+                                            inline_data = part.get("inline_data") or part.get("inlineData")
+                                            if inline_data and "data" in inline_data:
+                                                try:
+                                                    # 解码图片数据
+                                                    import io
+                                                    image_data = inline_data["data"]
+                                                    image_bytes = base64.b64decode(image_data)
+                                                    edited_image = Image.open(io.BytesIO(image_bytes))
+                                                    print("✅ 成功提取编辑后的图片")
+                                                except Exception as e:
+                                                    print(f"⚠️ 解码图片失败: {e}")
+
                     # 如果没有编辑后的图片，返回原图片
                     if edited_image is None:
                         print("⚠️ 未检测到编辑后的图片，返回原图片")
@@ -6500,29 +6565,29 @@ Execute the image editing task now and return the edited image."""
                                     print("⚠️ 智能AI放大失败，使用原始图像")
                         except Exception as e:
                             print(f"⚠️ 智能AI放大失败: {e}，使用原始图像")
-                    
+
                     # 如果没有响应文本，提供默认文本
                     if not response_text:
                         response_text = "图片编辑完成！这是根据您的编辑指令修改后的图像。"
                         print("📝 使用默认响应文本")
-                    
+
                     # 转换为tensor
                     image_tensor = pil_to_tensor(edited_image)
-                    
+
                     print("✅ 图片编辑完成")
                     print(f"📝 响应文本长度: {len(response_text)}")
                     # print(f"📝 响应文本内容: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
                     print(f"📝 响应文本类型: {'包含图像数据' if 'data:image/' in response_text else '纯文本内容'}")
                     self._push_chat(enhanced_prompt, response_text or "", unique_id) # 使用增强后的提示词
                     return (image_tensor, response_text)
-                
+
                 # 处理错误响应
                 else:
                     print(f"❌ HTTP状态码: {response.status_code}")
                     try:
                         error_detail = response.json()
                         print(f"❌ 错误详情: {json.dumps(error_detail, indent=2, ensure_ascii=False)}")
-                        
+
                         # 检查是否是配额错误
                         if response.status_code == 429:
                             error_message = error_detail.get("error", {}).get("message", "")
@@ -6533,16 +6598,16 @@ Execute the image editing task now and return the edited image."""
                                 print("   3. 考虑升级API计划")
                     except:
                         print(f"❌ 错误文本: {response.text}")
-                    
+
                     # 如果是最后一次尝试，抛出异常
                     if attempt == max_retries - 1:
                         response.raise_for_status()
-                    
+
                     # 智能等待
                     delay = smart_retry_delay(attempt, response.status_code)
                     print(f"🔄 等待 {delay:.1f} 秒后重试...")
                     time.sleep(delay)
-                    
+
             except requests.exceptions.RequestException as e:
                 error_msg = format_error_message(e)
                 print(f"❌ 请求失败: {error_msg}")
@@ -6552,7 +6617,7 @@ Execute the image editing task now and return the edited image."""
                     delay = smart_retry_delay(attempt)
                     print(f"🔄 等待 {delay:.1f} 秒后重试...")
                     time.sleep(delay)
-                    
+
             except Exception as e:
                 error_msg = format_error_message(e)
                 print(f"❌ 处理失败: {error_msg}")
@@ -6568,12 +6633,12 @@ Execute the image editing task now and return the edited image."""
             from gemini_banana import get_gemini_banana_config
         config = get_gemini_banana_config()
         mirror_sites = config.get('mirror_sites', {})
-        
+
         # 查找API4GPT镜像站配置
         for site_name, site_config in mirror_sites.items():
             if "api4gpt.com" in site_config.get("url", ""):
                 return site_config
-        
+
         # 如果没找到，返回默认配置
         return {
             "url": "https://www.api4gpt.com",
@@ -6613,19 +6678,19 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
         default_params = config.get('default_params', {})
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
         image_settings = config.get('image_settings', {})
-        
+
         # 获取镜像站配置
         mirror_sites = config.get('mirror_sites', {})
         mirror_options = list(mirror_sites.keys())
         if not mirror_options:
             mirror_options = ["official", "comfly", "custom"]
-        
+
         # 获取默认镜像站配置
         default_site = "comfly" if "comfly" in mirror_options else mirror_options[0] if mirror_options else "official"
         default_config = get_mirror_site_config(default_site)
-        
+
         # 🚀 Gemini官方API图像控制预设
-        aspect_ratios = image_settings.get('aspect_ratios', [
+        aspect_ratios = ["Auto"] + image_settings.get('aspect_ratios', [
             "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
         ])
         response_modalities = image_settings.get('response_modalities', [
@@ -6637,7 +6702,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
-        
+
         return {
             "required": {
                 "mirror_site": (mirror_options, {"default": default_site}),
@@ -6647,13 +6712,14 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "placeholder": "镜像站API密钥（可选，留空时自动获取）"
                 }),
                 "prompt": ("STRING", {"default": "请根据这些图片进行专业的图像编辑", "multiline": True}),
+                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
                 # 支持多种AI模型和多图像编辑服务: nano-banana支持Comfly和T8镜像站, [All]支持所有镜像站, API4GPT模型, OpenRouter模型
                 "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "gemini-2.5-flash-image [All]", "gemini-2.5-flash-image-preview [All]", "gemini-2.0-flash", "gemini-2.5-flash-image-hd [API4GPT]", "gemini-2.5-flash-image-vip [API4GPT]", "google/gemini-2.5-flash-image [OpenRouter]", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
 
                 # 📐 Gemini官方API图像控制参数
                 "aspect_ratio": (aspect_ratios, {
-                    "default": image_settings.get('default_aspect_ratio', "1:1"),
+                    "default": "Auto",
                     "tooltip": "图像宽高比 (Gemini官方API支持)"
                 }),
                 "response_modality": (response_modalities, {
@@ -6663,7 +6729,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
 
                 "quality": (quality_presets, {"default": image_settings.get('default_quality', "hd")}),
                 "style": (style_presets, {"default": image_settings.get('default_style', "natural")}),
-                
+
                 # 🎨 智能图像控制组（放在style下面）
                 "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
                 "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
@@ -6718,7 +6784,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
         }
-    
+
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("edited_image", "response_text")
     FUNCTION = "edit_multiple_images"
@@ -6763,7 +6829,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             traceback.print_exc()
             pass
 
-    def edit_multiple_images(self, mirror_site: str, api_key: str, prompt: str, model: str,
+    def edit_multiple_images(self, mirror_site: str, api_key: str, prompt: str, negative_prompt: str, model: str,
                            proxy: str, aspect_ratio: str, response_modality: str, quality: str, style: str,
                            detail_level: str, camera_control: str, lighting_control: str, template_selection: str,
                            upscale_factor: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
@@ -6775,12 +6841,16 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                            unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API进行多图像编辑"""
 
+        # Process wildcards in the prompt
+        wildcard_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wildcards")
+        prompt = process_wildcards(prompt, wildcard_dir)
+
         # 🔧 确保requests模块可用
         import requests
-        
+
         # 🚀 立即规范化模型名称，去除UI标识
         model = _normalize_model_name(model)
-        
+
         # 根据镜像站从配置获取URL和API Key
         site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
         api_url = site_config.get("url", "").strip()
@@ -6790,18 +6860,18 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
         if not api_url:
             raise ValueError("配置文件中缺少该镜像站的API URL")
         print(f"🔗 自动使用镜像站URL: {api_url}")
-        
+
         if not validate_api_url(api_url):
             raise ValueError("API URL格式无效，请检查配置文件")
-        
+
         # 验证API密钥
         if not validate_api_key(api_key):
             raise ValueError("API Key格式无效或为空")
-        
+
         # 验证提示词
         if not prompt.strip():
             raise ValueError("提示词不能为空")
-        
+
         # 处理图像控制参数
         try:
             from .gemini_banana import process_image_controls, enhance_prompt_with_controls
@@ -6823,11 +6893,16 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             camera_control,
             lighting_control,
             template_selection,
-            quality_enhancement="Auto",  # 默认值
-            enhance_quality=True,  # 默认值
-            smart_resize=True,  # 默认值
-            fill_color="white"  # 默认值
+            quality_enhancement="Auto",
+            enhance_quality=True,
+            smart_resize=True,
+            fill_color="white"
         )
+
+        # 负向提示词处理
+        if negative_prompt and negative_prompt.strip():
+            enhanced_prompt += f"\n\nNegative Prompt: {negative_prompt.strip()}"
+            print(f"🚫 添加负向提示词: {negative_prompt[:100]}...")
 
         # 处理自定义指令
         if custom_additions and custom_additions.strip():
@@ -6835,11 +6910,11 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             print(f"📝 添加自定义指令: {custom_additions[:100]}...")
 
         print(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={controls['quality']}, style={controls['style']}")
-        
+
         # 收集所有输入的图像
         all_input_pils = []
         input_images = [image1, image2, image3, image4]
-        
+
         for i, img_tensor in enumerate(input_images):
             if img_tensor is not None:
                 try:
@@ -6849,17 +6924,17 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                         print(f"📸 添加输入图像 {i+1}: {pil_image.size}")
                 except Exception as e:
                     print(f"⚠️ 图像 {i+1} 处理失败: {e}")
-        
+
         if not all_input_pils:
             raise ValueError("错误：请输入至少一张要编辑的图像")
-        
+
         print(f"🖼️ 总共收集到 {len(all_input_pils)} 张输入图像")
-        
+
         # 智能生成多图编辑提示词
         # 首先处理图片引用转换，确保所有情况下都能使用
         user_intent = prompt.strip()
         converted_prompt = user_intent
-        
+
         # 转换所有图片引用 - 通用化处理
         if len(all_input_pils) >= 1:
                             converted_prompt = converted_prompt.replace("图1", "左边图片")
@@ -6869,7 +6944,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             converted_prompt = converted_prompt.replace("图3", "第三张图片")
         if len(all_input_pils) >= 4:
             converted_prompt = converted_prompt.replace("图4", "第四张图片")
-        
+
         # 根据图片数量生成不同的提示词 - 完全通用化
         if len(all_input_pils) == 2:
             # 2张图片：通用组合编辑
@@ -6936,11 +7011,11 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
 {enhanced_prompt}
 
 请使用你的图像编辑能力，生成高质量的编辑结果。确保编辑后的图像符合所有要求。"""
-        
+
         # 转换所有输入图片 - 修复关键问题
         # 确保所有图片都被传递给模型，让模型能看到完整信息
         all_image_parts = []
-        
+
         for i, pil_image in enumerate(all_input_pils):
             # 调整图像尺寸以符合API要求
             pil_image = resize_image_for_api(pil_image)
@@ -6953,7 +7028,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 }
             })
             print(f"📸 准备传递图像 {i+1}: {pil_image.size}")
-        
+
         # 设置代理（用于 requests 库）
         proxies = None
         if proxy and proxy.strip() and "None" not in proxy:
@@ -6970,7 +7045,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 print(f"🔌 未指定代理，沿用系统代理: {existing}")
             else:
                 print("🔌 未指定代理（系统无代理）")
-        
+
         # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → custom
         is_nano_banana_official = mirror_site == "nano-banana官方"
         is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url
@@ -7004,9 +7079,9 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             print(f"🌐 使用API地址: {full_url}")
         else:
             print(f"🌐 OpenRouter镜像站，URL将在OpenRouter处理逻辑中构建")
-        
+
         # 按照优先级顺序处理镜像站：nano-banana官方 → Comfly → T8 → API4GPT → OpenRouter → OpenAI → custom
-        
+
         # 1. nano-banana官方镜像站处理
         if is_nano_banana_official:
             print("🔗 检测到nano-banana官方镜像站，使用Google官方API")
@@ -7031,7 +7106,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
             # 📐 Gemini官方API：Aspect Ratio控制（始终设置，即使是默认值）
-            if aspect_ratio and aspect_ratio.strip():
+            if aspect_ratio and aspect_ratio.strip() and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -7115,7 +7190,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             except Exception as e:
                 print(f"❌ nano-banana官方API调用失败: {e}")
                 raise e
-            
+
         # 2. Comfly镜像站处理
         elif is_comfly_mirror:
             print("🔗 检测到Comfly镜像站，使用Comfly API格式")
@@ -7296,7 +7371,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 }
 
                 # 📐 Aspect Ratio控制
-                if aspect_ratio:
+                if aspect_ratio and aspect_ratio != "Auto":
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -7335,7 +7410,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             }
 
             # 📐 Aspect Ratio控制
-            if aspect_ratio:
+            if aspect_ratio and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -7528,7 +7603,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 }
 
                 # 📐 Aspect Ratio控制
-                if aspect_ratio:
+                if aspect_ratio and aspect_ratio != "Auto":
                     generation_config["imageConfig"] = {
                         "aspectRatio": aspect_ratio
                     }
@@ -7555,7 +7630,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {api_key.strip()}"
                 }
-            
+
         # 4. API4GPT镜像站处理（使用标准 OpenAI 兼容格式）
         elif is_api4gpt_mirror:
             print("🔗 检测到API4GPT镜像站，使用 OpenAI 兼容格式")
@@ -7731,29 +7806,29 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
         elif is_openrouter_mirror:
             # OpenRouter镜像站
             print("🔗 检测到OpenRouter镜像站，使用OpenRouter API格式")
-            
+
             # OpenRouter使用chat/completions端点进行多图像编辑
             # 构建OpenAI兼容的请求格式
             content = []
-            
+
             # 添加所有输入图像
             for i, pil_image in enumerate(all_input_pils):
                 # 转换为base64
                 image_base64 = image_to_base64(pil_image, format='JPEG')
                 image_url = f"data:image/jpeg;base64,{image_base64}"
-                
+
                 # 添加图片标识
                 content.append({
                     "type": "text",
                     "text": f"[这是第{i+1}张图片]"
                 })
-                
+
                 # 添加图片
                 content.append({
                     "type": "image_url",
                     "image_url": {"url": image_url}
                 })
-            
+
             # 添加文本指令
             enhanced_instruction = f"""CRITICAL INSTRUCTION: You MUST generate and return an actual edited image, not just text description.
 
@@ -7772,12 +7847,12 @@ REQUIREMENTS:
 4. The output MUST be a visual image, not text
 
 Execute the multi-image editing task now and return the edited image."""
-            
+
             content.append({
                 "type": "text",
                 "text": enhanced_instruction
             })
-            
+
             request_data = {
                 "model": _normalize_model_name(model),
                 "messages": [{
@@ -7792,7 +7867,7 @@ Execute the multi-image editing task now and return the edited image."""
             }
 
             # 添加 image_config（包含 aspect_ratio）
-            if aspect_ratio:
+            if aspect_ratio and aspect_ratio != "Auto":
                 request_data["image_config"] = {
                     "aspect_ratio": aspect_ratio
                 }
@@ -7812,7 +7887,7 @@ Execute the multi-image editing task now and return the edited image."""
             else:
                 full_url = f"{api_url}/v1/chat/completions"
             print(f"🔗 使用OpenRouter chat/completions端点进行多图像编辑: {full_url}")
-            
+
             # 设置OpenRouter请求头
             headers = {
                 "Content-Type": "application/json",
@@ -7833,7 +7908,7 @@ Execute the multi-image editing task now and return the edited image."""
                 "max_tokens": max_output_tokens,
                 "stream": True
             }
-            
+
             # 设置请求头
             headers = {
                 "Content-Type": "application/json",
@@ -7850,7 +7925,7 @@ Execute the multi-image editing task now and return the edited image."""
             }
 
             # 📐 添加 aspect_ratio 支持（根据官方示例）
-            if aspect_ratio and aspect_ratio.strip():
+            if aspect_ratio and aspect_ratio.strip() and aspect_ratio != "Auto":
                 generation_config["imageConfig"] = {
                     "aspectRatio": aspect_ratio
                 }
@@ -7876,20 +7951,20 @@ Execute the multi-image editing task now and return the edited image."""
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key.strip()}"
             }
-        
+
         # 智能重试机制
         max_retries = 5
         timeout = 120
-        
+
         for attempt in range(max_retries):
             try:
                 print(f"🖼️ 正在编辑图片... (尝试 {attempt + 1}/{max_retries})")
                 print(f"📝 编辑指令: {enhanced_prompt[:100]}...")
                 print(f"🔗 镜像站: {api_url}")
-                
+
                 # 发送请求 - 添加SSL配置以解决连接问题
                 response = requests.post(full_url, headers=headers, json=request_data, timeout=timeout, verify=False)
-                
+
                 # 检查响应状态和内容
                 if response.status_code != 200:
                     print(f"📡 HTTP状态码: {response.status_code}")
@@ -7899,13 +7974,13 @@ Execute the multi-image editing task now and return the edited image."""
                 if not response.text.strip():
                     print("⚠️ API返回空响应")
                     raise ValueError("API返回空响应")
-                
+
                 # 成功响应
                 if response.status_code == 200:
                     # 提取文本响应和编辑后的图片
                     response_text = ""
                     edited_image = None
-                    
+
                     # 为所有镜像站定义 result 变量
                     if not is_api4gpt_mirror and not is_openrouter_mirror and not is_t8_mirror and not is_openai_mirror:
                         # 标准 Gemini API 镜像站（如 Comfy API）
@@ -7931,23 +8006,23 @@ Execute the multi-image editing task now and return the edited image."""
                         except Exception as e:
                             print(f"⚠️ OpenAI 镜像站响应解析失败: {e}")
                             result = {}
-                    
+
                     if is_api4gpt_mirror:
                         # API4GPT镜像站响应处理
                         print("🔗 处理API4GPT镜像站响应")
-                        
+
                         try:
                             # 尝试解析JSON响应
                             result = response.json()
                             print(f"📋 API4GPT响应结构: {list(result.keys())}")
-                            
+
                             if api4gpt_service == "nano-banana":
                                 # nano-banana使用OpenAI兼容格式
                                 response_text, edited_image = parse_openai_compatible_response(result)
                             else:
                                 # 其他服务使用原有的解析逻辑
                                 response_text, edited_image = parse_api4gpt_response(result, api4gpt_service)
-                            
+
                             if edited_image:
                                 print(f"✅ 成功提取API4GPT编辑后的图像")
                             else:
@@ -7959,14 +8034,14 @@ Execute the multi-image editing task now and return the edited image."""
                             print(f"⚠️ API4GPT JSON解析失败: {json_error}")
                             # print(f"📋 原始响应内容: {response.text[:500]}...")  # 注释掉冗长的调试信息
                             raise ValueError(f"API4GPT响应不是有效的JSON格式: {json_error}")
-                            
+
                     elif is_openrouter_mirror:
                         # OpenRouter镜像站响应处理 - 使用流式响应
                         print("🔗 处理OpenRouter镜像站流式响应")
-                        
+
                         # 处理流式响应
                         response_text = process_openrouter_stream(response)
-                        
+
                         # 检查响应文本中是否包含图像数据
                         if "data:image/" in response_text:
                             print("🖼️ 检测到OpenRouter返回的图像数据")
@@ -7979,7 +8054,7 @@ Execute the multi-image editing task now and return the edited image."""
                                     # 取第一个匹配的图像数据
                                     image_url = image_matches[0]
                                     print(f"🎯 成功匹配OpenRouter图像数据，长度: {len(image_url)}字符")
-                                    
+
                                     # 提取base64部分
                                     if ';base64,' in image_url:
                                         import io
@@ -7987,7 +8062,7 @@ Execute the multi-image editing task now and return the edited image."""
                                         image_bytes = base64.b64decode(base64_data)
                                         edited_image = Image.open(io.BytesIO(image_bytes))
                                         print(f"✅ 成功提取OpenRouter编辑后的图像: {edited_image.size}")
-                                        
+
                                         # 清理响应文本，移除base64数据
                                         response_text = re.sub(base64_pattern, '[图像已编辑]', response_text)
                                     else:
@@ -8002,7 +8077,7 @@ Execute the multi-image editing task now and return the edited image."""
                                 print(f"⚠️ OpenRouter图像数据解析失败: {e}")
                                 edited_image = all_input_pils[0]
                                 response_text = f"OpenRouter多图片编辑完成，但解析失败: {e}"
-                        
+
                         # 如果没有成功提取图像，返回原图片
                         if not edited_image:
                             print("⚠️ OpenRouter未返回编辑后的图像数据，返回原图片")
@@ -8043,22 +8118,24 @@ Execute the multi-image editing task now and return the edited image."""
                             if "candidates" in result and result["candidates"]:
                                 candidate = result["candidates"][0]
                                 if "content" in candidate and "parts" in candidate["content"]:
-                                    for part in candidate["content"]["parts"]:
-                                        # 提取文本
-                                        if "text" in part:
-                                            response_text += part["text"]
+                                    parts = candidate["content"]["parts"]
+                                    if parts is not None:  # 检查parts是否为None
+                                        for part in parts:
+                                            # 提取文本
+                                            if "text" in part:
+                                                response_text += part["text"]
 
-                                        # 提取编辑后的图片（支持inline_data和inlineData两种格式）
-                                        inline_data = part.get("inline_data") or part.get("inlineData")
-                                        if inline_data and "data" in inline_data:
-                                            try:
-                                                import io
-                                                image_data = inline_data["data"]
-                                                image_bytes = base64.b64decode(image_data)
-                                                edited_image = Image.open(io.BytesIO(image_bytes))
-                                                print(f"✅ 成功提取T8镜像站编辑后的图像: {edited_image.size}")
-                                            except Exception as e:
-                                                print(f"⚠️ T8镜像站图像数据解析失败: {e}")
+                                            # 提取编辑后的图片（支持inline_data和inlineData两种格式）
+                                            inline_data = part.get("inline_data") or part.get("inlineData")
+                                            if inline_data and "data" in inline_data:
+                                                try:
+                                                    import io
+                                                    image_data = inline_data["data"]
+                                                    image_bytes = base64.b64decode(image_data)
+                                                    edited_image = Image.open(io.BytesIO(image_bytes))
+                                                    print(f"✅ 成功提取T8镜像站编辑后的图像: {edited_image.size}")
+                                                except Exception as e:
+                                                    print(f"⚠️ T8镜像站图像数据解析失败: {e}")
 
                         # 如果没有成功提取图像，返回原图片
                         if not edited_image:
@@ -8079,7 +8156,7 @@ Execute the multi-image editing task now and return the edited image."""
                             "max_tokens": max_output_tokens,
                             "stream": True
                         }
-                        
+
                         # 设置请求头
                         headers = {
                             "Content-Type": "application/json",
@@ -8095,25 +8172,27 @@ Execute the multi-image editing task now and return the edited image."""
                         if "candidates" in result and result["candidates"]:
                             candidate = result["candidates"][0]
                             if "content" in candidate and "parts" in candidate["content"]:
-                                for part in candidate["content"]["parts"]:
-                                    # 提取文本
-                                    if "text" in part:
-                                        response_text += part["text"]
-                                    
-                                    # 提取编辑后的图片
-                                    if "inline_data" in part or "inlineData" in part:
-                                        inline_data = part.get("inline_data") or part.get("inlineData")
-                                        if inline_data and "data" in inline_data:
-                                            try:
-                                                # 解码图片数据
-                                                import io
-                                                image_data = inline_data["data"]
-                                                image_bytes = base64.b64decode(image_data)
-                                                edited_image = Image.open(io.BytesIO(image_bytes))
-                                                print("✅ 成功提取编辑后的图片")
-                                            except Exception as e:
-                                                print(f"⚠️ 解码图片失败: {e}")
-                    
+                                parts = candidate["content"]["parts"]
+                                if parts is not None:  # 检查parts是否为None
+                                    for part in parts:
+                                        # 提取文本
+                                        if "text" in part:
+                                            response_text += part["text"]
+
+                                        # 提取编辑后的图片
+                                        if "inline_data" in part or "inlineData" in part:
+                                            inline_data = part.get("inline_data") or part.get("inlineData")
+                                            if inline_data and "data" in inline_data:
+                                                try:
+                                                    # 解码图片数据
+                                                    import io
+                                                    image_data = inline_data["data"]
+                                                    image_bytes = base64.b64decode(image_data)
+                                                    edited_image = Image.open(io.BytesIO(image_bytes))
+                                                    print("✅ 成功提取编辑后的图片")
+                                                except Exception as e:
+                                                    print(f"⚠️ 解码图片失败: {e}")
+
                     # 如果没有编辑后的图片，返回原图片
                     if edited_image is None:
                         print("⚠️ 未检测到编辑后的图片，返回原图片")
@@ -8154,22 +8233,22 @@ Execute the multi-image editing task now and return the edited image."""
                                     print("⚠️ 智能AI放大失败，使用原始图像")
                         except Exception as e:
                             print(f"⚠️ 智能AI放大失败: {e}，使用原始图像")
-                    
+
                     # 如果没有响应文本，提供默认文本
                     if not response_text:
                         response_text = "多图像编辑完成！这是根据您的指令和参考图像生成的编辑结果。"
                         print("📝 使用默认响应文本")
-                    
+
                     # 转换为tensor
                     image_tensor = pil_to_tensor(edited_image)
-                    
+
                     print("✅ 多图像编辑完成")
                     print(f"📝 响应文本长度: {len(response_text)}")
                     # print(f"📝 响应文本内容: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
                     print(f"📝 响应文本类型: {'包含图像数据' if 'data:image/' in response_text else '纯文本内容'}")
                     self._push_chat(enhanced_prompt, response_text or "", unique_id)
                     return (image_tensor, response_text)
-                
+
                 # 处理错误响应
                 else:
                     print(f"❌ HTTP状态码: {response.status_code}")
@@ -8178,16 +8257,16 @@ Execute the multi-image editing task now and return the edited image."""
                         print(f"❌ 错误详情: {json.dumps(error_detail, indent=2, ensure_ascii=False)}")
                     except:
                         print(f"❌ 错误文本: {response.text}")
-                    
+
                     # 如果是最后一次尝试，抛出异常
                     if attempt == max_retries - 1:
                         response.raise_for_status()
-                    
+
                     # 智能等待
                     delay = smart_retry_delay(attempt, response.status_code)
                     print(f"🔄 等待 {delay:.1f} 秒后重试...")
                     time.sleep(delay)
-                    
+
             except requests.exceptions.RequestException as e:
                 error_msg = format_error_message(e)
                 print(f"❌ 请求失败: {error_msg}")
@@ -8197,7 +8276,7 @@ Execute the multi-image editing task now and return the edited image."""
                     delay = smart_retry_delay(attempt)
                     print(f"🔄 等待 {delay:.1f} 秒后重试...")
                     time.sleep(delay)
-                    
+
             except Exception as e:
                 error_msg = format_error_message(e)
                 print(f"❌ 处理失败: {error_msg}")
@@ -8208,13 +8287,13 @@ def parse_openai_compatible_response(response_data):
     """解析OpenAI兼容格式的响应数据"""
     response_text = ""
     generated_image = None
-    
+
     try:
         if "choices" in response_data and response_data["choices"]:
             choice = response_data["choices"][0]
             if "message" in choice and "content" in choice["message"]:
                 content = choice["message"]["content"]
-                
+
                 if isinstance(content, str):
                     response_text = content
                     # 检查是否包含图像数据（base64或URL）
@@ -8224,7 +8303,7 @@ def parse_openai_compatible_response(response_data):
                             import re
                             # 提取所有图像标记
                             image_matches = re.findall(r'!\[image\]\(([^)]+)\)', content)
-                            
+
                             for image_url in image_matches:
                                 if image_url.startswith("data:image/"):
                                     # 处理base64图像数据
@@ -8258,7 +8337,7 @@ def parse_openai_compatible_response(response_data):
                                     print(f"⚠️ 不支持的图像格式: {image_url}")
                         except Exception as e:
                             print(f"⚠️ 图像数据解析失败: {e}")
-                            
+
                 elif isinstance(content, list):
                     # 处理多模态内容
                     for item in content:
@@ -8292,14 +8371,14 @@ def parse_openai_compatible_response(response_data):
                                     print(f"⚠️ 图像下载失败: {e}")
                             else:
                                 print(f"⚠️ 不支持的图像URL格式: {image_url}")
-        
+
         if not response_text:
             response_text = "OpenAI兼容格式响应处理完成"
-            
+
     except Exception as e:
         print(f"⚠️ OpenAI兼容格式响应解析失败: {e}")
         response_text = f"响应解析失败: {e}"
-    
+
     return response_text, generated_image
 
 
@@ -8307,17 +8386,13 @@ def parse_openai_compatible_response(response_data):
 NODE_CLASS_MAPPINGS = {
     "KenChenLLMGeminiBananaMirrorImageGenNode": KenChenLLMGeminiBananaMirrorImageGenNode,
     "KenChenLLMGeminiBananaMirrorImageEditNode": KenChenLLMGeminiBananaMirrorImageEditNode,
-    "KenChenLLMGeminiBananaMultiImageEditNode": KenChenLLMGeminiBananaMultiImageEditNode,  # ✅ 修正：使用类名作为注册键
-    # 向后兼容旧的注册键
-    "GeminiBananaMirrorMultiImageEdit": KenChenLLMGeminiBananaMultiImageEditNode,  # 兼容旧工作流
+    "KenChenLLMGeminiBananaMultiImageEditNode": KenChenLLMGeminiBananaMultiImageEditNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "KenChenLLMGeminiBananaMirrorImageGenNode": "🍌 Gemini Banana 镜像图像生成",
     "KenChenLLMGeminiBananaMirrorImageEditNode": "🍌 Gemini Banana 镜像图片编辑",
-    "KenChenLLMGeminiBananaMultiImageEditNode": "🍌 Gemini Banana 镜像多图像编辑",  # ✅ 修正：使用类名作为注册键
-    # 向后兼容旧的注册键
-    "GeminiBananaMirrorMultiImageEdit": "🍌 Gemini Banana 镜像多图像编辑",  # 兼容旧工作流
+    "KenChenLLMGeminiBananaMultiImageEditNode": "🍌 Gemini Banana 镜像多图像编辑",
 }
 
 # 强制设置节点颜色
@@ -8351,5 +8426,4 @@ def setup_node_colors():
 
 # 应用颜色设置
 setup_node_colors()
-print("🎨 已为镜像节点设置橙色主题")
 
