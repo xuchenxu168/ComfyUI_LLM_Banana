@@ -8,8 +8,27 @@ from PIL import Image
 import requests
 from io import BytesIO
 import traceback
+import tempfile
+import time
 
-# 延迟导入google.genai
+# 视频处理相关导入
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    print("⚠️ opencv-python 未安装，视频处理功能将受限。请运行: pip install opencv-python")
+
+# Gemini SDK 导入
+try:
+    from google import genai
+    from google.genai import types
+    GENAI_SDK_AVAILABLE = True
+except ImportError:
+    GENAI_SDK_AVAILABLE = False
+    print("⚠️ google-genai SDK 未安装，将使用 REST API。建议运行: pip install google-genai")
+
+# 延迟导入google.genai (保留兼容性)
 def get_google_genai():
     try:
         import google.genai
@@ -46,6 +65,129 @@ def get_gemini_config():
     """获取Gemini配置，优先从配置文件读取"""
     config = load_gemini_config()
     return config
+
+def save_video_tensor_to_mp4(video_tensor, output_path, fps=30):
+    """
+    将 ComfyUI 的 VIDEO tensor 保存为 MP4 文件
+
+    Args:
+        video_tensor: torch.Tensor, shape [frames, channels, height, width]
+        output_path: str, 输出 MP4 文件路径
+        fps: int, 帧率（默认 30）
+
+    Returns:
+        str: 输出文件路径，如果失败返回 None
+    """
+    if not CV2_AVAILABLE:
+        _log_error("opencv-python 未安装，无法保存视频为 MP4")
+        return None
+
+    try:
+        frames_count = video_tensor.shape[0]
+        height = video_tensor.shape[2]
+        width = video_tensor.shape[3]
+
+        _log_info(f"📹 保存视频: {frames_count} 帧, {width}x{height}, {fps} FPS")
+
+        # 创建视频写入器 (使用 mp4v 编码器)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+        if not out.isOpened():
+            _log_error(f"无法创建视频写入器: {output_path}")
+            return None
+
+        for i in range(frames_count):
+            frame = video_tensor[i]
+
+            # 转换为 numpy 数组 (HWC 格式)
+            if frame.shape[0] in [1, 3, 4]:  # CHW 格式
+                frame_np = frame.permute(1, 2, 0).cpu().numpy()
+            else:  # HWC 格式
+                frame_np = frame.cpu().numpy()
+
+            # 转换为 uint8
+            if frame_np.max() <= 1.0:
+                frame_np = (frame_np * 255).astype(np.uint8)
+            else:
+                frame_np = frame_np.astype(np.uint8)
+
+            # 处理通道数
+            if frame_np.shape[2] == 1:  # 灰度
+                frame_np = cv2.cvtColor(frame_np, cv2.COLOR_GRAY2BGR)
+            elif frame_np.shape[2] == 3:  # RGB -> BGR
+                frame_np = cv2.cvtColor(frame_np, cv2.COLOR_RGB2BGR)
+            elif frame_np.shape[2] == 4:  # RGBA -> BGR
+                frame_np = cv2.cvtColor(frame_np, cv2.COLOR_RGBA2BGR)
+
+            out.write(frame_np)
+
+        out.release()
+        _log_info(f"✅ 视频保存成功: {output_path}")
+        return output_path
+
+    except Exception as e:
+        _log_error(f"保存视频失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def upload_video_to_gemini_file_api(video_path, api_key, display_name="video"):
+    """
+    使用 Gemini File API 上传视频文件
+
+    Args:
+        video_path: str, 视频文件路径
+        api_key: str, Gemini API 密钥
+        display_name: str, 显示名称
+
+    Returns:
+        dict: 包含 file_uri 和 mime_type 的字典，如果失败返回 None
+    """
+    if not GENAI_SDK_AVAILABLE:
+        _log_error("google-genai SDK 未安装，无法使用 File API")
+        return None
+
+    try:
+        _log_info(f"📤 上传视频到 Gemini File API: {video_path}")
+
+        # 创建客户端
+        client = genai.Client(api_key=api_key)
+
+        # 上传文件
+        uploaded_file = client.files.upload(file=video_path)
+
+        _log_info(f"⏳ 等待文件处理... (文件名: {uploaded_file.name})")
+
+        # 等待文件处理完成
+        max_wait = 60  # 最多等待 60 秒
+        wait_time = 0
+        while uploaded_file.state.name == "PROCESSING":
+            if wait_time >= max_wait:
+                _log_error(f"文件处理超时 ({max_wait}秒)")
+                return None
+
+            time.sleep(1)
+            wait_time += 1
+            uploaded_file = client.files.get(name=uploaded_file.name)
+
+        if uploaded_file.state.name == "FAILED":
+            _log_error(f"文件处理失败: {uploaded_file.name}")
+            return None
+
+        _log_info(f"✅ 视频上传成功! URI: {uploaded_file.uri}")
+
+        return {
+            "file_uri": uploaded_file.uri,
+            "mime_type": uploaded_file.mime_type,
+            "file_name": uploaded_file.name
+        }
+
+    except Exception as e:
+        _log_error(f"上传视频到 File API 失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 class KenChenLLMGeminiTextNode:
     @classmethod
@@ -199,7 +341,13 @@ class KenChenLLMGeminiMultimodalNode:
             "optional": {
                 "image": ("IMAGE",),
                 "audio": ("AUDIO",),
-                "video": ("IMAGE",),
+                "video": ("VIDEO",),
+                "max_video_frames": ("INT", {
+                    "default": 10,
+                    "min": 1,
+                    "max": 100,
+                    "tooltip": "视频处理时最多提取的帧数。增加此值会提高视频分析质量，但会增加API成本和处理时间。建议值: 10-30"
+                }),
             },
         }
     RETURN_TYPES = ("STRING",)
@@ -213,14 +361,15 @@ class KenChenLLMGeminiMultimodalNode:
         prompt,
         model,
         proxy,
-        temperature, 
-        top_p, 
-        top_k, 
+        temperature,
+        top_p,
+        top_k,
         max_output_tokens,
         seed,
         image=None,
         audio=None,
         video=None,
+        max_video_frames=10,
     ):
         try:
             genai = get_google_genai()
@@ -261,8 +410,34 @@ class KenChenLLMGeminiMultimodalNode:
                 generation_config["seed"] = seed
             
             # 准备内容
-            content_parts = [{"text": prompt}]
-            
+            # 如果有视频输入，需要在提示词中添加视频上下文
+            video_context_added = False
+            if video is not None:
+                # 检查提示词中是否已经包含视频相关的说明
+                video_keywords = ['视频', 'video', '帧', 'frame', '动态', '连续', '序列']
+                has_video_context = any(keyword in prompt.lower() for keyword in video_keywords)
+
+                if not has_video_context:
+                    # 自动添加视频上下文说明（更强的提示）
+                    video_prompt_prefix = (
+                        "【重要提示 - 这是视频分析任务】\n"
+                        "接下来你会看到多张图片，这些图片是从同一个视频中按时间顺序提取的连续帧。\n"
+                        "请务必：\n"
+                        "1. 将所有图片作为一个完整的视频序列来分析\n"
+                        "2. 分析视频中的动作、场景变化、时间流程\n"
+                        "3. 不要只描述第一张图片，要综合所有帧的信息\n"
+                        "4. 如果看到场景或人物的变化，请描述这个变化过程\n\n"
+                        "用户的问题：\n"
+                    )
+                    enhanced_prompt = video_prompt_prefix + prompt
+                    content_parts = [{"text": enhanced_prompt}]
+                    video_context_added = True
+                    _log_info("🎬 自动添加视频分析上下文到提示词")
+                else:
+                    content_parts = [{"text": prompt}]
+            else:
+                content_parts = [{"text": prompt}]
+
             # 处理图像
             if image is not None:
                 if isinstance(image, torch.Tensor):
@@ -487,90 +662,153 @@ class KenChenLLMGeminiMultimodalNode:
             else:
                 _log_info("没有音频输入")
             
-            # 处理视频
+            # 🎬 处理视频 - 使用 File API
+            uploaded_video_file = None
+            temp_video_path = None
+
             if video is not None:
-                if isinstance(video, torch.Tensor):
-                    try:
-                        _log_info(f"开始处理输入视频，原始形状: {video.shape}, 数据类型: {video.dtype}")
-                        
-                        # 检查视频维度
-                        if video.dim() == 4:
-                            # 视频格式: [frames, channels, height, width] 或 [frames, height, width, channels]
-                            frames_count = video.shape[0]
-                            _log_info(f"视频帧数: {frames_count}")
-                            
-                            # 限制帧数以避免API限制
-                            max_frames = 10
-                            if frames_count > max_frames:
-                                _log_warning(f"视频帧数过多 ({frames_count})，只处理前 {max_frames} 帧")
-                                frames_to_process = max_frames
+                try:
+                    # 检查视频类型
+                    if isinstance(video, str):
+                        # Load_AF_Video 返回视频文件路径 - 直接使用
+                        _log_info(f"🎬 检测到视频文件路径: {video}")
+                        temp_video_path = video
+                        use_existing_file = True
+                    elif isinstance(video, (dict, torch.Tensor)):
+                        # 需要转换为 MP4
+                        video_frames = None
+
+                        # 支持多种 VIDEO 类型格式
+                        if isinstance(video, dict):
+                            if "video" in video:
+                                video_frames = video["video"]
+                            elif "frames" in video:
+                                video_frames = video["frames"]
                             else:
-                                frames_to_process = frames_count
-                            
-                            for i in range(frames_to_process):
-                                try:
-                                    frame = video[i]
-                                    _log_info(f"处理第 {i+1}/{frames_to_process} 帧，形状: {frame.shape}")
-                                    
-                                    # 检查帧维度
-                                    if frame.dim() == 3:
-                                        # 判断是CHW还是HWC格式
-                                        if frame.shape[0] in [1, 3, 4]:  # CHW格式
-                                            frame_np = frame.permute(1, 2, 0).cpu().numpy()
-                                        elif frame.shape[2] in [1, 3, 4]:  # HWC格式
-                                            frame_np = frame.cpu().numpy()
-                                        else:
-                                            _log_warning(f"无法识别的帧格式: {frame.shape}")
-                                            continue
-                                        
-                                        # 确保数据类型和范围正确
-                                        if frame_np.dtype != np.float32 and frame_np.dtype != np.float64:
-                                            frame_np = frame_np.astype(np.float32)
-                                        
-                                        if frame_np.max() > 1.0:
-                                            frame_np = frame_np / 255.0
-                                        
-                                        frame_np = (frame_np * 255).astype(np.uint8)
-                                        
-                                        # 处理单通道和RGBA帧
-                                        if frame_np.shape[2] == 1:
-                                            frame_np = np.repeat(frame_np, 3, axis=2)
-                                        elif frame_np.shape[2] == 4:
-                                            frame_np = frame_np[:, :, :3]
-                                        
-                                        pil_frame = Image.fromarray(frame_np)
-                                        
-                                        # 转换为base64
-                                        buffer = BytesIO()
-                                        pil_frame.save(buffer, format='PNG')
-                                        frame_base64 = base64.b64encode(buffer.getvalue()).decode()
-                                        content_parts.append({
-                                            "inline_data": {
-                                                "mime_type": "image/png",
-                                                "data": frame_base64
-                                            }
-                                        })
-                                        _log_info(f"成功处理第 {i+1} 帧，尺寸: {pil_frame.size}")
-                                        
-                                    else:
-                                        _log_warning(f"帧维度不正确: {frame.dim()}, 跳过")
-                                        continue
-                                        
-                                except Exception as frame_error:
-                                    _log_error(f"处理第 {i+1} 帧时出错: {frame_error}")
-                                    continue
-                            
-                            _log_info(f"成功处理输入视频，处理了 {frames_to_process} 帧")
-                            
+                                for key, value in video.items():
+                                    if isinstance(value, torch.Tensor):
+                                        video_frames = value
+                                        break
+                        elif isinstance(video, torch.Tensor):
+                            video_frames = video
+
+                        if video_frames is not None and isinstance(video_frames, torch.Tensor):
+                            _log_info(f"🎬 处理视频，形状: {video_frames.shape}, 数据类型: {video_frames.dtype}")
+
+                            if video_frames.dim() == 4:
+                                frames_count = video_frames.shape[0]
+                                _log_info(f"📊 视频帧数: {frames_count}")
+
+                                # 保存为临时 MP4 文件
+                                temp_file = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
+                                temp_video_path = temp_file.name
+                                temp_file.close()
+
+                                fps = 30
+                                saved_path = save_video_tensor_to_mp4(video_frames, temp_video_path, fps=fps)
+
+                                if not saved_path:
+                                    _log_error("保存视频失败，无法使用 File API")
+                                    temp_video_path = None
+                                else:
+                                    use_existing_file = False
+                            else:
+                                _log_warning(f"视频维度不正确: {video_frames.dim()}, 期望4维")
+                                temp_video_path = None
                         else:
-                            _log_warning(f"视频维度不正确: {video.dim()}, 期望4维")
-                            return (f"错误: 视频维度不正确，期望4维，实际{video.dim()}维",)
-                        
-                    except Exception as e:
-                        _log_error(f"处理输入视频时出错: {e}")
-                        return (f"错误: 处理输入视频失败: {e}",)
+                            _log_warning("无法从 dict 中提取视频 tensor")
+                            temp_video_path = None
+                    else:
+                        _log_warning(f"视频输入类型不支持: {type(video)}")
+                        temp_video_path = None
+
+                    # 如果有视频文件，上传到 File API
+                    if temp_video_path:
+                        _log_info("🎬 检测到视频输入，使用 Gemini File API 上传视频")
+
+                        uploaded_video_file = upload_video_to_gemini_file_api(
+                            temp_video_path,
+                            final_api_key,
+                            display_name="comfyui_video"
+                        )
+
+                        if not uploaded_video_file:
+                            _log_error("视频上传失败，将跳过视频分析")
+                            temp_video_path = None
+
+                except Exception as e:
+                    _log_error(f"处理输入视频时出错: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    temp_video_path = None
             
-            # 生成内容
+            # 🎬 如果有视频文件，使用 SDK 调用
+            if uploaded_video_file and GENAI_SDK_AVAILABLE:
+                _log_info(f"🔍 使用 Gemini SDK 进行视频分析...")
+
+                try:
+                    # 使用 SDK 调用
+                    client_sdk = genai.Client(api_key=final_api_key)
+
+                    # 构建内容
+                    sdk_contents = [
+                        types.Part(text=prompt),
+                        types.Part(
+                            file_data=types.FileData(
+                                file_uri=uploaded_video_file['file_uri'],
+                                mime_type=uploaded_video_file['mime_type']
+                            )
+                        )
+                    ]
+
+                    # 添加其他媒体（如果有）
+                    for part in content_parts[1:]:  # 跳过第一个文本部分
+                        if "inline_data" in part:
+                            sdk_contents.append(
+                                types.Part(
+                                    inline_data=types.Blob(
+                                        data=base64.b64decode(part["inline_data"]["data"]),
+                                        mime_type=part["inline_data"]["mime_type"]
+                                    )
+                                )
+                            )
+
+                    # 调用 API
+                    response = client_sdk.models.generate_content(
+                        model=model,
+                        contents=types.Content(parts=sdk_contents),
+                        config=types.GenerateContentConfig(
+                            temperature=temperature,
+                            top_p=top_p,
+                            top_k=top_k,
+                            max_output_tokens=max_output_tokens
+                        )
+                    )
+
+                    text = response.text
+
+                    # 清理临时文件
+                    if temp_video_path and not use_existing_file and os.path.exists(temp_video_path):
+                        try:
+                            os.unlink(temp_video_path)
+                            _log_info("🗑️ 临时视频文件已删除")
+                        except:
+                            pass
+
+                    _log_info("✅ 视频分析成功完成")
+                    return (text,)
+
+                except Exception as sdk_error:
+                    _log_error(f"SDK 调用失败: {sdk_error}")
+                    # 清理临时文件
+                    if temp_video_path and not use_existing_file and os.path.exists(temp_video_path):
+                        try:
+                            os.unlink(temp_video_path)
+                        except:
+                            pass
+                    raise
+
+            # 如果没有视频或 SDK 不可用，使用原来的方式
             _log_info(f"准备发送到API的内容部分数量: {len(content_parts)}")
             for i, part in enumerate(content_parts):
                 if "text" in part:
@@ -579,11 +817,11 @@ class KenChenLLMGeminiMultimodalNode:
                     mime_type = part["inline_data"]["mime_type"]
                     data_length = len(part["inline_data"]["data"])
                     _log_info(f"第 {i+1} 部分: {mime_type} 数据 (长度: {data_length})")
-            
+
             # 根据内容类型选择调用方式
             has_audio = any("audio" in part.get("inline_data", {}).get("mime_type", "") for part in content_parts if "inline_data" in part)
             has_image = any("image" in part.get("inline_data", {}).get("mime_type", "") for part in content_parts if "inline_data" in part)
-            
+
             if has_audio:
                 _log_info("检测到音频内容，使用多模态调用")
                 response = client.models.generate_content(
@@ -605,6 +843,14 @@ class KenChenLLMGeminiMultimodalNode:
                     contents=[{"parts": content_parts}],
                     config=generation_config
                 )
+
+            # 清理临时文件
+            if temp_video_path and not use_existing_file and os.path.exists(temp_video_path):
+                try:
+                    os.unlink(temp_video_path)
+                    _log_info("🗑️ 临时视频文件已删除")
+                except:
+                    pass
             
             if response.candidates and response.candidates[0].content.parts:
                 text = response.candidates[0].content.parts[0].text
