@@ -6,6 +6,12 @@
 
 一个功能强大的ComfyUI自定义节点集合，集成了多种大语言模型和AI服务，支持文本生成、图像生成、图像分析、翻译等多种AI功能。
 
+## 🆕 专属更新：Nano Banana 2 与重大功能
+
+- 完整更新说明与迁移指南请见：[`README_NANO_BANANA_2_UPDATE.md`](README_NANO_BANANA_2_UPDATE.md)
+- 重点变化：NB2 使用 Gemini 原生 generateContent、imageConfig 支持 1K/2K/4K、镜像端点自动选择与纠偏、迭代优化全链路、多图编辑稳健性与智能AI放大
+
+
 ## 🌟 主要特性
 
 - **🍌 Banana系列节点**: 专业的图像编辑和多图处理能力，支持批量操作
