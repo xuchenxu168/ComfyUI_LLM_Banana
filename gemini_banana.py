@@ -185,10 +185,16 @@ except Exception:
     PromptServer = None
 
 def _log_info(message):
-    pass  # 关闭调试信息
+    try:
+        print(f"[Gemini-Banana] {message}")
+    except UnicodeEncodeError:
+        print(f"[Gemini-Banana] {repr(message)}")
 
 def _log_warning(message):
-    pass  # 关闭调试信息
+    try:
+        print(f"[Gemini-Banana] WARNING: {message}")
+    except UnicodeEncodeError:
+        print(f"[Gemini-Banana] WARNING: {repr(message)}")
 
 def _log_error(message):
     try:
@@ -208,6 +214,245 @@ def smart_retry_delay(attempt, error_code=None):
         return base_delay + random.uniform(1, 5)  # 添加随机抖动
     else:
         return base_delay
+
+# ---- Lightweight Conversation Store for Iterative Refinement ----
+SESSION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessions")
+
+# ---- Image Cache for Iterative Refinement (Step 2) ----
+# 缓存上一轮生成的图像，按 unique_id 存储
+_IMAGE_CACHE = {}  # {unique_id: PIL.Image}
+_SEED_CACHE = {}   # {unique_id: int} - 用于 lock_seed 功能
+
+def cache_image(unique_id: str, image):
+    """缓存图像到内存（PIL Image 或 torch.Tensor）"""
+    if not unique_id:
+        return
+    try:
+        # 转换为 PIL Image 存储
+        from PIL import Image
+        if isinstance(image, torch.Tensor):
+            # tensor -> PIL
+            if image.dim() == 4:
+                image = image[0]  # 移除 batch 维度
+            img_array = image.cpu().numpy()
+            if img_array.dtype == np.float32 or img_array.dtype == np.float64:
+                img_array = (img_array * 255).astype(np.uint8)
+            pil_image = Image.fromarray(img_array)
+        elif isinstance(image, Image.Image):
+            pil_image = image
+        else:
+            _log_warning(f"无法缓存图像，未知类型: {type(image)}")
+            return
+
+        _IMAGE_CACHE[unique_id] = pil_image
+        _log_info(f"✅ 已缓存图像到内存 (unique_id: {unique_id[:8]}...)")
+    except Exception as e:
+        _log_warning(f"缓存图像失败: {e}")
+
+def get_cached_image(unique_id: str):
+    """从缓存获取图像"""
+    if not unique_id:
+        return None
+    return _IMAGE_CACHE.get(unique_id)
+
+def clear_image_cache(unique_id: str = None):
+    """清空图像缓存"""
+    if unique_id:
+        if unique_id in _IMAGE_CACHE:
+            del _IMAGE_CACHE[unique_id]
+            _log_info(f"🗑️ 已清空图像缓存 (unique_id: {unique_id[:8]}...)")
+    else:
+        _IMAGE_CACHE.clear()
+        _log_info("🗑️ 已清空所有图像缓存")
+
+def cache_seed(unique_id: str, seed: int):
+    """缓存 seed 值"""
+    if not unique_id or seed <= 0:
+        return
+    _SEED_CACHE[unique_id] = seed
+    _log_info(f"🔒 已缓存 seed={seed} (unique_id: {unique_id[:8]}...)")
+
+def get_cached_seed(unique_id: str) -> int:
+    """获取缓存的 seed 值"""
+    if not unique_id:
+        return 0
+    return _SEED_CACHE.get(unique_id, 0)
+
+def clear_seed_cache(unique_id: str = None):
+    """清空 seed 缓存"""
+    if unique_id:
+        if unique_id in _SEED_CACHE:
+            del _SEED_CACHE[unique_id]
+            _log_info(f"🗑️ 已清空 seed 缓存 (unique_id: {unique_id[:8]}...)")
+    else:
+        _SEED_CACHE.clear()
+        _log_info("🗑️ 已清空所有 seed 缓存")
+
+def _ensure_session_dir():
+    try:
+        os.makedirs(SESSION_DIR, exist_ok=True)
+    except Exception as e:
+        _log_warning(f"无法创建会话目录: {e}")
+
+def _session_file(unique_id: str):
+    _ensure_session_dir()
+    safe_id = re.sub(r'[^a-zA-Z0-9_\-]', '_', unique_id or "default")
+    return os.path.join(SESSION_DIR, f"{safe_id}.json")
+
+def load_conversation(unique_id: str):
+    try:
+        path = _session_file(unique_id)
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
+        return []
+    except Exception as e:
+        _log_warning(f"加载会话失败: {e}")
+        return []
+
+def save_conversation(unique_id: str, history):
+    try:
+        path = _session_file(unique_id)
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(history or [], f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        _log_warning(f"保存会话失败: {e}")
+
+def reset_conversation_session(unique_id: str):
+    try:
+        path = _session_file(unique_id)
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception as e:
+        _log_warning(f"重置会话失败: {e}")
+
+def append_turn(unique_id: str, user_text: str, assistant_text: str):
+    history = load_conversation(unique_id)
+    if user_text:
+        history.append({"role": "user", "text": user_text})
+    if assistant_text is not None:
+        history.append({"role": "assistant", "text": assistant_text})
+    save_conversation(unique_id, history)
+
+def trim_history(unique_id: str, keep_last: int = 3):
+    history = load_conversation(unique_id)
+    if keep_last is not None and keep_last > 0:
+        history = history[-(keep_last * 2):]  # 每轮通常两条（user+assistant）
+        save_conversation(unique_id, history)
+    return history
+
+def build_history_prefix(history, keep_last: int = 3):
+    if not history:
+        return ""
+    # 仅取最近的若干轮
+    if keep_last and keep_last > 0:
+        history = history[-(keep_last * 2):]
+    lines = ["Context from previous turns (for consistent refinement):"]
+    for item in history:
+        role = item.get("role", "user")
+        text = (item.get("text") or "").strip()
+        if not text:
+            continue
+        if len(text) > 500:
+            text = text[:500] + "..."
+        prefix = "User" if role == "user" else "Assistant"
+        lines.append(f"- {prefix}: {text}")
+    lines.append("")
+    return "\n".join(lines)
+
+# ---- Step 3: Conversation Summary (High-level Stabilization) ----
+
+def _summary_file(unique_id: str):
+    _ensure_session_dir()
+    safe_id = re.sub(r'[^a-zA-Z0-9_\-]', '_', unique_id or "default")
+    return os.path.join(SESSION_DIR, f"{safe_id}.summary.txt")
+
+
+def load_summary(unique_id: str) -> str:
+    try:
+        path = _summary_file(unique_id)
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                return f.read()
+        return ""
+    except Exception as e:
+        _log_warning(f"加载会话摘要失败: {e}")
+        return ""
+
+
+def save_summary(unique_id: str, summary_text: str):
+    try:
+        path = _summary_file(unique_id)
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(summary_text or "")
+    except Exception as e:
+        _log_warning(f"保存会话摘要失败: {e}")
+
+
+def reset_summary(unique_id: str):
+    try:
+        path = _summary_file(unique_id)
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception as e:
+        _log_warning(f"重置会话摘要失败: {e}")
+
+
+def build_conversation_summary(history, previous_summary: str = "", max_chars: int = 600):
+    """
+    轻量摘要器（本地启发式）：
+    - 优先抽取最近的用户需求（user turns）
+    - 保留风格、色彩、构图、主体、限制等关键词
+    - 与 previous_summary 合并，避免无谓增长
+    """
+    if not history and not previous_summary:
+        return ""
+
+    # 仅使用最近的若干轮
+    recent = history[-10:] if history else []
+
+    user_points = []
+    assistant_points = []
+    for item in recent:
+        role = item.get("role", "user")
+        text = (item.get("text") or "").strip()
+        if not text:
+            continue
+        # 简单清洗
+        text = re.sub(r"\s+", " ", text)
+        if role == "user":
+            user_points.append(text)
+        else:
+            assistant_points.append(text)
+
+    # 构造结构化摘要
+    lines = []
+    if previous_summary:
+        lines.append("[Persisted Summary]")
+        lines.append(previous_summary.strip())
+    if user_points:
+        lines.append("[Latest User Intents]")
+        # 取最近3条用户意图
+        for t in user_points[-3:]:
+            if len(t) > 240:
+                t = t[:240] + "..."
+            lines.append(f"- {t}")
+    if assistant_points:
+        lines.append("[Assistant Notes]")
+        for t in assistant_points[-2:]:
+            if len(t) > 180:
+                t = t[:180] + "..."
+            lines.append(f"- {t}")
+
+    summary = "\n".join(lines).strip()
+
+    # 压缩长度
+    if len(summary) > max_chars:
+        summary = summary[:max_chars] + "..."
+
+    return summary
 
 def resize_image_for_api(image, max_size=2048):
     """调整图像大小以满足API限制"""
@@ -1627,7 +1872,7 @@ def get_system_instruction(preset: str, custom_instruction: str = ""):
 
 def generate_with_official_api(api_key, model, content_parts, generation_config,
                                safety_settings=None, system_instruction=None,
-                               max_retries=5, proxy=None):
+                               max_retries=5, proxy=None, tools=None):
     """优先使用官方google.genai库调用API"""
     try:
         # 尝试导入官方库
@@ -1669,11 +1914,20 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         else:
             config_params['response_modalities'] = ['Text']
 
-        # 处理imageConfig（aspect_ratio）
-        if 'imageConfig' in generation_config and 'aspectRatio' in generation_config['imageConfig']:
-            config_params['image_config'] = types.ImageConfig(
-                aspect_ratio=generation_config['imageConfig']['aspectRatio']
-            )
+        # 处理imageConfig（aspect_ratio + imageSize）
+        if 'imageConfig' in generation_config:
+            image_config_dict = {}
+
+            if 'aspectRatio' in generation_config['imageConfig']:
+                image_config_dict['aspect_ratio'] = generation_config['imageConfig']['aspectRatio']
+
+            # 🔥 处理 imageSize 参数（Nano Banana 2 支持 1K/2K/4K）
+            if 'imageSize' in generation_config['imageConfig']:
+                image_config_dict['image_size'] = generation_config['imageConfig']['imageSize']
+                _log_info(f"🔥 SDK调用：设置 imageSize={generation_config['imageConfig']['imageSize']}")
+
+            if image_config_dict:
+                config_params['image_config'] = types.ImageConfig(**image_config_dict)
 
         # 处理seed
         if 'seed' in generation_config and generation_config['seed'] > 0:
@@ -1691,6 +1945,11 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         # 🎯 处理系统指令
         if system_instruction:
             config_params['system_instruction'] = system_instruction
+
+        # 🔍 处理 Google Search tools
+        if tools:
+            config_params['tools'] = tools
+            _log_info(f"🔍 SDK调用：添加 Google Search tools")
 
         official_config = types.GenerateContentConfig(**config_params)
 
@@ -1772,7 +2031,7 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
 
 def generate_with_rest_api(api_key, model, content_parts, generation_config,
                           safety_settings=None, system_instruction=None,
-                          max_retries=5, proxy=None, base_url=None):
+                          max_retries=5, proxy=None, base_url=None, tools=None):
     """使用REST API的智能重试机制调用（回退方案）"""
 
     # 构建API URL - 支持镜像站
@@ -1813,11 +2072,19 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
             "parts": [{"text": system_instruction}]
         }
 
+    # 🔍 添加 Google Search tools
+    if tools:
+        request_data["tools"] = tools
+        _log_info(f"🔍 添加 Google Search tools 到请求: {tools}")
+
     # 设置请求头
     headers = {
         "Content-Type": "application/json",
         "x-goog-api-key": api_key.strip()
     }
+
+    # 🐛 调试：打印 generationConfig
+    _log_info(f"🔍 DEBUG - generationConfig: {generation_config}")
 
     # 处理代理设置
     proxies = None
@@ -1880,13 +2147,13 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
 
 def generate_with_priority_api(api_key, model, content_parts, generation_config,
                                safety_settings=None, system_instruction=None,
-                               max_retries=5, proxy=None, base_url=None):
+                               max_retries=5, proxy=None, base_url=None, tools=None):
     """优先使用官方API，失败时回退到REST API"""
 
     # 首先尝试官方API
     _log_info("🎯 优先尝试官方google.genai API")
     result = generate_with_official_api(api_key, model, content_parts, generation_config,
-                                       safety_settings, system_instruction, max_retries, proxy)
+                                       safety_settings, system_instruction, max_retries, proxy, tools)
 
     if result is not None:
         _log_info("✅ 官方API调用成功")
@@ -1895,7 +2162,7 @@ def generate_with_priority_api(api_key, model, content_parts, generation_config,
     # 官方API失败，回退到REST API
     _log_info("🔄 官方API失败，回退到REST API")
     return generate_with_rest_api(api_key, model, content_parts, generation_config,
-                                  safety_settings, system_instruction, max_retries, proxy, base_url)
+                                  safety_settings, system_instruction, max_retries, proxy, base_url, tools)
 
 def generate_with_priority_api_direct(api_key, model, request_data, max_retries=5, proxy=None, base_url=None):
     """优先使用官方API，失败时回退到直接REST API调用（用于多图像编辑）"""
@@ -1928,11 +2195,20 @@ def generate_with_priority_api_direct(api_key, model, request_data, max_retries=
         else:
             config_params['response_modalities'] = ['Text', 'Image']
 
-        # 处理imageConfig（aspect_ratio）
-        if 'imageConfig' in generation_config and 'aspectRatio' in generation_config['imageConfig']:
-            config_params['image_config'] = types.ImageConfig(
-                aspect_ratio=generation_config['imageConfig']['aspectRatio']
-            )
+        # 处理imageConfig（aspect_ratio + imageSize）
+        if 'imageConfig' in generation_config:
+            image_config_dict = {}
+
+            if 'aspectRatio' in generation_config['imageConfig']:
+                image_config_dict['aspect_ratio'] = generation_config['imageConfig']['aspectRatio']
+
+            # 🔥 处理 imageSize 参数（Nano Banana 2 支持 1K/2K/4K）
+            if 'imageSize' in generation_config['imageConfig']:
+                image_config_dict['image_size'] = generation_config['imageConfig']['imageSize']
+                _log_info(f"🔥 SDK调用（多图像编辑）：设置 imageSize={generation_config['imageConfig']['imageSize']}")
+
+            if image_config_dict:
+                config_params['image_config'] = types.ImageConfig(**image_config_dict)
 
         # 处理seed
         if 'seed' in generation_config and generation_config['seed'] > 0:
@@ -2084,13 +2360,13 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         if not models:
             # Fallback to core Banana models if config is empty
             models = [
-                "gemini-2.5-flash-image-preview",  # Latest Banana model
-                "gemini-2.0-flash-preview-image-generation",
-                "nano-banana"
+                "gemini-3-pro-image-preview",  # Latest Nano Banana 2 model
+                "gemini-2.5-flash-image",
+                "gemini-2.5-flash-image-preview"
             ]
 
         # Get default model from config, prioritize latest Banana model
-        default_model = config.get('default_model', {}).get('image_gen', "gemini-2.5-flash-image-preview")
+        default_model = config.get('default_model', {}).get('image_gen', "gemini-3-pro-image-preview")
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
 
         # Get image control presets - Enhanced with Gemini official API features
@@ -2130,6 +2406,17 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 "response_modality": (response_modalities, {
                     "default": image_settings.get('default_response_modality', "TEXT_AND_IMAGE"),
                     "tooltip": "响应模式：TEXT_AND_IMAGE=文字+图像，IMAGE_ONLY=仅图像"
+                }),
+
+                # 🚀 Nano Banana 2 分辨率控制（仅对 gemini-3-pro-image-preview 生效）
+                "output_resolution": ([
+                    "Auto (Model Default)",
+                    "1K",
+                    "2K",
+                    "4K"
+                ], {
+                    "default": "Auto (Model Default)",
+                    "tooltip": "🔥 仅 Nano Banana 2 (gemini-3-pro-image-preview) 支持：通过 imageSize 参数直出 1K/2K/4K 分辨率（与 aspect_ratio 组合生成对应尺寸）。其他模型会忽略此参数。"
                 }),
 
                 # 🔍 Topaz Gigapixel AI放大控制
@@ -2181,14 +2468,58 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                     "multiline": True,
                     "placeholder": "自定义系统指令（优先级高于预设）"
                 }),
+
+                # 🔍 Google Search Grounding
+                "enable_google_search": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🔍 启用 Google 搜索接地（Grounding with Google Search）\n⚠️ 注意事项：\n1. 仅支持 gemini-3-pro-image-preview 模型\n2. 必须使用 TEXT_AND_IMAGE 响应模式（IMAGE_ONLY 模式不会返回图像）\n3. 每次搜索查询会单独计费\n4. 基于图片的搜索结果不会传递给生成模型\n💡 用途：根据实时信息（天气、新闻、事件等）生成图片"
+                }),
+
+                # ♻️ 迭代优化（会话）
+                "enable_iterative_refinement": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "开启多轮迭代优化：自动把最近几轮对话作为上下文，逐步细化图像。会增加token消耗，建议仅保留最近3-5轮。"
+                }),
+                "keep_last_turns": ("INT", {
+                    "default": 3,
+                    "min": 1,
+                    "max": 10,
+                    "tooltip": "保留最近N轮（user+assistant为一轮）的对话作为上下文"
+                }),
+                "reset_conversation": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "重置当前节点的会话历史（基于 unique_id）"
+                }),
+
+                # 🔒 Seed 锁定（Step 2）
+                "lock_seed": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🔒 锁定 seed：启用后，首次运行时使用当前 seed，后续运行自动沿用首次的 seed，保持风格一致。配合迭代优化使用效果最佳。"
+                }),
+
+                # 🧠 会话摘要（Step 3）
+                "enable_conversation_summary": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🧠 启用会话摘要：自动将过往多轮对话概括为简短摘要，持续注入以保持一致性，同时减少历史上下文长度。"
+                }),
+                "summary_injection": (["System Instruction", "Prompt Prefix"], {
+                    "default": "System Instruction",
+                    "tooltip": "摘要注入位置：作为系统指令或提示词前缀"
+                }),
+                "summary_max_chars": ("INT", {
+                    "default": 600,
+                    "min": 100,
+                    "max": 2000,
+                    "tooltip": "摘要最大字符数（越大越详细，但会增加token）"
+                }),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID"
             }
         }
 
-    RETURN_TYPES = ("STRING", "IMAGE")
-    RETURN_NAMES = ("generation_text", "generated_image")
+    RETURN_TYPES = ("STRING", "IMAGE", "STRING")
+    RETURN_NAMES = ("generation_text", "generated_image", "grounding_info")
     FUNCTION = "generate_image"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
 
@@ -2260,6 +2591,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         proxy,
         aspect_ratio,
         response_modality,
+        output_resolution,
         upscale_factor,
         gigapixel_model,
         quality,
@@ -2277,6 +2609,14 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         safety_level: str = "default",
         system_instruction_preset: str = "none",
         custom_system_instruction: str = "",
+        enable_google_search: bool = False,
+        enable_iterative_refinement: bool = False,
+        keep_last_turns: int = 3,
+        reset_conversation: bool = False,
+        lock_seed: bool = False,
+        enable_conversation_summary: bool = False,
+        summary_injection: str = "System Instruction",
+        summary_max_chars: int = 600,
         unique_id: str = "",
     ):
         try:
@@ -2319,13 +2659,98 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 fill_color="white"  # 默认值
             )
 
+            # 🔒 Seed 锁定逻辑（Step 2）
+            if lock_seed and unique_id:
+                cached_seed = get_cached_seed(unique_id)
+                if cached_seed > 0:
+                    # 使用缓存的 seed
+                    seed = cached_seed
+                    _log_info(f"🔒 使用锁定的 seed={seed}")
+                elif seed > 0:
+                    # 首次运行，缓存当前 seed
+                    cache_seed(unique_id, seed)
+                    _log_info(f"🔒 首次锁定 seed={seed}")
+                else:
+                    # seed=0，生成一个随机 seed 并缓存
+                    import random
+                    seed = random.randint(1, 2**31 - 1)
+                    cache_seed(unique_id, seed)
+                    _log_info(f"🔒 生成并锁定随机 seed={seed}")
+
+            # 🧠 Step 3: 初始化摘要注入变量
+            summary_prompt_prefix = ""
+            summary_system_extra = ""
+
+            # ♻️ 迭代优化 + 🧠 会话摘要（Step 3）
+            if enable_iterative_refinement and unique_id:
+                try:
+                    if reset_conversation:
+                        reset_conversation_session(unique_id)
+                        reset_summary(unique_id)
+                        # 同时清空 seed 缓存
+                        if lock_seed:
+                            clear_seed_cache(unique_id)
+                        _log_info("♻️ 已重置会话历史并清空摘要")
+
+                    if enable_conversation_summary:
+                        # 构建/加载摘要并准备注入
+                        history_all = load_conversation(unique_id)
+                        prev_summary = load_summary(unique_id)
+                        summary_text = build_conversation_summary(history_all, prev_summary, max_chars=summary_max_chars)
+                        if summary_text:
+                            save_summary(unique_id, summary_text)
+                            if summary_injection == "System Instruction":
+                                # 记录到系统指令补充中，稍后注入
+                                summary_system_extra = f"\n\n[Conversation Summary]\n{summary_text}"
+                                _log_info("🧠 将摘要注入 System Instruction")
+                            else:
+                                # 记录到提示词前缀中，稍后统一拼接
+                                summary_prompt_prefix = f"Conversation summary for consistency:\n{summary_text}\n\n"
+                                _log_info("🧠 将摘要注入 Prompt 前缀")
+                    else:
+                        # 传统：拼接最近会话上下文
+                        history = trim_history(unique_id, keep_last_turns)
+                        history_prefix = build_history_prefix(history, keep_last_turns)
+                        if history_prefix:
+                            summary_prompt_prefix = f"{history_prefix}\n"
+                            _log_info("♻️ 使用最近会话上下文作为前缀")
+                except Exception as e:
+                    _log_warning(f"迭代上下文/摘要处理失败: {e}")
+
+            # 应用摘要前缀到提示词
+            if summary_prompt_prefix:
+                enhanced_prompt = summary_prompt_prefix + enhanced_prompt
+
             # 处理自定义指令
             if custom_instructions and custom_instructions.strip():
                 enhanced_prompt += f"\n\n{custom_instructions.strip()}"
                 _log_info(f"📝 添加自定义指令: {custom_instructions[:100]}...")
 
-            _log_info(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
+            # 🔥 检测是否为 Nano Banana 2 模型
+            is_nb2 = "gemini-3-pro-image" in model.lower() or "nano-banana-2" in model.lower()
+            if is_nb2:
+                _log_info(f"🔥 检测到 Nano Banana 2 模型: {model}")
+                _log_info("🚀 启用 Nano Banana 2 特性：1K/2K/4K分辨率、imageSize参数")
 
+            # 🎯 Nano Banana 2 分辨率控制
+            nb2_image_size = None  # imageSize参数（1K/2K/4K）
+
+            if is_nb2 and output_resolution != "Auto (Model Default)":
+                # 直接使用用户选择的分辨率（1K/2K/4K）
+                nb2_image_size = output_resolution
+                _log_info(f"🎯 Nano Banana 2 imageSize: {nb2_image_size}")
+
+                # 如果用户也设置了 aspect_ratio，会在后面与 imageSize 组合
+                if aspect_ratio and aspect_ratio != "Auto":
+                    _log_info(f"📐 将组合 aspectRatio={aspect_ratio} + imageSize={nb2_image_size}")
+                else:
+                    _log_info(f"📐 使用 imageSize={nb2_image_size}（宽高比由模型默认）")
+            elif not is_nb2 and output_resolution != "Auto (Model Default)":
+                # 非 Nano Banana 2 模型但设置了 output_resolution
+                _log_info(f"⚠️ 当前模型 {model} 不支持 output_resolution 参数，将忽略此设置")
+                _log_info(f"💡 只有 Nano Banana 2 (gemini-3-pro-image-preview) 支持 1K/2K/4K 分辨率控制")
+
+            _log_info(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
 
             # 负向提示词处理
             if negative_prompt and negative_prompt.strip():
@@ -2357,12 +2782,18 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 generation_config["responseModalities"] = ["Text", "Image"]
                 _log_info("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
-            # 📐 Gemini官方API：Aspect Ratio控制
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                _log_info(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    _log_info(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    _log_info(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
 
             # 智能种子控制
             if seed > 0:
@@ -2375,8 +2806,32 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
 
             # 🎯 获取系统指令
             system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+            # 🧠 注入会话摘要（如有）
+            if 'summary_system_extra' in locals() and summary_system_extra:
+                system_instruction = (system_instruction or "") + summary_system_extra
+                _log_info("🧠 已将会话摘要注入 System Instruction")
             if system_instruction:
                 _log_info(f"🎯 使用系统指令: {system_instruction[:100]}...")
+
+            # 🔍 Google Search Grounding 配置
+            tools = None
+            grounding_info = "Google Search: Disabled"
+            if enable_google_search:
+                # 验证模型支持
+                if not is_nb2:
+                    _log_warning("⚠️ Google Search grounding 仅支持 gemini-3-pro-image-preview 模型")
+                    _log_warning(f"⚠️ 当前模型 {model} 不支持此功能，将忽略 enable_google_search 设置")
+                    grounding_info = f"Google Search: Not supported by {model}"
+                # 验证响应模式
+                elif response_modality == "IMAGE_ONLY":
+                    _log_warning("⚠️ Google Search grounding 不支持 IMAGE_ONLY 响应模式")
+                    _log_warning("⚠️ 请使用 TEXT_AND_IMAGE 模式，将忽略 enable_google_search 设置")
+                    grounding_info = "Google Search: Not compatible with IMAGE_ONLY mode"
+                else:
+                    tools = [{"google_search": {}}]
+                    grounding_info = "Google Search: Enabled - Model will search for real-time information"
+                    _log_info("🔍 启用 Google Search grounding")
+                    _log_info("🔍 模型将自动搜索实时信息来辅助图像生成")
 
             # 准备内容
             content_parts = [{"text": enhanced_prompt}]
@@ -2390,7 +2845,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
             response_json = generate_with_priority_api(api_key, model, content_parts, generation_config,
                                                       safety_settings=safety_settings,
                                                       system_instruction=system_instruction,
-                                                      proxy=proxy, base_url=None)
+                                                      proxy=proxy, base_url=None, tools=tools)
 
             # 处理响应
             raw_text = extract_text_from_response(response_json)
@@ -2466,12 +2921,27 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
 
             self._push_chat(enhanced_prompt, assistant_text, unique_id)
 
+            # ♻️ 保存本轮对话到会话历史
+            if enable_iterative_refinement and unique_id:
+                try:
+                    append_turn(unique_id, enhanced_prompt, assistant_text)
+                    _log_info("♻️ 已保存本轮对话到会话历史")
+                except Exception as e:
+                    _log_warning(f"保存会话历史失败: {e}")
+
+            # 💾 缓存生成的图像（Step 2）
+            if unique_id and generated_image is not None:
+                try:
+                    cache_image(unique_id, generated_image)
+                except Exception as e:
+                    _log_warning(f"缓存图像失败: {e}")
+
             # 确保返回tensor格式
             if isinstance(generated_image, Image.Image):
                 generated_image = pil_to_tensor(generated_image)
 
             _log_info("✅ 图像生成成功完成")
-            return (assistant_text, generated_image)
+            return (assistant_text, generated_image, grounding_info)
 
         except Exception as e:
             error_msg = str(e)
@@ -2497,7 +2967,7 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
             else:
                 friendly_error = f"生成失败: {error_msg}"
 
-            return (friendly_error, create_dummy_image())
+            return (friendly_error, create_dummy_image(), "Error occurred")
 
 class KenChenLLMGeminiBananaImageToImageBananaNode:
     """Gemini Banana 图像编辑节点"""
@@ -2522,13 +2992,13 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         if not models:
             # Fallback to core Banana models if config is empty
             models = [
-                "gemini-2.5-flash-image-preview",  # Latest Banana model
-                "gemini-2.0-flash-preview-image-generation",
-                "nano-banana"
+                "gemini-3-pro-image-preview",  # Latest Nano Banana 2 model
+                "gemini-2.5-flash-image",
+                "gemini-2.5-flash-image-preview"
             ]
 
         # Get default model from config, prioritize latest Banana model
-        default_model = config.get('default_model', {}).get('image_gen', "gemini-2.5-flash-image-preview")
+        default_model = config.get('default_model', {}).get('image_gen', "gemini-3-pro-image-preview")
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
 
         # 🚀 Gemini官方API图像控制预设
@@ -2569,6 +3039,17 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 "response_modality": (response_modalities, {
                     "default": image_settings.get('default_response_modality', "TEXT_AND_IMAGE"),
                     "tooltip": "响应模式：TEXT_AND_IMAGE=文字+图像，IMAGE_ONLY=仅图像"
+                }),
+
+                # 🚀 Nano Banana 2 分辨率控制（仅对 gemini-3-pro-image-preview 生效）
+                "output_resolution": ([
+                    "Auto (Model Default)",
+                    "1K",
+                    "2K",
+                    "4K"
+                ], {
+                    "default": "Auto (Model Default)",
+                    "tooltip": "🔥 仅 Nano Banana 2 (gemini-3-pro-image-preview) 支持：通过 imageSize 参数直出 1K/2K/4K 分辨率（与 aspect_ratio 组合生成对应尺寸）。其他模型会忽略此参数。"
                 }),
 
                 # 🔍 Topaz Gigapixel AI放大控制
@@ -2620,6 +3101,50 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                     "multiline": True,
                     "placeholder": "自定义系统指令（优先级高于预设）"
                 }),
+
+                # ♻️ 迭代优化（会话）
+                "enable_iterative_refinement": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "开启多轮迭代优化：自动把最近几轮对话作为上下文，逐步细化图像。会增加token消耗，建议仅保留最近3-5轮。"
+                }),
+                "keep_last_turns": ("INT", {
+                    "default": 3,
+                    "min": 1,
+                    "max": 10,
+                    "tooltip": "保留最近N轮（user+assistant为一轮）的对话作为上下文"
+                }),
+                "reset_conversation": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "重置当前节点的会话历史（基于 unique_id）"
+                }),
+
+                # 🔒 Seed 锁定（Step 2）
+                "lock_seed": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🔒 锁定 seed：启用后，首次运行时使用当前 seed，后续运行自动沿用首次的 seed，保持风格一致。配合迭代优化使用效果最佳。"
+                }),
+
+                # 🖼️ 自动使用上一轮图像（Step 2）
+                "auto_use_last_image": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🖼️ 自动使用上一轮生成的图像：启用后，如果未连接输入图像，将自动使用本节点上一轮生成的图像作为输入。配合迭代优化实现连续细化。"
+                }),
+
+                # 🧠 会话摘要（Step 3）
+                "enable_conversation_summary": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🧠 启用会话摘要：自动将过往多轮对话概括为简短摘要，持续注入以保持一致性，同时减少历史上下文长度。"
+                }),
+                "summary_injection": (["System Instruction", "Prompt Prefix"], {
+                    "default": "System Instruction",
+                    "tooltip": "摘要注入位置：作为系统指令或提示词前缀"
+                }),
+                "summary_max_chars": ("INT", {
+                    "default": 600,
+                    "min": 100,
+                    "max": 2000,
+                    "tooltip": "摘要最大字符数（越大越详细，但会增加token）"
+                }),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID"
@@ -2661,6 +3186,7 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         proxy,
         aspect_ratio,
         response_modality,
+        output_resolution,
         upscale_factor,
         gigapixel_model,
         quality,
@@ -2678,6 +3204,14 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         safety_level: str = "default",
         system_instruction_preset: str = "none",
         custom_system_instruction: str = "",
+        enable_iterative_refinement: bool = False,
+        keep_last_turns: int = 3,
+        reset_conversation: bool = False,
+        lock_seed: bool = False,
+        auto_use_last_image: bool = False,
+        enable_conversation_summary: bool = False,
+        summary_injection: str = "System Instruction",
+        summary_max_chars: int = 600,
         unique_id: str = "",
     ):
         try:
@@ -2697,11 +3231,35 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                     _log_error(error_msg)
                     return (error_msg, create_dummy_image())
 
+            # 🖼️ 自动使用上一轮图像（Step 2）
+            if auto_use_last_image and unique_id and image is None:
+                cached_img = get_cached_image(unique_id)
+                if cached_img:
+                    _log_info("🖼️ 自动使用上一轮缓存的图像作为输入")
+                    image = cached_img
+                else:
+                    _log_warning("⚠️ auto_use_last_image 已启用，但未找到缓存图像")
+
             # 验证提示词
             if not prompt.strip():
                 error_msg = "提示词不能为空"
                 _log_error(error_msg)
                 return (error_msg, create_dummy_image())
+
+            # 🔒 Seed 锁定逻辑（Step 2）
+            if lock_seed and unique_id:
+                cached_seed = get_cached_seed(unique_id)
+                if cached_seed > 0:
+                    seed = cached_seed
+                    _log_info(f"🔒 使用锁定的 seed={seed}")
+                elif seed > 0:
+                    cache_seed(unique_id, seed)
+                    _log_info(f"🔒 首次锁定 seed={seed}")
+                else:
+                    import random
+                    seed = random.randint(1, 2**31 - 1)
+                    cache_seed(unique_id, seed)
+                    _log_info(f"🔒 生成并锁定随机 seed={seed}")
 
             # 🎨 构建增强提示词（使用enhance_prompt_with_controls函数）
             controls = process_image_controls(quality, style)
@@ -2720,6 +3278,50 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 fill_color="white"
             )
 
+            # 🧠 Step 3: 初始化摘要注入变量
+            summary_prompt_prefix = ""
+            summary_system_extra = ""
+
+            # ♻️ 迭代优化 + 🧠 会话摘要（Step 3）
+            if enable_iterative_refinement and unique_id:
+                try:
+                    if reset_conversation:
+                        reset_conversation_session(unique_id)
+                        reset_summary(unique_id)
+                        # 同时清空 seed 和图像缓存
+                        if lock_seed:
+                            clear_seed_cache(unique_id)
+                        if auto_use_last_image:
+                            clear_image_cache(unique_id)
+                        _log_info("♻️ 已重置会话历史并清空摘要")
+
+                    if enable_conversation_summary:
+                        # 构建/加载摘要并准备注入
+                        history_all = load_conversation(unique_id)
+                        prev_summary = load_summary(unique_id)
+                        summary_text = build_conversation_summary(history_all, prev_summary, max_chars=summary_max_chars)
+                        if summary_text:
+                            save_summary(unique_id, summary_text)
+                            if summary_injection == "System Instruction":
+                                summary_system_extra = f"\n\n[Conversation Summary]\n{summary_text}"
+                                _log_info("🧠 将摘要注入 System Instruction")
+                            else:
+                                summary_prompt_prefix = f"Conversation summary for consistency:\n{summary_text}\n\n"
+                                _log_info("🧠 将摘要注入 Prompt 前缀")
+                    else:
+                        # 传统：拼接最近会话上下文
+                        history = trim_history(unique_id, keep_last_turns)
+                        history_prefix = build_history_prefix(history, keep_last_turns)
+                        if history_prefix:
+                            summary_prompt_prefix = f"{history_prefix}\n"
+                            _log_info("♻️ 使用最近会话上下文作为前缀")
+                except Exception as e:
+                    _log_warning(f"迭代上下文/摘要处理失败: {e}")
+
+            # 应用摘要前缀到提示词
+            if summary_prompt_prefix:
+                enhanced_prompt = summary_prompt_prefix + enhanced_prompt
+
             # 负向提示词处理
             if negative_prompt and negative_prompt.strip():
                 enhanced_prompt += f"\n\nNegative Prompt: {negative_prompt.strip()}"
@@ -2729,6 +3331,30 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
             if custom_additions and custom_additions.strip():
                 enhanced_prompt += f"\n\n{custom_additions.strip()}"
                 _log_info(f"📝 添加自定义指令: {custom_additions[:100]}...")
+
+            # 🔥 检测是否为 Nano Banana 2 模型
+            is_nb2 = "gemini-3-pro-image" in model.lower() or "nano-banana-2" in model.lower()
+            if is_nb2:
+                _log_info(f"🔥 检测到 Nano Banana 2 模型: {model}")
+                _log_info("🚀 启用 Nano Banana 2 特性：1K/2K/4K分辨率、imageSize参数")
+
+            # 🎯 Nano Banana 2 分辨率控制
+            nb2_image_size = None  # imageSize参数（1K/2K/4K）
+
+            if is_nb2 and output_resolution != "Auto (Model Default)":
+                # 直接使用用户选择的分辨率（1K/2K/4K）
+                nb2_image_size = output_resolution
+                _log_info(f"🎯 Nano Banana 2 imageSize: {nb2_image_size}")
+
+                # 如果用户也设置了 aspect_ratio，会在后面与 imageSize 组合
+                if aspect_ratio and aspect_ratio != "Auto":
+                    _log_info(f"📐 将组合 aspectRatio={aspect_ratio} + imageSize={nb2_image_size}")
+                else:
+                    _log_info(f"📐 使用 imageSize={nb2_image_size}（宽高比由模型默认）")
+            elif not is_nb2 and output_resolution != "Auto (Model Default)":
+                # 非 Nano Banana 2 模型但设置了 output_resolution
+                _log_info(f"⚠️ 当前模型 {model} 不支持 output_resolution 参数，将忽略此设置")
+                _log_info(f"💡 只有 Nano Banana 2 (gemini-3-pro-image-preview) 支持 1K/2K/4K 分辨率控制")
 
             _log_info(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
 
@@ -2766,12 +3392,18 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 generation_config["responseModalities"] = ["Text", "Image"]
                 _log_info("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
-            # 📐 Gemini官方API：Aspect Ratio控制
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                _log_info(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    _log_info(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    _log_info(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
 
             # 智能种子控制
             if seed > 0:
@@ -2784,6 +3416,10 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
 
             # 🎯 获取系统指令
             system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+            # 🧠 注入会话摘要（如有）
+            if 'summary_system_extra' in locals() and summary_system_extra:
+                system_instruction = (system_instruction or "") + summary_system_extra
+                _log_info("🧠 已将会话摘要注入 System Instruction")
             if system_instruction:
                 _log_info(f"🎯 使用系统指令: {system_instruction[:100]}...")
 
@@ -2871,6 +3507,21 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
             _log_info(f"📝 响应文本长度: {len(response_text)}")
             _log_info(f"📝 响应文本内容: {response_text[:200]}...")
             self._push_chat(enhanced_prompt, response_text or "", unique_id) # 使用增强后的提示词
+
+            # ♻️ 保存本轮对话到会话历史
+            if enable_iterative_refinement and unique_id:
+                try:
+                    append_turn(unique_id, enhanced_prompt, response_text)
+                    _log_info("♻️ 已保存本轮对话到会话历史")
+                except Exception as e:
+                    _log_warning(f"保存会话历史失败: {e}")
+
+            # 💾 缓存生成的图像（Step 2）
+            if unique_id and edited_image is not None:
+                try:
+                    cache_image(unique_id, edited_image)
+                except Exception as e:
+                    _log_warning(f"缓存图像失败: {e}")
 
             return (response_text, image_tensor)
 
@@ -3279,6 +3930,19 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
         default_params = config.get('default_params', {})
         image_settings = config.get('image_settings', {})
 
+        # Get image edit models from config, with fallback to core Banana models
+        models = config.get('models', {}).get('image_edit_models', [])
+        if not models:
+            # Fallback to core Banana models if config is empty
+            models = [
+                "gemini-3-pro-image-preview",  # Latest Nano Banana 2 model
+                "gemini-2.5-flash-image",
+                "gemini-2.5-flash-image-preview"
+            ]
+
+        # Get default model from config, prioritize latest Banana model
+        default_model = config.get('default_model', {}).get('image_edit', "gemini-3-pro-image-preview")
+
         # 🚀 Gemini官方API图像控制预设
         aspect_ratios = ["Auto"] + image_settings.get('aspect_ratios', [
             "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
@@ -3298,7 +3962,7 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
                 "api_key": ("STRING", {"default": "", "multiline": False}),
                 "prompt": ("STRING", {"default": "请根据这些图片进行专业的图像编辑", "multiline": True}),
                 "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
-                "model": (["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.0-flash"], {"default": "gemini-2.5-flash-image"}),
+                "model": (models, {"default": default_model}),
 
                 # 📐 Gemini官方API图像控制参数
                 "aspect_ratio": (aspect_ratios, {
@@ -3308,6 +3972,17 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
                 "response_modality": (response_modalities, {
                     "default": image_settings.get('default_response_modality', "TEXT_AND_IMAGE"),
                     "tooltip": "响应模式：TEXT_AND_IMAGE=文字+图像，IMAGE_ONLY=仅图像"
+                }),
+
+                # 🚀 Nano Banana 2 分辨率控制（仅对 gemini-3-pro-image-preview 生效）
+                "output_resolution": ([
+                    "Auto (Model Default)",
+                    "1K",
+                    "2K",
+                    "4K"
+                ], {
+                    "default": "Auto (Model Default)",
+                    "tooltip": "🔥 仅 Nano Banana 2 (gemini-3-pro-image-preview) 支持：通过 imageSize 参数直出 1K/2K/4K 分辨率（与 aspect_ratio 组合生成对应尺寸）。其他模型会忽略此参数。"
                 }),
 
                 # 🔍 Topaz Gigapixel AI放大控制
@@ -3335,6 +4010,40 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
                 "max_output_tokens": ("INT", {"default": default_params.get('max_output_tokens', 8192), "min": 0, "max": 32768}),
                 "seed": ("INT", {"default": default_params.get('seed', 0), "min": 0, "max": 999999}),
                 "post_generation_control": (["randomize", "maintain_consistency", "enhance_creativity"], {"default": "randomize"}),
+
+                # 🔄 迭代优化功能 (Step 1-3)
+                "enable_iterative_refinement": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "启用迭代优化：自动保存会话历史，支持连续细化"
+                }),
+                "keep_last_turns": ("INT", {
+                    "default": 3,
+                    "min": 1,
+                    "max": 10,
+                    "tooltip": "保留最近N轮对话作为上下文"
+                }),
+                "reset_conversation": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "重置会话历史（清空所有历史记录和缓存）"
+                }),
+                "lock_seed": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "锁定种子值：首次运行后固定seed，保持风格一致"
+                }),
+                "enable_conversation_summary": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "启用会话摘要：自动生成对话摘要，减少token消耗"
+                }),
+                "summary_injection": (["System Instruction", "Prompt Prefix"], {
+                    "default": "System Instruction",
+                    "tooltip": "摘要注入位置：System Instruction更稳定，Prompt Prefix更显式"
+                }),
+                "summary_max_chars": ("INT", {
+                    "default": 600,
+                    "min": 100,
+                    "max": 2000,
+                    "tooltip": "摘要最大字符数"
+                }),
             },
             "optional": {
                 "image1": ("IMAGE",),
@@ -3429,13 +4138,35 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
             pass
 
     def edit_multiple_images(self, api_key: str, prompt: str, negative_prompt: str, model: str, aspect_ratio: str, response_modality: str,
-                           upscale_factor: str, gigapixel_model: str, quality: str, style: str, detail_level: str,
+                           output_resolution: str, upscale_factor: str, gigapixel_model: str, quality: str, style: str, detail_level: str,
                            camera_control: str, lighting_control: str, template_selection: str, temperature: float, top_p: float,
                            top_k: int, max_output_tokens: int, seed: int, post_generation_control: str,
+                           enable_iterative_refinement: bool = False, keep_last_turns: int = 3, reset_conversation: bool = False,
+                           lock_seed: bool = False, enable_conversation_summary: bool = False,
+                           summary_injection: str = "System Instruction", summary_max_chars: int = 600,
                            image1=None, image2=None, image3=None, image4=None, custom_additions: str = "",
                            safety_level: str = "default", system_instruction_preset: str = "none",
                            custom_system_instruction: str = "", unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用 Gemini API 进行多图像编辑"""
+
+        # 🔄 Step 1-3: 迭代优化功能处理
+        if enable_iterative_refinement and unique_id:
+            # 处理重置会话
+            if reset_conversation:
+                reset_conversation_session(unique_id)
+                if lock_seed:
+                    clear_seed_cache(unique_id)
+                print(f"🔄 会话已重置 (unique_id: {unique_id})")
+
+            # 处理种子锁定
+            if lock_seed:
+                cached_seed = get_cached_seed(unique_id)
+                if cached_seed is not None:
+                    seed = cached_seed
+                    print(f"🔒 使用锁定的种子: {seed}")
+                else:
+                    cache_seed(unique_id, seed)
+                    print(f"🔒 种子已锁定: {seed}")
 
         # Process wildcards in the prompt
         wildcard_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wildcards")
@@ -3485,6 +4216,57 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
         if custom_additions and custom_additions.strip():
             enhanced_prompt += f"\n\n{custom_additions.strip()}"
             print(f"📝 添加自定义指令: {custom_additions[:100]}...")
+
+        # 🔄 Step 2: 处理会话历史和摘要
+        conversation_context = ""
+        if enable_iterative_refinement and unique_id:
+            # 获取会话历史
+            history = get_conversation_history(unique_id)
+
+            if enable_conversation_summary and history:
+                # 生成会话摘要
+                summary = generate_conversation_summary(history, summary_max_chars)
+                if summary:
+                    if summary_injection == "System Instruction":
+                        # 摘要将在系统指令中注入
+                        conversation_context = f"Previous conversation summary: {summary}"
+                    else:  # Prompt Prefix
+                        enhanced_prompt = f"Previous conversation summary: {summary}\n\n{enhanced_prompt}"
+                    print(f"📋 生成会话摘要 ({len(summary)} 字符)")
+            elif history:
+                # 使用完整历史记录
+                recent_history = history[-keep_last_turns:] if keep_last_turns > 0 else history
+                if recent_history:
+                    history_text = format_conversation_history(recent_history)
+                    if summary_injection == "System Instruction":
+                        conversation_context = f"Previous conversation:\n{history_text}"
+                    else:  # Prompt Prefix
+                        enhanced_prompt = f"Previous conversation:\n{history_text}\n\n{enhanced_prompt}"
+                    print(f"📚 使用最近 {len(recent_history)} 轮对话历史")
+
+        # 🔥 检测是否为 Nano Banana 2 模型
+        is_nb2 = "gemini-3-pro-image" in model.lower() or "nano-banana-2" in model.lower()
+        if is_nb2:
+            print(f"🔥 检测到 Nano Banana 2 模型: {model}")
+            print("🚀 启用 Nano Banana 2 特性：1K/2K/4K分辨率、imageSize参数")
+
+        # 🎯 Nano Banana 2 分辨率控制
+        nb2_image_size = None  # imageSize参数（1K/2K/4K）
+
+        if is_nb2 and output_resolution != "Auto (Model Default)":
+            # 直接使用用户选择的分辨率（1K/2K/4K）
+            nb2_image_size = output_resolution
+            print(f"🎯 Nano Banana 2 imageSize: {nb2_image_size}")
+
+            # 如果用户也设置了 aspect_ratio，会在后面与 imageSize 组合
+            if aspect_ratio and aspect_ratio != "Auto":
+                print(f"📐 将组合 aspectRatio={aspect_ratio} + imageSize={nb2_image_size}")
+            else:
+                print(f"📐 使用 imageSize={nb2_image_size}（宽高比由模型默认）")
+        elif not is_nb2 and output_resolution != "Auto (Model Default)":
+            # 非 Nano Banana 2 模型但设置了 output_resolution
+            print(f"⚠️ 当前模型 {model} 不支持 output_resolution 参数，将忽略此设置")
+            print(f"💡 只有 Nano Banana 2 (gemini-3-pro-image-preview) 支持 1K/2K/4K 分辨率控制")
 
         print(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
 
@@ -3594,12 +4376,18 @@ Execute the image editing task now and return the generated image."""
             generation_config["responseModalities"] = ["Text", "Image"]
             print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
-        # 📐 Gemini官方API：Aspect Ratio控制
+        # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
         if aspect_ratio and aspect_ratio != "Auto":
-            generation_config["imageConfig"] = {
-                "aspectRatio": aspect_ratio
-            }
-            print(f"📐 设置宽高比: {aspect_ratio}")
+            image_config = {"aspectRatio": aspect_ratio}
+
+            # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+            if is_nb2 and nb2_image_size:
+                image_config["imageSize"] = nb2_image_size
+                print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+            else:
+                print(f"📐 设置宽高比: {aspect_ratio}")
+
+            generation_config["imageConfig"] = image_config
 
         # 智能种子控制
         if seed and seed > 0:
@@ -3612,6 +4400,15 @@ Execute the image editing task now and return the generated image."""
 
         # 🎯 获取系统指令
         system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+
+        # 🔄 Step 3: 将会话上下文注入到系统指令中
+        if enable_iterative_refinement and unique_id and conversation_context and summary_injection == "System Instruction":
+            if system_instruction:
+                system_instruction = f"{system_instruction}\n\n{conversation_context}"
+            else:
+                system_instruction = conversation_context
+            print(f"🔄 会话上下文已注入系统指令 ({len(conversation_context)} 字符)")
+
         if system_instruction:
             print(f"🎯 使用系统指令: {system_instruction[:100]}...")
 
@@ -3740,6 +4537,20 @@ Execute the image editing task now and return the generated image."""
                     print(f"📝 响应文本长度: {len(response_text)}")
                     print(f"📝 响应文本内容: {response_text[:200]}...")
                     self._push_chat(enhanced_prompt, response_text or "", unique_id)
+
+                    # ♻️ 保存本轮对话到会话历史
+                    if enable_iterative_refinement and unique_id:
+                        try:
+                            append_turn(unique_id, enhanced_prompt, response_text)
+                            print(f"💾 已保存对话历史 (unique_id: {unique_id})")
+
+                            # 缓存输出图像
+                            if edited_image:
+                                cache_image(unique_id, edited_image)
+                                print(f"🖼️ 已缓存输出图像 (unique_id: {unique_id})")
+                        except Exception as e:
+                            print(f"⚠️ 保存对话历史失败: {e}")
+
                     return (image_tensor, response_text)  # 修正：返回顺序应该是 (IMAGE, STRING)
 
                 # 处理错误响应

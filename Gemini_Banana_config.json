@@ -1,13 +1,13 @@
 {
-    "api_key": "",
-    "multimodal_api_key": "",
+    "api_key": "AIzaSyAA1-OJev_vtw1Gx7zZB8fJHlUBpZEbMS8",
+    "multimodal_api_key": "AIzaSyAA1-OJev_vtw1Gx7zZB8fJHlUBpZEbMS8",
     "base_url": "https://generativelanguage.googleapis.com",
     "proxy": "None",
     "default_model": {
         "text_gen": "gemini-2.0-flash-lite",
         "multimodal": "gemini-2.5-pro-exp-03-25",
-        "image_gen": "gemini-2.5-flash-image",
-        "image_edit": "gemini-2.5-flash-image"
+        "image_gen": "gemini-3-pro-image-preview",
+        "image_edit": "gemini-3-pro-image-preview"
     },
     "default_params": {
         "temperature": 1.0,
@@ -26,7 +26,7 @@
     "mirror_sites": {
         "nano-banana官方": {
             "url": "https://generativelanguage.googleapis.com",
-            "api_key": "",
+            "api_key": "AIzaSyAA1-OJev_vtw1Gx7zZB8fJHlUBpZEbMS8",
             "api_format": "gemini",
             "models": [
                 "gemini-2.0-flash-lite",
@@ -46,35 +46,49 @@
         },
         "comfly": {
             "url": "https://ai.comfly.chat/v1",
-            "api_key": ""
+            "api_key": "sk-9wjYfsOrd1WxTd61AGxCcmI3tAubLnUvDOwaiuWE25XtYHNx"
         },
         "Kuai API": {
             "url": "https://apis.kuai.host",
-            "api_key": "",
+            "api_key": "sk-NCi6n7idUu2iz4y6rqT2aLBEp5RcHvlu62fnVdecrdkaOgFF",
             "api_format": "gemini",
             "models": ["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"],
             "description": "Kuai API（酷爱API）镜像站，支持Gemini原生接口格式，API Key通过URL参数传递"
         },
         "T8的贞贞AI工坊": {
             "url": "https://ai.t8star.cn",
-            "api_key": "",
+            "api_key": "sk-NEF5kPDaUTzpLPwb9YLHHZtPeauRQBnPzc8MI4I7LJ3oadpG",
             "api_format": "openai",
             "models": ["gemini-2.5-flash-image-preview"],
             "description": "T8贞贞的AI工坊镜像站，支持Gemini 2.5 Flash Image Preview模型，使用OpenAI兼容的API格式"
         },
         "API4GPT": {
             "url": "https://one.api4gpt.com",
-            "api_key": "",
+            "api_key": "sk-7vQ50rx6H3nYp5g0lBK81oJNZCcqAnJeNgOI6AEUEZncsOGB",
             "api_format": "openai",
             "models": ["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.5-flash-image-hd", "gemini-2.5-flash-image-vip"],
             "description": "API4GPT镜像站，使用OpenAI兼容格式，支持nano-banana图像生成服务"
         },
         "OpenRouter": {
             "url": "https://openrouter.ai/api/v1",
-            "api_key": "",
+            "api_key": "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",
             "api_format": "openrouter",
-            "models": ["gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation", "google/gemini-2.5-flash-image-preview:free", "google/gemini-2.5-flash-image-preview"],
-            "description": "OpenRouter镜像站，支持多种AI模型和图像生成服务"
+            "models": ["google/gemini-3-pro-image-preview", "gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation", "google/gemini-2.5-flash-image-preview:free", "google/gemini-2.5-flash-image-preview"],
+            "description": "OpenRouter镜像站，支持多种AI模型和图像生成服务，使用 google/ 前缀的模型名称"
+        },
+        "Comet": {
+            "url": "https://api.cometapi.com",
+            "api_key": "sk-tdbj8yCYH3p8uO1TYiEnKkBwJBNBIWUr3cLsW2aTjuvWi79f",
+            "api_format": "gemini",
+            "models": ["gemini-3-pro-image", "gemini-3-pro-image-preview", "gemini-2.5-flash-image", "gemini-2.5-flash-image-preview"],
+            "description": "CometAPI镜像站，支持Gemini原生接口格式，提供gemini-3-pro-image (Nano Banana 2)最新模型，定价$0.03120（比官方低20%）",
+            "pricing": {
+                "gemini-3-pro-image": "$0.03120/次",
+                "gemini-2.5-flash-image": "$0.039/次"
+            },
+            "endpoints": {
+                "gemini": "/v1beta/models/{model}:generateContent"
+            }
         },
         "OpenAI": {
             "url": "https://api.openai.com/v1",
@@ -85,7 +99,7 @@
         },
         "api.aabao": {
             "url": "https://api.aabao.top",
-            "api_key": "",
+            "api_key": "sk-PY9TXCVwMzFWjGa9zmqagGpiZzguYYyNMCtCDv7Qn983G9PY",
             "api_format": "gemini",
             "models": ["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"],
             "description": "api.aabao 镜像站（One API 系统），支持 Gemini 原生接口格式 (/v1beta/models/gemini-2.5-flash-image:generateContent)，使用 Authorization: Bearer 认证，按次计费：次卡模型分组 $0.018/次，绘画定制-1分组 $0.120/次",
@@ -136,20 +150,17 @@
             "gemini-2.0-flash-exp-image-generation"
         ],
         "image_gen_models": [
+            "gemini-3-pro-image-preview",
             "gemini-2.5-flash-image",
-            "gemini-2.5-flash-image-preview",
-            "gemini-2.0-flash",
-            "fal-ai/nano-banana",
-            "nano-banana"
+            "gemini-2.5-flash-image-preview"
         ],
         "image_edit_models": [
+            "gemini-3-pro-image-preview",
             "gemini-2.5-flash-image",
-            "gemini-2.5-flash-image-preview",
-            "gemini-2.0-flash",
-            "fal-ai/nano-banana/edit",
-            "nano-banana/edit"
+            "gemini-2.5-flash-image-preview"
         ],
         "enhanced_image_models": [
+            "gemini-3-pro-image-preview",
             "gemini-2.5-flash-image",
             "gemini-2.5-flash-image-preview",
             "gemini-2.5-flash-image-hd",
@@ -191,7 +202,15 @@
         "semantic_inpainting": true,
         "style_transfer": true,
         "multi_image_composition": true,
-        "preserve_fidelity_details": true
+        "preserve_fidelity_details": true,
+        "nano_banana_2_native_2k": true,
+        "nano_banana_2_4k_upscaling": true,
+        "nano_banana_2_multi_stage_generation": true,
+        "nano_banana_2_self_correction": true,
+        "nano_banana_2_enhanced_prompt_adherence": true,
+        "nano_banana_2_improved_text_rendering": true,
+        "nano_banana_2_physical_reasoning": true,
+        "nano_banana_2_multi_image_fusion": true
     },
     "image_settings": {
         "max_image_size": 2048,
@@ -206,10 +225,10 @@
             "1024x1792",
             "1792x1024",
             "1536x1536",
-            "2048x2048",
-            "1920x1080",
-            "2560x1440",
-            "3840x2160"
+            "2048x2048 (2K Native)",
+            "1920x1080 (Full HD)",
+            "2560x1440 (2K)",
+            "3840x2160 (4K Ultra HD)"
         ],
         "aspect_ratios": [
             "1:1",
@@ -315,8 +334,62 @@
         "tokens_per_image": 1290,
         "cost_per_million_tokens": "$30.00"
     },
+    "model_info": {
+        "gemini-3-pro-image": {
+            "version": "Nano Banana 2",
+            "architecture": "Gemini 3 Pro Image (GEMPIX 2)",
+            "generation": "Second Generation (Upgraded)",
+            "release_date": "2025-11",
+            "status": "latest",
+            "features": [
+                "Native 2K resolution output (2048x2048)",
+                "Optional 4K upscaling (3840x2160)",
+                "Multi-stage iterative generation with self-correction",
+                "Enhanced prompt adherence (reduced hallucinations)",
+                "Improved text-in-image rendering (clearer typography)",
+                "Stronger scene/physical reasoning (transparent/refractive surfaces)",
+                "Advanced multi-image fusion capabilities",
+                "Layered composition support",
+                "Internal planning and error detection",
+                "Better geometric/optical reasoning (glass, refraction)",
+                "Faster iteration speed",
+                "More reliable first-pass results"
+            ],
+            "improvements_over_v1": [
+                "Resolution: Standard → 2K native + 4K upscaling",
+                "Prompt adherence: Basic → Significantly improved",
+                "Text rendering: Frequent garbled glyphs → Clear, legible text",
+                "Physical reasoning: Basic → Enhanced (glass, water, transparency)",
+                "Multi-image fusion: Basic → Advanced coherent composition",
+                "Generation workflow: Single-pass → Multi-stage with self-correction",
+                "Edge quality: Standard → Cleaner edges and sharper micro-details",
+                "Color accuracy: Good → Truer colors",
+                "Artifact reduction: Moderate → Substantial improvement"
+            ],
+            "benchmark_tests": {
+                "wine_glass_test": "Excellent transparency and refraction handling",
+                "glass_burger_challenge": "Superior material understanding",
+                "text_rendering": "Visibly improved typography with fewer errors",
+                "prompt_fidelity": "More faithful adherence, fewer hallucinated props"
+            },
+            "pricing": {
+                "cometapi": "$0.03120 (20% off official price)",
+                "tokens_per_image": 1290
+            },
+            "migration_note": "Recommended upgrade from gemini-2.5-flash-image. Preview version will be deprecated by October 31, 2025."
+        },
+        "gemini-2.5-flash-image": {
+            "version": "Nano Banana 1",
+            "architecture": "Gemini 2.5 Flash Image",
+            "generation": "First Generation",
+            "status": "stable",
+            "note": "Previous generation, still supported but recommended to upgrade to gemini-3-pro-image-preview for better quality"
+        }
+    },
     "notes": {
-        "nano_banana": "完整的 Gemini (Nano Banana) 实现，集成官方文档的所有图像生成功能",
+        "nano_banana": "完整的 Gemini (Nano Banana) 实现，集成官方文档的所有图像生成功能。现已支持 Nano Banana 2 (gemini-3-pro-image-preview) 的所有新特性！",
+        "nano_banana_2_upgrade": "🚀 Nano Banana 2 (gemini-3-pro-image-preview) 是重大升级版本，提供2K/4K分辨率、多阶段生成、增强的提示词遵循、改进的文字渲染和更强的物理推理能力",
+        "official_api_note": "⚠️ 官方 API 目前只提供 gemini-3-pro-image-preview（预览版），正式版 gemini-3-pro-image 尚未发布。镜像站（如 CometAPI）可能已提供正式版。",
         "best_practices": [
             "使用官方API获得最佳性能和稳定性",
             "镜像站适用于网络受限环境",

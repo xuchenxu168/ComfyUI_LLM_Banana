@@ -29,14 +29,13 @@ def load_modules():
             # If relative import fails, try absolute import
             sys.path.insert(0, current_dir)
             glm = importlib.import_module('glm')
-            
+
         if hasattr(glm, 'NODE_CLASS_MAPPINGS'):
             NODE_CLASS_MAPPINGS.update(glm.NODE_CLASS_MAPPINGS)
         if hasattr(glm, 'NODE_DISPLAY_NAME_MAPPINGS'):
             NODE_DISPLAY_NAME_MAPPINGS.update(glm.NODE_DISPLAY_NAME_MAPPINGS)
-        print("[LLM Prompt] GLM module loaded successfully")
     except Exception as e:
-        print(f"[LLM Prompt] GLM module loading failed: {e}")
+        pass
 
     # Try to import Comfly module
     try:
@@ -46,14 +45,13 @@ def load_modules():
         except (ImportError, ValueError):
             # If relative import fails, try absolute import
             comfly = importlib.import_module('comfly')
-            
+
         if hasattr(comfly, 'NODE_CLASS_MAPPINGS'):
             NODE_CLASS_MAPPINGS.update(comfly.NODE_CLASS_MAPPINGS)
         if hasattr(comfly, 'NODE_DISPLAY_NAME_MAPPINGS'):
             NODE_DISPLAY_NAME_MAPPINGS.update(comfly.NODE_DISPLAY_NAME_MAPPINGS)
-        print("[LLM Prompt] Comfly module loaded successfully")
     except Exception as e:
-        print(f"[LLM Prompt] Comfly module loading failed: {e}")
+        pass
 
     # Try to import JoyCaption module
     try:
@@ -63,14 +61,13 @@ def load_modules():
         except (ImportError, ValueError):
             # If relative import fails, try absolute import
             joycaption = importlib.import_module('joycaption')
-            
+
         if hasattr(joycaption, 'NODE_CLASS_MAPPINGS'):
             NODE_CLASS_MAPPINGS.update(joycaption.NODE_CLASS_MAPPINGS)
         if hasattr(joycaption, 'NODE_DISPLAY_NAME_MAPPINGS'):
             NODE_DISPLAY_NAME_MAPPINGS.update(joycaption.NODE_DISPLAY_NAME_MAPPINGS)
-        print("[LLM Prompt] JoyCaption module loaded successfully")
     except Exception as e:
-        print(f"[LLM Prompt] JoyCaption module loading failed: {e}")
+        pass
 
     # Try to import Gemini module
     try:
@@ -80,14 +77,13 @@ def load_modules():
         except (ImportError, ValueError):
             # If relative import fails, try absolute import
             gemini = importlib.import_module('gemini')
-            
+
         if hasattr(gemini, 'NODE_CLASS_MAPPINGS'):
             NODE_CLASS_MAPPINGS.update(gemini.NODE_CLASS_MAPPINGS)
         if hasattr(gemini, 'NODE_DISPLAY_NAME_MAPPINGS'):
             NODE_DISPLAY_NAME_MAPPINGS.update(gemini.NODE_DISPLAY_NAME_MAPPINGS)
-        print("[LLM Prompt] Gemini module loaded successfully")
     except Exception as e:
-        print(f"[LLM Prompt] Gemini module loading failed: {e}")
+        pass
 
     # Try to import Gemini Banana module
     try:
@@ -97,14 +93,13 @@ def load_modules():
         except (ImportError, ValueError):
             # If relative import fails, try absolute import
             gemini_banana = importlib.import_module('gemini_banana')
-            
+
         if hasattr(gemini_banana, 'NODE_CLASS_MAPPINGS'):
             NODE_CLASS_MAPPINGS.update(gemini_banana.NODE_CLASS_MAPPINGS)
         if hasattr(gemini_banana, 'NODE_DISPLAY_NAME_MAPPINGS'):
             NODE_DISPLAY_NAME_MAPPINGS.update(gemini_banana.NODE_DISPLAY_NAME_MAPPINGS)
-        print("[LLM Prompt] Gemini Banana module loaded successfully")
     except Exception as e:
-        print(f"[LLM Prompt] Gemini Banana module loading failed: {e}")
+        pass
 
     # Try to import Gemini Banana Mirror module
     try:
@@ -114,14 +109,29 @@ def load_modules():
         except (ImportError, ValueError):
             # If relative import fails, try absolute import
             gemini_banana_mirror = importlib.import_module('gemini_banana_mirror')
-            
+
         if hasattr(gemini_banana_mirror, 'NODE_CLASS_MAPPINGS'):
             NODE_CLASS_MAPPINGS.update(gemini_banana_mirror.NODE_CLASS_MAPPINGS)
         if hasattr(gemini_banana_mirror, 'NODE_DISPLAY_NAME_MAPPINGS'):
             NODE_DISPLAY_NAME_MAPPINGS.update(gemini_banana_mirror.NODE_DISPLAY_NAME_MAPPINGS)
-        print("[LLM Prompt] Gemini Banana Mirror module loaded successfully")
     except Exception as e:
-        print(f"[LLM Prompt] Gemini Banana Mirror module loading failed: {e}")
+        pass
+
+    # Try to import Image Collage module
+    try:
+        # Try relative import
+        try:
+            from . import image_collage_node
+        except (ImportError, ValueError):
+            # If relative import fails, try absolute import
+            image_collage_node = importlib.import_module('image_collage_node')
+
+        if hasattr(image_collage_node, 'NODE_CLASS_MAPPINGS'):
+            NODE_CLASS_MAPPINGS.update(image_collage_node.NODE_CLASS_MAPPINGS)
+        if hasattr(image_collage_node, 'NODE_DISPLAY_NAME_MAPPINGS'):
+            NODE_DISPLAY_NAME_MAPPINGS.update(image_collage_node.NODE_DISPLAY_NAME_MAPPINGS)
+    except Exception as e:
+        pass
 
     # Note: openrouter_banana and comfly_nano_banana modules are deprecated
     # Their functionality has been integrated into gemini_banana_mirror.py
@@ -132,8 +142,6 @@ def load_modules():
 
 # Load modules immediately
 load_modules()
-
-print(f"[LLM Agent Assistant] Plugin loaded successfully ({len(NODE_CLASS_MAPPINGS)} nodes)")
 
 # 导出WEB_DIRECTORY供ComfyUI使用
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', 'WEB_DIRECTORY']

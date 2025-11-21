@@ -66,9 +66,207 @@ def process_wildcards(prompt: str, wildcard_dir: str):
         print(f"Wildcard processed prompt: {processed_prompt}")
 
     return processed_prompt
+
+def _log_info(message):
+    try:
+        print(f"[Gemini-Banana-Mirror] {message}")
+    except UnicodeEncodeError:
+        print(f"[Gemini-Banana-Mirror] {repr(message)}")
+
+def _log_warning(message):
+    try:
+        print(f"[Gemini-Banana-Mirror] WARNING: {message}")
+    except UnicodeEncodeError:
+        print(f"[Gemini-Banana-Mirror] WARNING: {repr(message)}")
+
+def _log_error(message):
+    try:
+        print(f"[LLM Agent Assistant][Gemini-Banana-Mirror] ERROR: {message}")
+    except UnicodeEncodeError:
+        print(f"[LLM Prompt][Gemini-Banana-Mirror] ERROR: {repr(message)}")
+
 import sys
 from io import BytesIO
 from PIL import Image, ImageFilter
+
+# ---- Lightweight Conversation Store and Caches (for Iterative Refinement) ----
+SESSION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessions")
+
+_IMAGE_CACHE = {}
+_SEED_CACHE = {}
+
+def _ensure_session_dir():
+    try:
+        if not os.path.exists(SESSION_DIR):
+            os.makedirs(SESSION_DIR, exist_ok=True)
+    except Exception as e:
+        _log_warning(f"创建会话目录失败: {e}")
+
+def _session_file(unique_id: str):
+    _ensure_session_dir()
+    safe_id = re.sub(r'[^a-zA-Z0-9_\-]', '_', unique_id or "default")
+    return os.path.join(SESSION_DIR, f"{safe_id}.json")
+
+# Conversation history
+
+def load_conversation(unique_id: str):
+    try:
+        path = _session_file(unique_id)
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except Exception as e:
+        _log_warning(f"加载会话失败: {e}")
+    return []
+
+def save_conversation(unique_id: str, history):
+    try:
+        path = _session_file(unique_id)
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(history or [], f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        _log_warning(f"保存会话失败: {e}")
+
+def reset_conversation_session(unique_id: str):
+    try:
+        path = _session_file(unique_id)
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception as e:
+        _log_warning(f"重置会话失败: {e}")
+
+def append_turn(unique_id: str, user_text: str, assistant_text: str):
+    history = load_conversation(unique_id)
+    if user_text:
+        history.append({"role": "user", "text": user_text})
+    if assistant_text is not None:
+        history.append({"role": "assistant", "text": assistant_text})
+    save_conversation(unique_id, history)
+
+def trim_history(unique_id: str, keep_last: int = 3):
+    history = load_conversation(unique_id)
+    if keep_last and keep_last > 0:
+        history = history[-(keep_last * 2):]
+        save_conversation(unique_id, history)
+    return history
+
+def build_history_prefix(history, keep_last: int = 3):
+    if not history:
+        return ""
+    if keep_last and keep_last > 0:
+        history = history[-(keep_last * 2):]
+    lines = ["Context from previous turns (for consistent refinement):"]
+    for turn in history:
+        role = turn.get("role", "user").capitalize()
+        text = turn.get("text", "")
+        if text:
+            lines.append(f"- {role}: {text}")
+    return "\n".join(lines)
+
+# Summary persistence
+
+def _summary_file(unique_id: str):
+    _ensure_session_dir()
+    safe_id = re.sub(r'[^a-zA-Z0-9_\-]', '_', unique_id or "default")
+    return os.path.join(SESSION_DIR, f"{safe_id}.summary.txt")
+
+def load_summary(unique_id: str) -> str:
+    try:
+        path = _summary_file(unique_id)
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                return f.read()
+    except Exception as e:
+        _log_warning(f"加载会话摘要失败: {e}")
+    return ""
+
+def save_summary(unique_id: str, summary_text: str):
+    try:
+        path = _summary_file(unique_id)
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(summary_text or "")
+    except Exception as e:
+        _log_warning(f"保存会话摘要失败: {e}")
+
+def reset_summary(unique_id: str):
+    try:
+        path = _summary_file(unique_id)
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception as e:
+        _log_warning(f"重置会话摘要失败: {e}")
+
+def build_conversation_summary(history, previous_summary: str = "", max_chars: int = 600):
+    try:
+        # 抽取最近用户意图和助手说明
+        user_points = []
+        assistant_notes = []
+        for turn in history[-10:]:  # 仅关注最近10条
+            role = turn.get("role", "user")
+            text = (turn.get("text", "") or "").strip()
+            if not text:
+                continue
+            if role == "user":
+                user_points.append(text)
+            else:
+                assistant_notes.append(text)
+        user_summary = "; ".join(user_points[-5:])
+        assistant_summary = "; ".join(assistant_notes[-3:])
+        merged = []
+        if previous_summary:
+            merged.append(previous_summary.strip())
+        if user_summary:
+            merged.append(f"User intents: {user_summary}")
+        if assistant_summary:
+            merged.append(f"Assistant notes: {assistant_summary}")
+        text = " \n".join(merged)
+        if len(text) > max_chars:
+            text = text[-max_chars:]
+        return text
+    except Exception as e:
+        _log_warning(f"构建摘要失败: {e}")
+        return previous_summary or ""
+
+# Caches
+
+def cache_image(unique_id: str, image):
+    if not unique_id or image is None:
+        return
+    try:
+        if hasattr(image, 'convert'):
+            pil_image = image
+        else:
+            pil_image = tensor_to_pil(image)
+        _IMAGE_CACHE[unique_id] = pil_image
+        _log_info(f"✅ 已缓存图像到内存 (unique_id: {unique_id[:8]}...)")
+    except Exception as e:
+        _log_warning(f"缓存图像失败: {e}")
+
+def get_cached_image(unique_id: str):
+    if not unique_id:
+        return None
+    return _IMAGE_CACHE.get(unique_id)
+
+def clear_image_cache(unique_id: str = None):
+    if unique_id:
+        _IMAGE_CACHE.pop(unique_id, None)
+    else:
+        _IMAGE_CACHE.clear()
+
+def cache_seed(unique_id: str, seed: int):
+    if not unique_id or seed <= 0:
+        return
+    _SEED_CACHE[unique_id] = seed
+    _log_info(f"🔒 已缓存 seed={seed} (unique_id: {unique_id[:8]}...)")
+
+def get_cached_seed(unique_id: str) -> int:
+    return _SEED_CACHE.get(unique_id, 0)
+
+def clear_seed_cache(unique_id: str = None):
+    if unique_id:
+        _SEED_CACHE.pop(unique_id, None)
+    else:
+        _SEED_CACHE.clear()
 
 # 🚀 AI放大模型集成
 def detect_available_upscale_models():
@@ -1659,7 +1857,7 @@ def format_error_message(error):
 
 def generate_with_official_api(api_key, model, content_parts, generation_config,
                                safety_settings=None, system_instruction=None,
-                               max_retries=5, proxy=None):
+                               max_retries=5, proxy=None, tools=None):
     """使用官方google.genai库调用API"""
     try:
         # 尝试导入官方库
@@ -1685,11 +1883,20 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         else:
             config_params['response_modalities'] = ['Text', 'Image']
 
-        # 处理imageConfig（aspect_ratio）
-        if 'imageConfig' in generation_config and 'aspectRatio' in generation_config['imageConfig']:
-            config_params['image_config'] = types.ImageConfig(
-                aspect_ratio=generation_config['imageConfig']['aspectRatio']
-            )
+        # 处理imageConfig（aspect_ratio + imageSize）
+        if 'imageConfig' in generation_config:
+            image_config_dict = generation_config['imageConfig']
+            image_config_params = {}
+
+            if 'aspectRatio' in image_config_dict:
+                image_config_params['aspect_ratio'] = image_config_dict['aspectRatio']
+
+            # 🔥 添加 imageSize 支持（1K/2K/4K）
+            if 'imageSize' in image_config_dict:
+                image_config_params['image_size'] = image_config_dict['imageSize']
+
+            if image_config_params:
+                config_params['image_config'] = types.ImageConfig(**image_config_params)
 
         # 处理seed
         if 'seed' in generation_config and generation_config['seed'] > 0:
@@ -1707,6 +1914,11 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         # 🎯 处理系统指令
         if system_instruction:
             config_params['system_instruction'] = system_instruction
+
+        # 🔍 处理 Google Search tools
+        if tools:
+            config_params['tools'] = tools
+            print(f"🔍 SDK调用：添加 Google Search tools")
 
         official_config = types.GenerateContentConfig(**config_params)
 
@@ -1794,7 +2006,7 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
 
 def generate_with_rest_api(api_key, model, content_parts, generation_config,
                           safety_settings=None, system_instruction=None,
-                          max_retries=5, proxy=None, base_url=None):
+                          max_retries=5, proxy=None, base_url=None, tools=None):
     """使用REST API调用Gemini"""
     import requests
 
@@ -1818,6 +2030,11 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
         request_data["system_instruction"] = {
             "parts": [{"text": system_instruction}]
         }
+
+    # 🔍 添加 Google Search tools
+    if tools:
+        request_data["tools"] = tools
+        print(f"🔍 REST API：添加 Google Search tools 到请求")
 
     # 🔑 根据 base_url 设置不同的认证方式
     is_aabao = base_url and "aabao" in base_url.lower()
@@ -1877,13 +2094,13 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
 
 def generate_with_priority_api(api_key, model, content_parts, generation_config,
                                safety_settings=None, system_instruction=None,
-                               max_retries=5, proxy=None, base_url=None):
+                               max_retries=5, proxy=None, base_url=None, tools=None):
     """优先使用官方API，失败时回退到REST API"""
 
     # 首先尝试官方API
     print("🎯 优先尝试官方google.genai API")
     result = generate_with_official_api(api_key, model, content_parts, generation_config,
-                                       safety_settings, system_instruction, max_retries, proxy)
+                                       safety_settings, system_instruction, max_retries, proxy, tools)
 
     if result is not None:
         print("✅ 官方API调用成功")
@@ -1892,7 +2109,7 @@ def generate_with_priority_api(api_key, model, content_parts, generation_config,
     # 官方API失败，回退到REST API
     print("🔄 官方API失败，回退到REST API")
     return generate_with_rest_api(api_key, model, content_parts, generation_config,
-                                  safety_settings, system_instruction, max_retries, proxy, base_url)
+                                  safety_settings, system_instruction, max_retries, proxy, base_url, tools)
 
 def extract_text_from_response(response_json):
     """从响应中提取文本内容"""
@@ -1984,13 +2201,33 @@ def process_generated_image_from_response(response_json):
         return None
 
 def _normalize_model_name(model: str) -> str:
-    """Strip any trailing bracketed labels (e.g., ' [OpenRouter]', ' [Comfly‑T8]'), robust to hyphen variants."""
+    """
+    规范化模型名称，支持智能版本切换
+
+    功能：
+    - 自动将 "Auto (Latest)" 映射到最新的 gemini-3-pro-image-preview
+    - 移除模型名称中的标记（🔥NEW, ✓Stable, 🤖等）
+    - 移除镜像站标识（[All], [Comet], [Comfly-T8]等）
+    """
     try:
         if not model:
             return model
+
+        # 🚀 智能版本切换：自动选择最新版本
+        if "Auto" in model or "Latest" in model:
+            print("🤖 智能版本切换：自动选择最新版本 gemini-3-pro-image-preview (Nano Banana 2)")
+            return "gemini-3-pro-image-preview"
+
         import re
+        # 移除标记符号
+        model = re.sub(r'\s*🔥\s*NEW.*$', '', model)
+        model = re.sub(r'\s*✓\s*Stable.*$', '', model)
+        model = re.sub(r'\s*🤖.*$', '', model)
+
         # Remove any ' [....]' suffix at end, including unicode hyphen variants inside
-        return re.sub(r"\s*\[[^\]]+\]\s*$", "", model)
+        model = re.sub(r"\s*\[[^\]]+\]\s*$", "", model)
+
+        return model.strip()
     except Exception:
         return model
 
@@ -3185,6 +3422,17 @@ def build_api_url(base_url, model, api_format="gemini"):
     # 规范化模型名称
     normalized_model = _normalize_model_name(model)
 
+    # Comet API 特殊处理 - URL 已经包含 /v1beta/models
+    if "cometapi.com" in base_url:
+        # 如果 URL 已经包含 /v1beta/models，直接添加模型名称和端点
+        if "/v1beta/models" in base_url:
+            # 移除末尾的 /v1beta/models（如果有）
+            base_url_clean = base_url.replace("/v1beta/models", "").rstrip('/')
+            return f"{base_url_clean}/v1beta/models/{normalized_model}:generateContent"
+        else:
+            # 如果没有，按标准方式构建
+            return f"{base_url}/v1beta/models/{normalized_model}:generateContent"
+
     # T8镜像站特殊处理 - 根据模型类型选择端点（与Comfly对齐）
     if "t8star.cn" in base_url or "ai.t8star.cn" in base_url:
         # 移除base_url末尾的/v1（如果有）
@@ -3805,6 +4053,32 @@ def smart_resize_with_padding(image: Image.Image, target_size: Tuple[int, int],
             from gemini_banana import smart_resize_with_padding as core_resize
         return core_resize(image, target_size, fill_color=fill_color, fill_strategy="paste")
 
+
+# 🚀 Nano Banana 2 辅助函数
+def get_model_generation(model: str) -> str:
+    """
+    获取模型的代际信息
+
+    Returns:
+        "Nano Banana 2" 或 "Nano Banana 1" 或 "Other"
+    """
+    normalized = _normalize_model_name(model)
+
+    if "gemini-3-pro-image" in normalized:
+        return "Nano Banana 2"
+    elif "gemini-2.5-flash-image" in normalized:
+        return "Nano Banana 1"
+    else:
+        return "Other"
+
+
+def is_nano_banana_2(model: str) -> bool:
+    """
+    判断是否为 Nano Banana 2 模型
+    """
+    return get_model_generation(model) == "Nano Banana 2"
+
+
 class KenChenLLMGeminiBananaMirrorImageGenNode:
     """Gemini Banana 镜像站图片生成节点
 
@@ -3873,8 +4147,28 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 }),
                 "prompt": ("STRING", {"default": "A beautiful mountain landscape at sunset", "multiline": True}),
                 "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
-                # 支持多种AI模型和图像生成服务: nano-banana支持Comfly和T8镜像站, [All]支持所有镜像站, API4GPT模型, OpenRouter模型
-                "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "gemini-2.5-flash-image [All]", "gemini-2.5-flash-image-preview [All]", "gemini-2.0-flash-preview-image-generation", "gemini-2.5-flash-image-hd [API4GPT]", "gemini-2.5-flash-image-vip [API4GPT]", "google/gemini-2.5-flash-image [OpenRouter]", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
+                # 🚀 Nano Banana 2 智能版本切换 + 完整模型支持
+                "model": ([
+                    "Auto (Latest Gemini 3 Pro) 🤖",  # 智能选择最新版本
+
+                    # Nano Banana 2 (最新)
+                    "gemini-3-pro-image [Comet] 🔥NEW",
+                    "gemini-3-pro-image-preview [All] 🔥NEW",
+                    "google/gemini-3-pro-image-preview [OpenRouter] 🔥NEW",
+
+                    # Nano Banana 1 (稳定版)
+                    "gemini-2.5-flash-image [All] ✓Stable",
+                    "gemini-2.5-flash-image-preview [All] ✓Stable",
+
+                    # 其他模型
+                    "nano-banana [Comfly-T8]",
+                    "nano-banana-hd [Comfly-T8]",
+                    "gemini-2.0-flash-preview-image-generation",
+                    "gemini-2.5-flash-image-hd [API4GPT]",
+                    "gemini-2.5-flash-image-vip [API4GPT]",
+                    "google/gemini-2.5-flash-image [OpenRouter]",
+                    "google/gemini-2.5-flash-image-preview [OpenRouter]"
+                ], {"default": "Auto (Latest Gemini 3 Pro) 🤖"}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
 
                 # 📐 Gemini官方API图像控制参数
@@ -3885,6 +4179,17 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 "response_modality": (response_modalities, {
                     "default": image_settings.get('default_response_modality', "TEXT_AND_IMAGE"),
                     "tooltip": "响应模式：TEXT_AND_IMAGE=文字+图像，IMAGE_ONLY=仅图像"
+                }),
+
+                # 🚀 Nano Banana 2 分辨率控制（仅对 gemini-3-pro-image-preview 生效）
+                "output_resolution": ([
+                    "Auto (Model Default)",
+                    "1K",
+                    "2K",
+                    "4K"
+                ], {
+                    "default": "Auto (Model Default)",
+                    "tooltip": "🔥 仅 Nano Banana 2 (gemini-3-pro-image/gemini-3-pro-image-preview) 支持：通过 imageSize 参数直出 1K/2K/4K 分辨率（与 aspect_ratio 组合生成对应尺寸）。其他模型会忽略此参数。"
                 }),
 
                 # 🔍 Topaz Gigapixel AI放大控制
@@ -3936,12 +4241,57 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "multiline": True,
                     "placeholder": "自定义系统指令（优先级高于预设）"
                 }),
+
+                # 🔍 Google Search Grounding
+                "enable_google_search": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🔍 启用 Google 搜索接地（Grounding with Google Search）\n⚠️ 注意事项：\n1. 仅支持 Nano Banana 2 模型（gemini-3-pro-image-preview）\n2. 必须使用 TEXT_AND_IMAGE 响应模式（IMAGE_ONLY 不支持）\n3. 仅支持使用 Gemini 原生格式的镜像站\n4. 支持的镜像站: nano-banana官方、Comet、Kuai、Comfly(Gemini模型)、T8(Gemini模型)\n5. 不支持: OpenRouter、API4GPT、Comfly/T8的nano-banana模型\n💡 用途：根据实时信息（天气、新闻、事件等）生成图片"
+                }),
+
+                # ♻️ Step 1: 迭代优化 - 会话历史
+                "enable_iterative_refinement": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "♻️ 启用迭代优化：通过多轮对话逐步细化图像\n💡 开启后会保存对话历史，下次生成时作为上下文\n⚠️ 注意：会增加 token 消耗"
+                }),
+                "keep_last_turns": ("INT", {
+                    "default": 3,
+                    "min": 1,
+                    "max": 10,
+                    "tooltip": "保留最近 N 轮对话作为上下文（每轮包含用户+助手）"
+                }),
+                "reset_conversation": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🔄 重置会话：清空历史对话、摘要和缓存，重新开始"
+                }),
+
+                # 🔒 Step 2: 体验提升 - Seed 锁定
+                "lock_seed": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🔒 锁定 seed：首次运行时缓存 seed，后续运行自动使用相同 seed 保持风格一致\n💡 配合迭代优化使用效果更佳"
+                }),
+
+                # 📝 Step 3: 高阶稳定化 - 会话摘要
+                "enable_conversation_summary": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "📝 启用会话摘要：自动生成对话摘要并注入，减少历史膨胀\n💡 推荐与迭代优化一起使用"
+                }),
+                "summary_injection": (["System Instruction", "Prompt Prefix"], {
+                    "default": "System Instruction",
+                    "tooltip": "摘要注入位置：\n• System Instruction - 更稳定、更隐形（推荐）\n• Prompt Prefix - 更显式、便于排查"
+                }),
+                "summary_max_chars": ("INT", {
+                    "default": 600,
+                    "min": 200,
+                    "max": 2000,
+                    "tooltip": "摘要最大字符数（建议 600-1000）"
+                }),
+
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("image", "response_text")
+    RETURN_TYPES = ("IMAGE", "STRING", "STRING")
+    RETURN_NAMES = ("image", "response_text", "grounding_info")
     FUNCTION = "generate_image"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
 
@@ -3993,7 +4343,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             pass
 
     def generate_image(self, mirror_site: str, api_key: str, prompt: str, negative_prompt: str, model: str,
-                      proxy: str, aspect_ratio: str, response_modality: str, upscale_factor: str, gigapixel_model: str,
+                      proxy: str, aspect_ratio: str, response_modality: str, output_resolution: str, upscale_factor: str, gigapixel_model: str,
                       quality: str, style: str, detail_level: str, camera_control: str, lighting_control: str,
                       template_selection: str, temperature: float, top_p: float, top_k: int,
                       max_output_tokens: int, seed: int,
@@ -4001,7 +4351,15 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                       safety_level: str = "default",
                       system_instruction_preset: str = "none",
                       custom_system_instruction: str = "",
-                      unique_id: str = "") -> Tuple[torch.Tensor, str]:
+                      enable_google_search: bool = False,
+                      enable_iterative_refinement: bool = False,
+                      keep_last_turns: int = 3,
+                      reset_conversation: bool = False,
+                      lock_seed: bool = False,
+                      enable_conversation_summary: bool = False,
+                      summary_injection: str = "System Instruction",
+                      summary_max_chars: int = 600,
+                      unique_id: str = "") -> Tuple[torch.Tensor, str, str]:
         """使用镜像站API生成图片"""
 
         # Process wildcards in the prompt
@@ -4013,6 +4371,30 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
 
         # 🚀 立即规范化模型名称，去除UI标识
         model = _normalize_model_name(model)
+
+        # 🚀 检测是否为 Nano Banana 2 模型
+        is_nb2 = is_nano_banana_2(model)
+        if is_nb2:
+            print(f"🔥 检测到 Nano Banana 2 模型: {model}")
+            print(f"🚀 启用 Nano Banana 2 特性：2K/4K分辨率、多阶段生成、增强提示词遵循")
+
+        # 🚀 处理 Nano Banana 2 分辨率设置
+        nb2_image_size = None  # imageSize参数（1K/2K/4K）
+
+        if is_nb2 and output_resolution != "Auto (Model Default)":
+            # 直接使用用户选择的分辨率（1K/2K/4K）
+            nb2_image_size = output_resolution
+            print(f"🎯 Nano Banana 2 imageSize: {nb2_image_size}")
+
+            # 如果用户也设置了 aspect_ratio，会在后面与 imageSize 组合
+            if aspect_ratio and aspect_ratio != "Auto":
+                print(f"📐 将组合 aspectRatio={aspect_ratio} + imageSize={nb2_image_size}")
+            else:
+                print(f"📐 使用 imageSize={nb2_image_size}（宽高比由模型默认）")
+        elif not is_nb2 and output_resolution != "Auto (Model Default)":
+            # 非 Nano Banana 2 模型但设置了 output_resolution
+            print(f"⚠️ 当前模型 {model} 不支持 output_resolution 参数，将忽略此设置")
+            print(f"💡 只有 Nano Banana 2 (gemini-3-pro-image/gemini-3-pro-image-preview) 支持 1K/2K/4K 分辨率控制")
 
         # 根据镜像站从配置获取URL和API Key
         site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
@@ -4057,6 +4439,56 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             fill_color="white"
         )
 
+        # 🔒 Seed locking (Step 2)
+        if lock_seed and unique_id:
+            cached_seed = get_cached_seed(unique_id)
+            if cached_seed > 0:
+                seed = cached_seed
+                _log_info(f"🔒 使用锁定的 seed={seed}")
+            elif seed > 0:
+                cache_seed(unique_id, seed)
+                _log_info(f"🔒 首次锁定 seed={seed}")
+
+        # 🧠 Step 3: 初始化摘要注入变量
+        summary_prompt_prefix = ""
+        summary_system_extra = ""
+
+        # ♻️ 迭代优化 + 🧠 会话摘要
+        if enable_iterative_refinement and unique_id:
+            try:
+                if reset_conversation:
+                    reset_conversation_session(unique_id)
+                    reset_summary(unique_id)
+                    clear_image_cache(unique_id)
+                    if lock_seed:
+                        clear_seed_cache(unique_id)
+                    _log_info("♻️ 已重置会话历史并清空摘要与缓存")
+
+                if enable_conversation_summary:
+                    history_all = load_conversation(unique_id)
+                    prev_summary = load_summary(unique_id)
+                    summary_text = build_conversation_summary(history_all, prev_summary, max_chars=summary_max_chars)
+                    if summary_text:
+                        save_summary(unique_id, summary_text)
+                        if summary_injection == "System Instruction":
+                            summary_system_extra = f"\n\n[Conversation Summary]\n{summary_text}"
+                            _log_info("🧠 将摘要注入 System Instruction")
+                        else:
+                            summary_prompt_prefix = f"Conversation summary for consistency:\n{summary_text}\n\n"
+                            _log_info("🧠 将摘要注入 Prompt 前缀")
+                else:
+                    # 使用精简历史作为前缀
+                    trimmed = trim_history(unique_id, keep_last_turns)
+                    history_prefix = build_history_prefix(trimmed, keep_last_turns)
+                    if history_prefix:
+                        summary_prompt_prefix = history_prefix + "\n\n"
+                        _log_info("♻️ 已注入历史上下文前缀")
+            except Exception as e:
+                _log_warning(f"迭代优化上下文处理失败: {e}")
+
+        if summary_prompt_prefix:
+            enhanced_prompt = summary_prompt_prefix + enhanced_prompt
+
         # 负向提示词处理
         if negative_prompt and negative_prompt.strip():
             enhanced_prompt += f"\n\nNegative Prompt: {negative_prompt.strip()}"
@@ -4067,7 +4499,12 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             enhanced_prompt += f"\n\n{custom_additions.strip()}"
             print(f"📝 添加自定义指令: {custom_additions[:100]}...")
 
+        # 🚀 Nano Banana 2 特殊提示词增强（智能互斥方案）
+        # 🎯 Nano Banana 2 分辨率控制现在通过 imageSize API 参数实现，不再需要提示词增强
+
         print(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, quality={quality}, style={style}")
+        if is_nb2 and nb2_image_size:
+            print(f"🔥 Nano Banana 2 分辨率增强: imageSize={nb2_image_size}")
 
         # 设置代理（用于 requests 库）
         proxies = None
@@ -4146,12 +4583,18 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 generation_config["responseModalities"] = ["Text", "Image"]
                 print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
-            # 📐 Gemini官方API：Aspect Ratio控制
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                print(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    print(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
 
             # 添加seed（如果有效）
             if seed and seed > 0:
@@ -4164,8 +4607,32 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
 
             # 🎯 添加系统指令
             system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+            # 🧠 合并摘要到系统指令
+            if summary_system_extra:
+                system_instruction = (system_instruction or "") + summary_system_extra
             if system_instruction:
                 print(f"🎯 使用系统指令: {system_instruction[:100]}...")
+
+            # 🔍 Google Search Grounding 配置
+            tools = None
+            grounding_info = "Google Search: Disabled"
+
+            if enable_google_search:
+                # 验证模型支持
+                if not is_nb2:
+                    print(f"⚠️ Google Search grounding 仅支持 Nano Banana 2 模型")
+                    print(f"⚠️ 当前模型 {model} 不支持此功能，将忽略 enable_google_search 设置")
+                    grounding_info = f"Google Search: Not supported by {model}"
+                # 验证响应模式
+                elif response_modality == "IMAGE_ONLY":
+                    print(f"⚠️ Google Search grounding 不支持 IMAGE_ONLY 响应模式")
+                    print(f"⚠️ 请使用 TEXT_AND_IMAGE 模式，将忽略 enable_google_search 设置")
+                    grounding_info = "Google Search: Not compatible with IMAGE_ONLY mode"
+                else:
+                    tools = [{"google_search": {}}]
+                    grounding_info = f"Google Search: Enabled on {mirror_site}"
+                    print(f"🔍 启用 Google Search grounding")
+                    print(f"🔍 模型将自动搜索实时信息来辅助图像生成")
 
             try:
                 # 🔍 判断是否为镜像站（非官方）
@@ -4193,7 +4660,8 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                         safety_settings=safety_settings,
                         system_instruction=system_instruction,
                         max_retries=5,
-                        proxy=proxy
+                        proxy=proxy,
+                        tools=tools
                     )
 
                 if response_json:
@@ -4242,14 +4710,18 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                                 print(f"⚠️ 智能AI放大失败: {e}，使用原始图像")
 
                         print("✅ 图片生成完成（nano-banana官方）")
+                        # ♻️ 保存会话历史和缓存图像
+                        if enable_iterative_refinement and unique_id:
+                            append_turn(unique_id, enhanced_prompt, response_text or "")
+                            cache_image(unique_id, generated_image)
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
-                        return (pil_to_tensor(generated_image), response_text)
+                        return (pil_to_tensor(generated_image), response_text, grounding_info)
                     else:
                         print("⚠️ nano-banana官方API响应中未找到图像数据")
                         # 返回默认图像
                         default_image = Image.new('RGB', (1024, 1024), color='black')
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
-                        return (pil_to_tensor(default_image), response_text)
+                        return (pil_to_tensor(default_image), response_text, grounding_info)
                 else:
                     raise Exception("nano-banana官方API调用失败")
 
@@ -4345,8 +4817,13 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
 
                         image_tensor = pil_to_tensor(generated_image)
                         print("✅ 图片生成完成（Comfly fal-ai/nano-banana）")
+                        # ♻️ 保存会话历史和缓存图像
+                        if enable_iterative_refinement and unique_id:
+                            append_turn(unique_id, enhanced_prompt, response_text or "")
+                            if generated_image:
+                                cache_image(unique_id, generated_image)
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
-                        return (image_tensor, response_text)
+                        return (image_tensor, response_text, grounding_info)
                     else:
                         print(f"⚠️ API响应格式异常: {result}")
                         raise Exception(f"API响应格式异常: {result}")
@@ -4433,8 +4910,13 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
 
                             image_tensor = pil_to_tensor(generated_image)
                             print("✅ 图片生成完成（Comfly nano-banana）")
+                            # ♻️ 保存会话历史和缓存图像
+                            if enable_iterative_refinement and unique_id:
+                                append_turn(unique_id, enhanced_prompt, response_text or "")
+                                if generated_image:
+                                    cache_image(unique_id, generated_image)
                             self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
-                            return (image_tensor, response_text)
+                            return (image_tensor, response_text, grounding_info)
 
                     except Exception as e:
                         print(f"❌ Comfly(nano-banana) 生成失败: {e}")
@@ -4449,12 +4931,22 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "responseModalities": normalize_response_modalities(["Text", "Image"])
                 }
 
-                # 📐 Aspect Ratio控制
+                # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
                 if aspect_ratio and aspect_ratio != "Auto":
-                    generation_config["imageConfig"] = {
-                        "aspectRatio": aspect_ratio
-                    }
-                    print(f"📐 设置宽高比: {aspect_ratio}")
+                    image_config = {"aspectRatio": aspect_ratio}
+
+                    # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                    if is_nb2 and nb2_image_size:
+                        image_config["imageSize"] = nb2_image_size
+                        print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                    else:
+                        print(f"📐 设置宽高比: {aspect_ratio}")
+
+                    generation_config["imageConfig"] = image_config
+                elif is_nb2 and nb2_image_size:
+                    # 只设置了 imageSize，没有 aspectRatio
+                    generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                    print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
                 # 添加seed（如果有效）
                 if seed and seed > 0:
@@ -4467,6 +4959,37 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     }],
                     "generationConfig": generation_config
                 }
+
+
+                # ✅ 确保安全设置与系统指令变量已定义，避免未赋值引用
+                try:
+                    safety_settings
+                except NameError:
+                    safety_settings = get_safety_settings(safety_level)
+                try:
+                    system_instruction
+                except NameError:
+                    system_instruction = None
+                try:
+                    tools
+                except NameError:
+                    tools = None
+
+
+                # 🛡️ 添加安全设置
+                if safety_settings:
+                    request_data["safetySettings"] = safety_settings
+
+                # 🎯 添加系统指令（已包含摘要）
+                if system_instruction:
+                    request_data["system_instruction"] = {
+                        "parts": [{"text": system_instruction}]
+                    }
+
+                # 🔍 添加 Google Search tools（Comfly 非 nano-banana 模型支持）
+                if tools:
+                    request_data["tools"] = tools
+                    print(f"🔍 Comfly Gemini 格式：添加 Google Search tools")
 
                 headers = {
                     "Content-Type": "application/json",
@@ -4488,12 +5011,22 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 "responseModalities": normalize_response_modalities(["Text", "Image"])
             }
 
-            # 📐 Aspect Ratio控制
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                print(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    print(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
+            elif is_nb2 and nb2_image_size:
+                # 只设置了 imageSize，没有 aspectRatio
+                generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
             # 添加seed（如果有效）
             if seed and seed > 0:
@@ -4602,6 +5135,11 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                                 print(f"⚠️ 智能AI放大失败: {e}")
 
                         print("✅ T8 fal-ai图片生成完成")
+                        # ♻️ 保存会话历史和缓存图像
+                        if enable_iterative_refinement and unique_id:
+                            append_turn(unique_id, enhanced_prompt, response_text or "")
+                            if generated_image:
+                                cache_image(unique_id, generated_image)
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
                         return (pil_to_tensor(generated_image), response_text)
                     else:
@@ -4660,6 +5198,11 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                             except Exception as e:
                                 print(f"⚠️ 智能AI放大失败: {e}")
                         print("✅ 图片生成完成（T8 nano-banana）")
+                        # ♻️ 保存会话历史和缓存图像
+                        if enable_iterative_refinement and unique_id:
+                            append_turn(unique_id, enhanced_prompt, response_text or "")
+                            if generated_image:
+                                cache_image(unique_id, generated_image)
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
                         return (pil_to_tensor(generated_image), response_text)
                 except Exception as e:
@@ -4676,12 +5219,22 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 "responseModalities": normalize_response_modalities(["Text", "Image"])
             }
 
-            # 📐 Aspect Ratio控制
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                print(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    print(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
+            elif is_nb2 and nb2_image_size:
+                # 只设置了 imageSize，没有 aspectRatio
+                generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
             # 添加seed（如果有效）
             if seed and seed > 0:
@@ -4700,21 +5253,77 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 "Authorization": f"Bearer {api_key.strip()}"
             }
 
-        # 4. API4GPT镜像站处理（使用标准 OpenAI 兼容格式）
+        # 4. API4GPT镜像站处理
         elif is_api4gpt_mirror:
-            print("🔗 检测到API4GPT镜像站，使用 OpenAI 兼容格式")
+            print("🔗 检测到API4GPT镜像站")
 
-            # API4GPT 的 nano-banana 服务使用标准 OpenAI /v1/images/generations 端点
-            # 参考文档：https://doc.api4gpt.com/api-341609441
-            request_data = {
-                "model": _normalize_model_name(model),
-                "prompt": enhanced_prompt,
-                "n": 1
-            }
+            # 统一初始化，避免未赋值引用
+            response_text = ""
+            generated_image = None
 
-            # 构建完整的 API URL
-            full_url = f"{api_url}/v1/images/generations"
-            print(f"🔗 使用 API4GPT 端点: {full_url}")
+
+            # 🔥 判断是否为 Nano Banana 2 模型
+            if is_nb2:
+                # Nano Banana 2 使用 Gemini 格式
+                # 参考文档：https://doc.api4gpt.com/api-380140398
+                print("🔥 使用 Nano Banana 2 (Gemini格式)")
+
+                # 构建 generation_config（对齐 Gemini/Comfly，可带采样与长度等参数）
+                generation_config = {
+                    "responseModalities": ["Image"],
+                    "temperature": temperature,
+                    "topP": top_p,
+                    "topK": top_k,
+                    "maxOutputTokens": max_output_tokens
+                }
+                if seed and seed > 0:
+                    generation_config["seed"] = seed
+
+                # 📐 添加 imageConfig（aspectRatio + imageSize）
+                image_config = {}
+
+                if aspect_ratio and aspect_ratio != "Auto":
+                    image_config["aspectRatio"] = aspect_ratio
+                    print(f"📐 设置宽高比: {aspect_ratio}")
+
+                if nb2_image_size:
+                    # 将 UI 选项映射为 1K/2K/4K
+                    _s = str(nb2_image_size).upper()
+                    mapped_size = "4K" if "4K" in _s else ("2K" if "2K" in _s else ("1K" if "1K" in _s else None))
+                    if mapped_size:
+                        image_config["imageSize"] = mapped_size
+                        print(f"📐 设置分辨率: {mapped_size}")
+                    else:
+                        print(f"⚠️ 未识别的 imageSize: {nb2_image_size}，已忽略")
+
+                if image_config:
+                    generation_config["imageConfig"] = image_config
+
+                request_data = {
+                    "contents": [{
+                        "parts": [{"text": enhanced_prompt}]
+                    }],
+                    "generationConfig": generation_config
+                }
+
+                # Nano Banana 2 端点
+                full_url = f"{api_url}/v1beta/models/gemini-3-pro-image-preview:generateContent"
+                print(f"🔗 使用 API4GPT Nano Banana 2 端点: {full_url}")
+
+            else:
+                # Nano Banana 1 使用 OpenAI 格式
+                # 参考文档：https://doc.api4gpt.com/api-341609441
+                print("🔗 使用 Nano Banana 1 (OpenAI格式)")
+
+                request_data = {
+                    "model": _normalize_model_name(model),
+                    "prompt": enhanced_prompt,
+                    "n": 1
+                }
+
+                # Nano Banana 1 端点
+                full_url = f"{api_url}/v1/images/generations"
+                print(f"🔗 使用 API4GPT Nano Banana 1 端点: {full_url}")
 
             headers = {
                 "Content-Type": "application/json",
@@ -4732,33 +5341,55 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 )
                 response.raise_for_status()
 
-                # 解析响应（OpenAI 兼容格式）
+                # 解析响应（NB2 为 Gemini 格式，其它为 OpenAI 兼容格式）
                 result = response.json()
                 print(f"✅ API4GPT API调用成功")
                 print(f"📋 API4GPT响应结构: {list(result.keys())}")
 
-                # 从 OpenAI 兼容格式中提取图像 URL
-                if "data" in result and len(result["data"]) > 0:
-                    image_url = result["data"][0].get("url")
-                    if image_url:
-                        print(f"🔗 下载图像: {image_url}")
-                        image_response = requests.get(image_url, proxies=proxies, timeout=60)
-                        image_response.raise_for_status()
-                        import io
-                        generated_image = Image.open(io.BytesIO(image_response.content))
-                        print(f"✅ 成功下载API4GPT生成的图像: {generated_image.size}")
-
-                        # 提取响应文本（如果有）
-                        response_text = result["data"][0].get("revised_prompt", enhanced_prompt)
-
-                        # ⚠️ API4GPT 不支持 aspect_ratio 参数，始终返回 1024x1024
-                        if aspect_ratio and aspect_ratio != "1:1":
-                            print(f"⚠️ 注意：API4GPT 不支持 aspect_ratio 参数，生成的图像为 1024x1024 (1:1)")
-                            print(f"💡 建议：使用其他镜像站（如 OpenRouter、官方 API）以支持自定义宽高比")
+                if is_nb2:
+                    # Gemini 格式：candidates[0].content.parts[].inlineData.data
+                    response_text = ""
+                    candidates = result.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        base64_data = None
+                        for p in parts:
+                            # 先尝试抓取返回文本
+                            if isinstance(p, dict) and "text" in p and isinstance(p["text"], str) and not response_text:
+                                response_text = p["text"]
+                            # 再抓取图片数据
+                            if "inlineData" in p and isinstance(p["inlineData"], dict):
+                                data_val = p["inlineData"].get("data")
+                                if data_val:
+                                    base64_data = data_val
+                                    break
+                        if base64_data:
+                            from base64 import b64decode as _b64decode
+                            from io import BytesIO as _BytesIO
+                            img_bytes = _b64decode(base64_data)
+                            generated_image = Image.open(_BytesIO(img_bytes))
+                            print(f"✅ 成功解析Gemini返回的图像: {generated_image.size}")
+                        else:
+                            raise ValueError("API4GPT(Gemini) 响应中未找到 inlineData 图像数据")
                     else:
-                        raise ValueError("API4GPT响应中没有图像URL")
+                        raise ValueError("API4GPT(Gemini) 响应未包含 candidates")
                 else:
-                    raise ValueError("API4GPT响应格式错误")
+                    # OpenAI 兼容格式
+                    if "data" in result and len(result["data"]) > 0:
+                        image_url = result["data"][0].get("url")
+                        if image_url:
+                            print(f"🔗 下载图像: {image_url}")
+                            image_response = requests.get(image_url, proxies=proxies, timeout=60)
+                            image_response.raise_for_status()
+                            generated_image = Image.open(io.BytesIO(image_response.content))
+                            print(f"✅ 成功下载API4GPT生成的图像: {generated_image.size}")
+
+                            # 提取响应文本（如果有）
+                            response_text = result["data"][0].get("revised_prompt", enhanced_prompt)
+                        else:
+                            raise ValueError("API4GPT响应中没有图像URL")
+                    else:
+                        raise ValueError("API4GPT响应格式错误")
 
                 # 🔍 Topaz Gigapixel AI智能放大
                 if generated_image:
@@ -4783,6 +5414,11 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 # 转换为tensor
                 image_tensor = pil_to_tensor(generated_image)
                 print("✅ 图片生成完成（API4GPT）")
+                # ♻️ 保存会话历史和缓存图像
+                if enable_iterative_refinement and unique_id:
+                    append_turn(unique_id, enhanced_prompt, response_text or "")
+                    if generated_image:
+                        cache_image(unique_id, generated_image)
                 self._push_chat(enhanced_prompt, response_text or "", unique_id)
                 return (image_tensor, response_text)
 
@@ -4894,6 +5530,11 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                                 print(f"⚠️ 智能AI放大失败: {e}")
 
                         print("✅ 图片生成完成（OpenRouter）")
+                        # ♻️ 保存会话历史和缓存图像
+                        if enable_iterative_refinement and unique_id:
+                            append_turn(unique_id, enhanced_prompt, response_text or "")
+                            if generated_image:
+                                cache_image(unique_id, generated_image)
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
                         return (pil_to_tensor(generated_image), response_text)
                     else:
@@ -4982,6 +5623,11 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                                 print(f"⚠️ 智能AI放大失败: {e}")
 
                         print("✅ 图片生成完成（统一请求）")
+                        # ♻️ 保存会话历史和缓存图像
+                        if enable_iterative_refinement and unique_id:
+                            append_turn(unique_id, enhanced_prompt, response_text or "")
+                            if generated_image:
+                                cache_image(unique_id, generated_image)
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
                         return (pil_to_tensor(generated_image), response_text)
                     else:
@@ -5034,6 +5680,12 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
 
                 # 🎯 添加系统指令
                 system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+                # 🧠 合并摘要到系统指令
+                try:
+                    if summary_system_extra:
+                        system_instruction = (system_instruction or "") + summary_system_extra
+                except Exception:
+                    pass
 
                 # 构建请求体
                 request_body = {
@@ -5118,8 +5770,13 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                                 print(f"⚠️ 智能AI放大失败: {e}")
 
                         print("✅ 图片生成完成（通用格式）")
+                        # ♻️ 保存会话历史和缓存图像
+                        if enable_iterative_refinement and unique_id:
+                            append_turn(unique_id, enhanced_prompt, response_text or "")
+                            if generated_image:
+                                cache_image(unique_id, generated_image)
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
-                        return (pil_to_tensor(generated_image), response_text)
+                        return (pil_to_tensor(generated_image), response_text, grounding_info)
                     else:
                         raise Exception("未能从响应中提取图像")
                 else:
@@ -5201,8 +5858,28 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 "image": ("IMAGE",),
                 "prompt": ("STRING", {"default": "Can you add a llama next to me?", "multiline": True}),
                 "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
-                # 支持多种AI模型和图像编辑服务: nano-banana支持Comfly和T8镜像站, [All]支持所有镜像站, API4GPT模型, OpenRouter模型
-                "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "gemini-2.5-flash-image [All]", "gemini-2.5-flash-image-preview [All]", "gemini-2.0-flash-preview-image-generation", "gemini-2.5-flash-image-hd [API4GPT]", "gemini-2.5-flash-image-vip [API4GPT]", "google/gemini-2.5-flash-image [OpenRouter]", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
+                # 🚀 Nano Banana 2 智能版本切换 + 完整模型支持
+                "model": ([
+                    "Auto (Latest Gemini 3 Pro) 🤖",  # 智能选择最新版本
+
+                    # Nano Banana 2 (最新)
+                    "gemini-3-pro-image [Comet] 🔥NEW",
+                    "gemini-3-pro-image-preview [All] 🔥NEW",
+                    "google/gemini-3-pro-image-preview [OpenRouter] 🔥NEW",
+
+                    # Nano Banana 1 (稳定版)
+                    "gemini-2.5-flash-image [All] ✓Stable",
+                    "gemini-2.5-flash-image-preview [All] ✓Stable",
+
+                    # 其他模型
+                    "nano-banana [Comfly-T8]",
+                    "nano-banana-hd [Comfly-T8]",
+                    "gemini-2.0-flash-preview-image-generation",
+                    "gemini-2.5-flash-image-hd [API4GPT]",
+                    "gemini-2.5-flash-image-vip [API4GPT]",
+                    "google/gemini-2.5-flash-image [OpenRouter]",
+                    "google/gemini-2.5-flash-image-preview [OpenRouter]"
+                ], {"default": "Auto (Latest Gemini 3 Pro) 🤖"}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
 
                 # 📐 Gemini官方API图像控制参数
@@ -5213,6 +5890,17 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 "response_modality": (response_modalities, {
                     "default": image_settings.get('default_response_modality', "TEXT_AND_IMAGE"),
                     "tooltip": "响应模式：TEXT_AND_IMAGE=文字+图像，IMAGE_ONLY=仅图像"
+                }),
+
+                # 🚀 Nano Banana 2 分辨率控制（仅对 gemini-3-pro-image-preview 生效）
+                "output_resolution": ([
+                    "Auto (Model Default)",
+                    "1K",
+                    "2K",
+                    "4K"
+                ], {
+                    "default": "Auto (Model Default)",
+                    "tooltip": "🔥 仅 Nano Banana 2 (gemini-3-pro-image/gemini-3-pro-image-preview) 支持：通过 imageSize 参数直出 1K/2K/4K 分辨率（与 aspect_ratio 组合生成对应尺寸）。其他模型会忽略此参数。"
                 }),
 
                 "quality": (quality_presets, {"default": image_settings.get('default_quality', "hd")}),
@@ -5263,6 +5951,50 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "default": "",
                     "multiline": True,
                     "placeholder": "自定义系统指令（优先级高于预设）"
+                }),
+
+                # ♻️ Step 1: 迭代优化参数
+                "enable_iterative_refinement": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "♻️ 启用迭代优化：通过多轮对话逐步细化图像\n💡 开启后会保存对话历史，下次生成时作为上下文\n⚠️ 注意：会增加 token 消耗"
+                }),
+                "keep_last_turns": ("INT", {
+                    "default": 3,
+                    "min": 1,
+                    "max": 10,
+                    "tooltip": "保留最近N轮对话作为上下文（建议2~5）"
+                }),
+                "reset_conversation": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "重置当前节点的会话历史（基于 unique_id）"
+                }),
+
+                # 🔒 Seed 锁定（Step 2）
+                "lock_seed": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🔒 锁定 seed：启用后，首次运行时使用当前 seed，后续运行自动沿用首次的 seed，保持风格一致。配合迭代优化使用效果最佳。"
+                }),
+
+                # 🖼️ 自动使用上一轮图像（Step 2）
+                "auto_use_last_image": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🖼️ 自动使用上一轮生成的图像：启用后，如果未连接输入图像，将自动使用本节点上一轮生成的图像作为输入。配合迭代优化实现连续细化。"
+                }),
+
+                # 🧠 会话摘要（Step 3）
+                "enable_conversation_summary": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🧠 开启会话摘要：自动压缩历史对话为简短摘要，用于保持风格/约束一致性，降低token消耗"
+                }),
+                "summary_injection": (["System Instruction", "Prompt Prefix"], {
+                    "default": "System Instruction",
+                    "tooltip": "摘要注入位置：系统指令更稳定，提示词前缀更显式"
+                }),
+                "summary_max_chars": ("INT", {
+                    "default": 600,
+                    "min": 100,
+                    "max": 2000,
+                    "tooltip": "摘要长度上限（字符数）"
                 }),
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
@@ -5321,13 +6053,21 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             pass
 
     def edit_image(self, mirror_site: str, api_key: str, image: torch.Tensor, prompt: str, negative_prompt: str, model: str,
-                    proxy: str, aspect_ratio: str, response_modality: str, quality: str, style: str,
+                    proxy: str, aspect_ratio: str, response_modality: str, output_resolution: str, quality: str, style: str,
                     detail_level: str, camera_control: str, lighting_control: str, template_selection: str,
                     upscale_factor: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
                     custom_additions: str = "",
                     safety_level: str = "default",
                     system_instruction_preset: str = "none",
                     custom_system_instruction: str = "",
+                    enable_iterative_refinement: bool = False,
+                    keep_last_turns: int = 3,
+                    reset_conversation: bool = False,
+                    lock_seed: bool = False,
+                    auto_use_last_image: bool = False,
+                    enable_conversation_summary: bool = False,
+                    summary_injection: str = "System Instruction",
+                    summary_max_chars: int = 600,
                     unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API编辑图片"""
 
@@ -5340,6 +6080,30 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
 
         # 🚀 立即规范化模型名称，去除UI标识
         model = _normalize_model_name(model)
+
+        # 🚀 检测是否为 Nano Banana 2 模型
+        is_nb2 = is_nano_banana_2(model)
+        if is_nb2:
+            print(f"🔥 检测到 Nano Banana 2 模型: {model}")
+            print(f"🚀 启用 Nano Banana 2 特性：1K/2K/4K分辨率、imageSize参数")
+
+        # 🚀 处理 Nano Banana 2 分辨率设置
+        nb2_image_size = None  # imageSize参数（1K/2K/4K）
+
+        if is_nb2 and output_resolution != "Auto (Model Default)":
+            # 直接使用用户选择的分辨率（1K/2K/4K）
+            nb2_image_size = output_resolution
+            print(f"🎯 Nano Banana 2 imageSize: {nb2_image_size}")
+
+            # 如果用户也设置了 aspect_ratio，会在后面与 imageSize 组合
+            if aspect_ratio and aspect_ratio != "Auto":
+                print(f"📐 将组合 aspectRatio={aspect_ratio} + imageSize={nb2_image_size}")
+            else:
+                print(f"📐 使用 imageSize={nb2_image_size}（宽高比由模型默认）")
+        elif not is_nb2 and output_resolution != "Auto (Model Default)":
+            # 非 Nano Banana 2 模型但设置了 output_resolution
+            print(f"⚠️ 当前模型 {model} 不支持 output_resolution 参数，将忽略此设置")
+            print(f"💡 只有 Nano Banana 2 (gemini-3-pro-image/gemini-3-pro-image-preview) 支持 1K/2K/4K 分辨率控制")
 
         # 根据镜像站从配置获取URL和API Key
         site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
@@ -5402,6 +6166,76 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
 
         print(f"🎨 图像控制参数: aspect_ratio={aspect_ratio}, 质量={controls['quality']}, 风格={controls['style']}")
 
+
+        # ♻️ Step 2: 自动使用上一轮图像
+        if auto_use_last_image and unique_id and image is None:
+            cached_img = get_cached_image(unique_id)
+            if cached_img is not None:
+                print(f"🖼️ [I2I] auto_use_last_image: 从缓存加载上一轮图像 (unique_id={unique_id})")
+                try:
+                    image = pil_to_tensor(cached_img)
+                except Exception:
+                    # 某些情况下缓存中已是tensor
+                    image = cached_img
+            else:
+                print(f"⚠️ [I2I] auto_use_last_image 开启，但缓存中无图像且未连接输入图像")
+
+        # 🔒 Step 2: Seed 锁定
+        if lock_seed and unique_id:
+            cached_seed = get_cached_seed(unique_id)
+            if cached_seed and cached_seed > 0:
+                seed = cached_seed
+                print(f"🔒 [I2I] lock_seed: 使用缓存的 seed={seed} (unique_id={unique_id})")
+            elif seed and seed > 0:
+                cache_seed(unique_id, seed)
+                print(f"🔒 [I2I] lock_seed: 首次缓存 seed={seed} (unique_id={unique_id})")
+
+        # 🔄 Step 1: 重置会话
+        if reset_conversation and unique_id:
+            print(f"🔄 [I2I] 重置会话历史与缓存 (unique_id={unique_id})")
+            try:
+                reset_conversation_session(unique_id)
+                reset_summary(unique_id)
+                clear_image_cache(unique_id)
+                if lock_seed:
+                    clear_seed_cache(unique_id)
+            except Exception as e:
+                print(f"⚠️ 重置会话出现异常: {e}")
+
+        # ♻️ Step 1 & 🧠 Step 3: 迭代优化上下文/摘要注入
+        summary_system_extra = ""
+        if enable_iterative_refinement and unique_id:
+            try:
+                if enable_conversation_summary:
+                    prev_summary = load_summary(unique_id)
+                    history_all = load_conversation(unique_id)
+                    recent_turns = trim_history(history_all, keep_last_turns)
+                    summary_text = build_conversation_summary(prev_summary, recent_turns, summary_max_chars)
+                    if summary_text:
+                        save_summary(unique_id, summary_text)
+                        if summary_injection == "System Instruction":
+                            summary_system_extra = f"\n\n[Conversation Summary]\n{summary_text}"
+                            print("🧠 [I2I] 将会话摘要注入 System Instruction")
+                        else:
+                            enhanced_prompt = f"Conversation summary for consistency:\n{summary_text}\n\n" + enhanced_prompt
+                            print("🧠 [I2I] 将会话摘要注入 Prompt 前缀")
+                else:
+                    history_all = load_conversation(unique_id)
+                    recent_turns = trim_history(history_all, keep_last_turns)
+                    if recent_turns:
+                        prefix = build_history_prefix(recent_turns)
+                        enhanced_prompt = prefix + enhanced_prompt
+                        print(f"♻️ [I2I] 注入最近 {len(recent_turns)} 轮对话作为前缀")
+            except Exception as e:
+                print(f"⚠️ [I2I] 迭代优化上下文注入失败: {e}")
+
+        # 🎯 构建系统指令（合并摘要）
+        system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+        if summary_system_extra:
+            system_instruction = (system_instruction or "") + summary_system_extra
+        if system_instruction:
+            print(f"🎯 系统指令（已合并摘要）: {system_instruction[:120]}...")
+
         # 转换输入图片
         pil_image = tensor_to_pil(image)
 
@@ -5455,6 +6289,13 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             is_api4gpt_mirror = True
             print(f"🔄 检测到错误的 API4GPT URL，自动切换到正确的 URL: {api_url}")
 
+        # ✅ API4GPT 纠偏：强制使用 Gemini 原生格式，不走 OpenAI 分支
+        if is_api4gpt_mirror:
+            if is_openai_mirror:
+                is_openai_mirror = False
+                print("🔄 API4GPT 纠偏：禁用 OpenAI 分支，使用 Gemini 原生格式")
+
+
         # 构建完整的API URL（OpenRouter除外，因为它在各自的处理逻辑中构建）
         if not is_openrouter_mirror:
             full_url = build_api_url(api_url, model)
@@ -5495,12 +6336,22 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 generation_config["responseModalities"] = ["Text", "Image"]
                 print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
-            # 📐 Gemini官方API：Aspect Ratio控制（始终设置，即使是默认值）
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio.strip() and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                print(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    print(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
+            elif is_nb2 and nb2_image_size:
+                # 只设置了 imageSize，没有 aspectRatio
+                generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
             else:
                 print("⚠️ aspect_ratio 为空，未设置 imageConfig")
 
@@ -5510,13 +6361,21 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
 
             try:
                 # 使用优先API调用（官方API优先，失败时回退到REST API）
+                # 🛡️ 安全设置
+                safety_settings = get_safety_settings(safety_level)
+                if safety_settings:
+                    print(f"🛡️ 使用安全级别: {safety_level}")
+
                 response_json = generate_with_priority_api(
                     api_key=api_key,
                     model=_normalize_model_name(model),
                     content_parts=content_parts,
                     generation_config=generation_config,
+                    safety_settings=safety_settings,
+                    system_instruction=system_instruction,
                     max_retries=5,
-                    proxy=proxy
+                    proxy=proxy,
+                    base_url=api_url
                 )
 
                 if response_json:
@@ -5563,6 +6422,13 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
 
                         image_tensor = pil_to_tensor(edited_image)
                         print("✅ 图片编辑完成（nano-banana官方）")
+                        # ♻️ 保存会话历史与缓存输出
+                        if enable_iterative_refinement and unique_id:
+                            try:
+                                append_turn(unique_id, enhanced_prompt, response_text or "")
+                                cache_image(unique_id, edited_image)
+                            except Exception:
+                                pass
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
                         return (image_tensor, response_text)
                     else:
@@ -5671,6 +6537,14 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
 
                             image_tensor = pil_to_tensor(edited_image)
                             print("✅ 图片编辑完成（Comfly fal-ai/nano-banana）")
+                            # ♻️ 保存会话历史与缓存输出
+                            if enable_iterative_refinement and unique_id:
+                                try:
+                                    append_turn(unique_id, enhanced_prompt, response_text or "")
+                                    if edited_image is not None:
+                                        cache_image(unique_id, edited_image)
+                                except Exception:
+                                    pass
                             self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
                             return (image_tensor, response_text)
                         else:
@@ -5756,6 +6630,14 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
 
                             image_tensor = pil_to_tensor(edited_image)
                             print("✅ 图片编辑完成（Comfly nano-banana）")
+                            # ♻️ 保存会话历史与缓存输出
+                            if enable_iterative_refinement and unique_id:
+                                try:
+                                    append_turn(unique_id, enhanced_prompt, response_text or "")
+                                    if edited_image is not None:
+                                        cache_image(unique_id, edited_image)
+                                except Exception:
+                                    pass
                             self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
                             return (image_tensor, response_text)
 
@@ -5772,12 +6654,22 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "responseModalities": normalize_response_modalities(["Text", "Image"])
                 }
 
-                # 📐 Aspect Ratio控制
+                # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
                 if aspect_ratio and aspect_ratio != "Auto":
-                    generation_config["imageConfig"] = {
-                        "aspectRatio": aspect_ratio
-                    }
-                    print(f"📐 设置宽高比: {aspect_ratio}")
+                    image_config = {"aspectRatio": aspect_ratio}
+
+                    # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                    if is_nb2 and nb2_image_size:
+                        image_config["imageSize"] = nb2_image_size
+                        print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                    else:
+                        print(f"📐 设置宽高比: {aspect_ratio}")
+
+                    generation_config["imageConfig"] = image_config
+                elif is_nb2 and nb2_image_size:
+                    # 只设置了 imageSize，没有 aspectRatio
+                    generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                    print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
                 # 添加seed（如果有效）
                 if seed and seed > 0:
@@ -5819,12 +6711,22 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 "responseModalities": normalize_response_modalities(["Text", "Image"])
             }
 
-            # 📐 Aspect Ratio控制
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                print(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    print(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
+            elif is_nb2 and nb2_image_size:
+                # 只设置了 imageSize，没有 aspectRatio
+                generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
             # 添加seed（如果有效）
             if seed and seed > 0:
@@ -5937,6 +6839,14 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                                 print("⚠️ 使用原始图像继续处理")
 
                             print("✅ T8 fal-ai图片编辑完成")
+                            # ♻️ 保存会话历史与缓存输出
+                            if enable_iterative_refinement and unique_id:
+                                try:
+                                    append_turn(unique_id, enhanced_prompt, response_text or "")
+                                    if edited_image is not None:
+                                        cache_image(unique_id, edited_image)
+                                except Exception:
+                                    pass
                             return (pil_to_tensor(edited_image), response_text)
                         else:
                             raise Exception("T8 fal-ai/nano-banana 未能编辑图像")
@@ -6005,6 +6915,14 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
 
                         image_tensor = pil_to_tensor(edited_image)
                         print("✅ 图片编辑完成（T8 nano-banana）")
+                        # ♻️ 保存会话历史与缓存输出
+                        if enable_iterative_refinement and unique_id:
+                            try:
+                                append_turn(unique_id, enhanced_prompt, response_text or "")
+                                if edited_image is not None:
+                                    cache_image(unique_id, edited_image)
+                            except Exception:
+                                pass
                         self._push_chat(enhanced_prompt, _make_chat_summary(response_text or ""), unique_id)
                         return (image_tensor, response_text)
 
@@ -6023,12 +6941,22 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "responseModalities": normalize_response_modalities(["Text", "Image"])
                 }
 
-                # 📐 Aspect Ratio控制
+                # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
                 if aspect_ratio and aspect_ratio != "Auto":
-                    generation_config["imageConfig"] = {
-                        "aspectRatio": aspect_ratio
-                    }
-                    print(f"📐 设置宽高比: {aspect_ratio}")
+                    image_config = {"aspectRatio": aspect_ratio}
+
+                    # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                    if is_nb2 and nb2_image_size:
+                        image_config["imageSize"] = nb2_image_size
+                        print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                    else:
+                        print(f"📐 设置宽高比: {aspect_ratio}")
+
+                    generation_config["imageConfig"] = image_config
+                elif is_nb2 and nb2_image_size:
+                    # 只设置了 imageSize，没有 aspectRatio
+                    generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                    print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
                 # 添加seed（如果有效）
                 if seed and seed > 0:
@@ -6057,7 +6985,155 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
 
         # 4. API4GPT镜像站处理（使用标准 OpenAI 兼容格式）
         elif is_api4gpt_mirror:
-            print("🔗 检测到API4GPT镜像站，使用 OpenAI 兼容格式")
+            print("🔗 检测到API4GPT镜像站 (Gemini 原生优先)")
+
+            # 🔥 Nano Banana 2 在 API4GPT 上走 Gemini v1beta 接口
+            if is_nb2:
+                try:
+                    # 初始化编辑输出与响应文本
+                    edited_image = None
+                    response_text = ""
+
+                    # 将编辑图像转为base64（JPEG）
+                    import io
+                    buf = io.BytesIO()
+                    pil_image.save(buf, format='JPEG')
+                    buf.seek(0)
+                    image_base64_nb2 = base64.b64encode(buf.getvalue()).decode('utf-8')
+
+                    # 生成配置：对齐 Gemini/Comfly，带采样与长度等参数
+                    generation_config = {
+                        "responseModalities": ["Text", "Image"],
+                        "temperature": temperature,
+                        "topP": top_p,
+                        "topK": top_k,
+                        "maxOutputTokens": max_output_tokens
+                    }
+                    if seed and seed > 0:
+                        generation_config["seed"] = seed
+
+                    image_config = {}
+                    mapped_size = None
+                    if aspect_ratio and aspect_ratio != "Auto":
+                        image_config["aspectRatio"] = aspect_ratio
+                    if nb2_image_size:
+                        _s = str(nb2_image_size).upper()
+                        mapped_size = "4K" if "4K" in _s else ("2K" if "2K" in _s else ("1K" if "1K" in _s else None))
+                        if mapped_size:
+                            image_config["imageSize"] = mapped_size
+                        else:
+                            print(f"⚠️ 未识别的 imageSize: {nb2_image_size}，已忽略")
+                    if image_config:
+                        generation_config["imageConfig"] = image_config
+                        # 调试输出：确保 imageSize 已包含在请求中
+                        try:
+                            dbg_aspect = image_config.get("aspectRatio")
+                            dbg_size = image_config.get("imageSize")
+                            print(f"📦 API4GPT 编辑将传递 imageConfig: aspectRatio={dbg_aspect}, imageSize={dbg_size}")
+                        except Exception:
+                            pass
+
+                    request_data = {
+                        "contents": [{
+                            "parts": [
+                                {"text": enhanced_prompt},
+                                {
+                                    "inline_data": {
+                                        "mime_type": "image/jpeg",
+                                        "data": image_base64_nb2
+                                    }
+                                }
+                            ]
+                        }],
+                        "generationConfig": generation_config
+                    }
+
+                    # 调试：确认 JSON 结构完整
+                    try:
+                        top_keys = list(request_data.keys())
+                        has_contents = "contents" in request_data
+                        gc = request_data.get("generationConfig", {})
+                        ic = gc.get("imageConfig", {})
+                        print(f"🧪 NB2 编辑JSON keys={top_keys}, has_contents={has_contents}")
+                        print(f"📦 imageConfig: aspectRatio={ic.get('aspectRatio')}, imageSize={ic.get('imageSize')}")
+                    except Exception:
+                        pass
+
+                    full_url = f"{api_url}/v1beta/models/gemini-3-pro-image-preview:generateContent"
+                    headers_nb2 = {
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {api_key.strip()}"
+                    }
+
+                    print(f"🔗 使用 API4GPT Nano Banana 2 编辑端点: {full_url}")
+                    response_nb2 = requests.post(
+                        full_url,
+                        headers=headers_nb2,
+                        json=request_data,
+                        proxies=proxies,
+                        timeout=300
+                    )
+                    response_nb2.raise_for_status()
+
+                    result_nb2 = response_nb2.json()
+                    # 解析 Gemini 响应，提取 inlineData 图像与可选文本
+                    candidates = result_nb2.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        base64_data = None
+                        for p in parts:
+                            if isinstance(p, dict) and "text" in p and isinstance(p["text"], str) and not response_text:
+                                response_text = p["text"]
+                            if "inlineData" in p and isinstance(p["inlineData"], dict):
+                                base64_data = p["inlineData"].get("data")
+                                if base64_data:
+                                    break
+                        if base64_data:
+                            from base64 import b64decode as _b64decode
+                            from io import BytesIO as _BytesIO
+                            img_bytes = _b64decode(base64_data)
+                            edited_image = Image.open(_BytesIO(img_bytes))
+
+                            # 🔍 Topaz Gigapixel AI智能放大（NB2 编辑）
+                            if upscale_factor and upscale_factor != "1x (不放大)" and isinstance(edited_image, Image.Image):
+                                try:
+                                    scale = int(upscale_factor.replace("x", "").strip().split()[0])
+                                    if scale > 1:
+                                        print(f"🔍 使用智能AI放大进行{scale}x放大，模型: {gigapixel_model}")
+                                        try:
+                                            from .banana_upscale import smart_upscale
+                                        except ImportError:
+                                            from banana_upscale import smart_upscale
+                                        target_w = edited_image.width * scale
+                                        target_h = edited_image.height * scale
+                                        upscaled_image = smart_upscale(edited_image, target_w, target_h, gigapixel_model)
+                                        if upscaled_image:
+                                            edited_image = upscaled_image
+                                            print(f"✅ 智能AI放大完成: {edited_image.size}")
+                                except Exception as e:
+                                    print(f"⚠️ 智能AI放大失败: {e}")
+
+                            # 返回编辑结果
+                            image_tensor = pil_to_tensor(edited_image)
+                            print("✅ 图片编辑完成（API4GPT NB2）")
+                            if enable_iterative_refinement and unique_id:
+                                try:
+                                    append_turn(unique_id, enhanced_prompt, response_text or "")
+                                    if edited_image is not None:
+                                        cache_image(unique_id, edited_image)
+                                except Exception:
+                                    pass
+                            self._push_chat(enhanced_prompt, response_text or "", unique_id)
+                            return (image_tensor, response_text)
+                        else:
+                            raise Exception("API4GPT Nano Banana 2 编辑响应解析失败：未找到图片数据")
+                    else:
+                        raise Exception("API4GPT Nano Banana 2 编辑响应解析失败：未返回候选项")
+
+                except Exception as e:
+                    print(f"❌ API4GPT Nano Banana 2 编辑失败: {e}")
+                    raise
+
 
             # API4GPT 的 nano-banana 服务使用标准 OpenAI /v1/images/edits 端点
             # 参考文档：https://doc.api4gpt.com/api-341609442
@@ -6145,6 +7221,14 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 # 转换为tensor
                 image_tensor = pil_to_tensor(edited_image)
                 print("✅ 图片编辑完成（API4GPT）")
+                # ♻️ 保存会话历史与缓存输出
+                if enable_iterative_refinement and unique_id:
+                    try:
+                        append_turn(unique_id, enhanced_prompt, response_text or "")
+                        if edited_image is not None:
+                            cache_image(unique_id, edited_image)
+                    except Exception:
+                        pass
                 self._push_chat(enhanced_prompt, response_text or "", unique_id)
                 return (image_tensor, response_text)
 
@@ -6255,12 +7339,22 @@ Execute the image editing task now and return the edited image."""
                 "responseModalities": normalize_response_modalities(["Text", "Image"])
             }
 
-            # 📐 添加 aspect_ratio 支持（根据官方示例）
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio.strip() and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                print(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    print(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
+            elif is_nb2 and nb2_image_size:
+                # 只设置了 imageSize，没有 aspectRatio
+                generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
             # 添加 seed（如果有效）
             if seed and seed > 0:
@@ -6578,6 +7672,14 @@ Execute the image editing task now and return the edited image."""
                     print(f"📝 响应文本长度: {len(response_text)}")
                     # print(f"📝 响应文本内容: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
                     print(f"📝 响应文本类型: {'包含图像数据' if 'data:image/' in response_text else '纯文本内容'}")
+                    # ♻️ 保存会话历史与缓存输出
+                    if enable_iterative_refinement and unique_id:
+                        try:
+                            append_turn(unique_id, enhanced_prompt, response_text or "")
+                            if edited_image is not None:
+                                cache_image(unique_id, edited_image)
+                        except Exception:
+                            pass
                     self._push_chat(enhanced_prompt, response_text or "", unique_id) # 使用增强后的提示词
                     return (image_tensor, response_text)
 
@@ -6713,8 +7815,28 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 }),
                 "prompt": ("STRING", {"default": "请根据这些图片进行专业的图像编辑", "multiline": True}),
                 "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
-                # 支持多种AI模型和多图像编辑服务: nano-banana支持Comfly和T8镜像站, [All]支持所有镜像站, API4GPT模型, OpenRouter模型
-                "model": (["nano-banana [Comfly-T8]", "nano-banana-hd [Comfly-T8]", "gemini-2.5-flash-image [All]", "gemini-2.5-flash-image-preview [All]", "gemini-2.0-flash", "gemini-2.5-flash-image-hd [API4GPT]", "gemini-2.5-flash-image-vip [API4GPT]", "google/gemini-2.5-flash-image [OpenRouter]", "google/gemini-2.5-flash-image-preview [OpenRouter]"], {"default": "nano-banana [Comfly-T8]"}),
+                # 🚀 Nano Banana 2 智能版本切换 + 完整模型支持
+                "model": ([
+                    "Auto (Latest Gemini 3 Pro) 🤖",  # 智能选择最新版本
+
+                    # Nano Banana 2 (最新)
+                    "gemini-3-pro-image [Comet] 🔥NEW",
+                    "gemini-3-pro-image-preview [All] 🔥NEW",
+                    "google/gemini-3-pro-image-preview [OpenRouter] 🔥NEW",
+
+                    # Nano Banana 1 (稳定版)
+                    "gemini-2.5-flash-image [All] ✓Stable",
+                    "gemini-2.5-flash-image-preview [All] ✓Stable",
+
+                    # 其他模型
+                    "nano-banana [Comfly-T8]",
+                    "nano-banana-hd [Comfly-T8]",
+                    "gemini-2.0-flash",
+                    "gemini-2.5-flash-image-hd [API4GPT]",
+                    "gemini-2.5-flash-image-vip [API4GPT]",
+                    "google/gemini-2.5-flash-image [OpenRouter]",
+                    "google/gemini-2.5-flash-image-preview [OpenRouter]"
+                ], {"default": "Auto (Latest Gemini 3 Pro) 🤖"}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
 
                 # 📐 Gemini官方API图像控制参数
@@ -6725,6 +7847,17 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 "response_modality": (response_modalities, {
                     "default": image_settings.get('default_response_modality', "TEXT_AND_IMAGE"),
                     "tooltip": "响应模式：TEXT_AND_IMAGE=文字+图像，IMAGE_ONLY=仅图像"
+                }),
+
+                # 🚀 Nano Banana 2 分辨率控制（仅对 gemini-3-pro-image-preview 生效）
+                "output_resolution": ([
+                    "Auto (Model Default)",
+                    "1K",
+                    "2K",
+                    "4K"
+                ], {
+                    "default": "Auto (Model Default)",
+                    "tooltip": "🔥 仅 Nano Banana 2 (gemini-3-pro-image/gemini-3-pro-image-preview) 支持：通过 imageSize 参数直出 1K/2K/4K 分辨率（与 aspect_ratio 组合生成对应尺寸）。其他模型会忽略此参数。"
                 }),
 
                 "quality": (quality_presets, {"default": image_settings.get('default_quality', "hd")}),
@@ -6781,6 +7914,40 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "multiline": True,
                     "placeholder": "自定义系统指令（优先级高于预设）"
                 }),
+
+                # 🔄 迭代优化功能 (Step 1-3)
+                "enable_iterative_refinement": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "启用迭代优化：保留历史对话上下文，实现连续细化"
+                }),
+                "keep_last_turns": ("INT", {
+                    "default": 3,
+                    "min": 1,
+                    "max": 10,
+                    "tooltip": "保留最近N轮对话（仅在未启用摘要时生效）"
+                }),
+                "reset_conversation": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "重置会话历史：清空所有历史记录，重新开始"
+                }),
+                "lock_seed": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "锁定种子：首次运行后固定seed值，保持风格一致"
+                }),
+                "enable_conversation_summary": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "启用会话摘要：自动生成对话摘要，减少token消耗，提高一致性"
+                }),
+                "summary_injection": (["System Instruction", "Prompt Prefix"], {
+                    "default": "System Instruction",
+                    "tooltip": "摘要注入位置：System Instruction更隐形稳定，Prompt Prefix更显式可见"
+                }),
+                "summary_max_chars": ("INT", {
+                    "default": 600,
+                    "min": 100,
+                    "max": 2000,
+                    "tooltip": "摘要最大字符数"
+                }),
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
         }
@@ -6830,7 +7997,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             pass
 
     def edit_multiple_images(self, mirror_site: str, api_key: str, prompt: str, negative_prompt: str, model: str,
-                           proxy: str, aspect_ratio: str, response_modality: str, quality: str, style: str,
+                           proxy: str, aspect_ratio: str, response_modality: str, output_resolution: str, quality: str, style: str,
                            detail_level: str, camera_control: str, lighting_control: str, template_selection: str,
                            upscale_factor: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
                            image1=None, image2=None, image3=None, image4=None,
@@ -6838,6 +8005,13 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                            safety_level: str = "default",
                            system_instruction_preset: str = "none",
                            custom_system_instruction: str = "",
+                           enable_iterative_refinement: bool = False,
+                           keep_last_turns: int = 3,
+                           reset_conversation: bool = False,
+                           lock_seed: bool = False,
+                           enable_conversation_summary: bool = False,
+                           summary_injection: str = "System Instruction",
+                           summary_max_chars: int = 600,
                            unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API进行多图像编辑"""
 
@@ -6850,6 +8024,30 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
 
         # 🚀 立即规范化模型名称，去除UI标识
         model = _normalize_model_name(model)
+
+        # 🚀 检测是否为 Nano Banana 2 模型
+        is_nb2 = is_nano_banana_2(model)
+        if is_nb2:
+            print(f"🔥 检测到 Nano Banana 2 模型: {model}")
+            print(f"🚀 启用 Nano Banana 2 特性：1K/2K/4K分辨率、imageSize参数")
+
+        # 🚀 处理 Nano Banana 2 分辨率设置
+        nb2_image_size = None  # imageSize参数（1K/2K/4K）
+
+        if is_nb2 and output_resolution != "Auto (Model Default)":
+            # 直接使用用户选择的分辨率（1K/2K/4K）
+            nb2_image_size = output_resolution
+            print(f"🎯 Nano Banana 2 imageSize: {nb2_image_size}")
+
+            # 如果用户也设置了 aspect_ratio，会在后面与 imageSize 组合
+            if aspect_ratio and aspect_ratio != "Auto":
+                print(f"📐 将组合 aspectRatio={aspect_ratio} + imageSize={nb2_image_size}")
+            else:
+                print(f"📐 使用 imageSize={nb2_image_size}（宽高比由模型默认）")
+        elif not is_nb2 and output_resolution != "Auto (Model Default)":
+            # 非 Nano Banana 2 模型但设置了 output_resolution
+            print(f"⚠️ 当前模型 {model} 不支持 output_resolution 参数，将忽略此设置")
+            print(f"💡 只有 Nano Banana 2 (gemini-3-pro-image/gemini-3-pro-image-preview) 支持 1K/2K/4K 分辨率控制")
 
         # 根据镜像站从配置获取URL和API Key
         site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
@@ -6898,6 +8096,62 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             smart_resize=True,
             fill_color="white"
         )
+
+        # 🔄 Step 2: Seed锁定
+        if lock_seed and unique_id:
+            cached_seed = get_cached_seed(unique_id)
+            if cached_seed > 0:
+                seed = cached_seed
+                print(f"🔒 使用锁定的seed: {seed}")
+            elif seed > 0:
+                cache_seed(unique_id, seed)
+                print(f"🔒 首次锁定seed: {seed}")
+
+        # 🔄 Step 1 & 3: 重置会话
+        if reset_conversation and unique_id:
+            print("🔄 重置会话历史...")
+            reset_conversation_session(unique_id)
+            reset_summary(unique_id)
+            clear_image_cache(unique_id)
+            if lock_seed:
+                clear_seed_cache(unique_id)
+            print("✅ 会话历史已重置")
+
+        # 🔄 Step 1 & 3: 迭代优化 - 注入历史或摘要
+        summary_system_extra = ""
+        if enable_iterative_refinement and unique_id:
+            if enable_conversation_summary:
+                # Step 3: 使用摘要
+                prev_summary = load_summary(unique_id)
+                conversation = load_conversation(unique_id)
+                recent_turns = conversation[-(keep_last_turns * 2):] if conversation else []
+                summary_text = build_conversation_summary(prev_summary, recent_turns, summary_max_chars)
+                save_summary(unique_id, summary_text)
+                print(f"📝 会话摘要已生成 ({len(summary_text)} 字符)")
+
+                if summary_injection == "System Instruction":
+                    summary_system_extra = f"\n\n[Previous Conversation Summary]\n{summary_text}"
+                    print("📌 摘要将注入到 System Instruction")
+                else:  # Prompt Prefix
+                    enhanced_prompt = f"[Previous Conversation Summary]\n{summary_text}\n\n{enhanced_prompt}"
+                    print("📌 摘要已注入到提示词前缀")
+            else:
+                # Step 1: 使用历史前缀
+                conversation = load_conversation(unique_id)
+                if conversation:
+                    history_prefix = build_history_prefix(conversation, keep_last_turns)
+                    enhanced_prompt = f"{history_prefix}\n\n{enhanced_prompt}"
+                    print(f"📜 已注入历史上下文 (最近 {keep_last_turns} 轮)")
+
+        # 🎯 构建系统指令（合并摘要）
+        try:
+            from .gemini_banana import get_system_instruction
+        except ImportError:
+            from gemini_banana import get_system_instruction
+        system_instruction = get_system_instruction(system_instruction_preset, custom_system_instruction)
+        if summary_system_extra:
+            system_instruction = (system_instruction or "") + summary_system_extra
+
 
         # 负向提示词处理
         if negative_prompt and negative_prompt.strip():
@@ -7105,12 +8359,22 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 generation_config["responseModalities"] = ["Text", "Image"]
                 print("📊 响应模式：文字+图像（TEXT_AND_IMAGE）")
 
-            # 📐 Gemini官方API：Aspect Ratio控制（始终设置，即使是默认值）
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio.strip() and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                print(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    print(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
+            elif is_nb2 and nb2_image_size:
+                # 只设置了 imageSize，没有 aspectRatio
+                generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
             else:
                 print("⚠️ aspect_ratio 为空，未设置 imageConfig")
 
@@ -7173,6 +8437,14 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
 
                         image_tensor = pil_to_tensor(edited_image)
                         print("✅ 多图像编辑完成（nano-banana官方）")
+                        # ♻️ 保存会话历史与缓存输出
+                        if enable_iterative_refinement and unique_id:
+                            try:
+                                append_turn(unique_id, enhanced_prompt, response_text or "")
+                                if edited_image is not None:
+                                    cache_image(unique_id, edited_image)
+                            except Exception:
+                                pass
                         self._push_chat(enhanced_prompt, response_text or "", unique_id)
                         return (image_tensor, response_text)
                     else:
@@ -7260,6 +8532,14 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                                 )
                                 image_tensor = pil_to_tensor(edited_image)
                                 print("✅ 多图像编辑完成（Comfly fal-ai/nano-banana）")
+                                # ♻️ 保存会话历史与缓存输出
+                                if enable_iterative_refinement and unique_id:
+                                    try:
+                                        append_turn(unique_id, enhanced_prompt, response_text or "")
+                                        if edited_image is not None:
+                                            cache_image(unique_id, edited_image)
+                                    except Exception:
+                                        pass
                                 self._push_chat(enhanced_prompt, response_text or "", unique_id)
                                 return (image_tensor, response_text)
                             except Exception as enhance_error:
@@ -7354,6 +8634,14 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
 
                             image_tensor = pil_to_tensor(edited_image)
                             print("✅ 多图像编辑完成（Comfly nano-banana）")
+                            # ♻️ 保存会话历史与缓存输出
+                            if enable_iterative_refinement and unique_id:
+                                try:
+                                    append_turn(unique_id, enhanced_prompt, response_text or "")
+                                    if edited_image is not None:
+                                        cache_image(unique_id, edited_image)
+                                except Exception:
+                                    pass
                             self._push_chat(enhanced_prompt, response_text or "", unique_id)
                             return (image_tensor, response_text)
 
@@ -7370,12 +8658,22 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "responseModalities": normalize_response_modalities(["Text", "Image"])
                 }
 
-                # 📐 Aspect Ratio控制
+                # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
                 if aspect_ratio and aspect_ratio != "Auto":
-                    generation_config["imageConfig"] = {
-                        "aspectRatio": aspect_ratio
-                    }
-                    print(f"📐 设置宽高比: {aspect_ratio}")
+                    image_config = {"aspectRatio": aspect_ratio}
+
+                    # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                    if is_nb2 and nb2_image_size:
+                        image_config["imageSize"] = nb2_image_size
+                        print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                    else:
+                        print(f"📐 设置宽高比: {aspect_ratio}")
+
+                    generation_config["imageConfig"] = image_config
+                elif is_nb2 and nb2_image_size:
+                    # 只设置了 imageSize，没有 aspectRatio
+                    generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                    print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
                 # 添加seed（如果有效）
                 if seed and seed > 0:
@@ -7409,12 +8707,22 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 "responseModalities": normalize_response_modalities(["Text", "Image"])
             }
 
-            # 📐 Aspect Ratio控制
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                print(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    print(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
+            elif is_nb2 and nb2_image_size:
+                # 只设置了 imageSize，没有 aspectRatio
+                generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
             # 添加seed（如果有效）
             if seed and seed > 0:
@@ -7514,6 +8822,14 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
 
                             image_tensor = pil_to_tensor(edited_image)
                             print("✅ T8 fal-ai多图编辑完成")
+                            # ♻️ 保存会话历史与缓存输出
+                            if enable_iterative_refinement and unique_id:
+                                try:
+                                    append_turn(unique_id, enhanced_prompt, response_text or "")
+                                    if edited_image is not None:
+                                        cache_image(unique_id, edited_image)
+                                except Exception:
+                                    pass
                             self._push_chat(enhanced_prompt, response_text or "", unique_id)
                             return (image_tensor, response_text)
                         else:
@@ -7584,6 +8900,14 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
 
                         image_tensor = pil_to_tensor(edited_image)
                         print("✅ 多图像编辑完成（T8 nano-banana）")
+                        # ♻️ 保存会话历史与缓存输出
+                        if enable_iterative_refinement and unique_id:
+                            try:
+                                append_turn(unique_id, enhanced_prompt, response_text or "")
+                                if edited_image is not None:
+                                    cache_image(unique_id, edited_image)
+                            except Exception:
+                                pass
                         self._push_chat(enhanced_prompt, response_text or "", unique_id)
                         return (image_tensor, response_text)
 
@@ -7602,12 +8926,22 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "responseModalities": normalize_response_modalities(["Text", "Image"])
                 }
 
-                # 📐 Aspect Ratio控制
+                # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
                 if aspect_ratio and aspect_ratio != "Auto":
-                    generation_config["imageConfig"] = {
-                        "aspectRatio": aspect_ratio
-                    }
-                    print(f"📐 设置宽高比: {aspect_ratio}")
+                    image_config = {"aspectRatio": aspect_ratio}
+
+                    # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                    if is_nb2 and nb2_image_size:
+                        image_config["imageSize"] = nb2_image_size
+                        print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                    else:
+                        print(f"📐 设置宽高比: {aspect_ratio}")
+
+                    generation_config["imageConfig"] = image_config
+                elif is_nb2 and nb2_image_size:
+                    # 只设置了 imageSize，没有 aspectRatio
+                    generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                    print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
                 # 添加seed（如果有效）
                 if seed and seed > 0:
@@ -7631,16 +8965,134 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "Authorization": f"Bearer {api_key.strip()}"
                 }
 
-        # 4. API4GPT镜像站处理（使用标准 OpenAI 兼容格式）
+        # 4. API4GPT镜像站处理
         elif is_api4gpt_mirror:
-            print("🔗 检测到API4GPT镜像站，使用 OpenAI 兼容格式")
+            print("🔗 检测到API4GPT镜像站 (Gemini 原生优先)")
 
-            # API4GPT 的 nano-banana 服务使用标准 OpenAI /v1/images/edits 端点
+            # 🔥 Nano Banana 2 在 API4GPT 上走 Gemini v1beta 接口
+            if is_nb2:
+                try:
+                    # 初始化编辑输出与响应文本
+                    edited_image = None
+                    response_text = ""
+
+                    # 构建 Gemini 格式的多图编辑请求
+                    generation_config = {
+                        "responseModalities": ["Text", "Image"],
+                        "temperature": temperature,
+                        "topP": top_p,
+                        "topK": top_k,
+                        "maxOutputTokens": max_output_tokens
+                    }
+                    if seed and seed > 0:
+                        generation_config["seed"] = seed
+
+                    image_config = {}
+                    if aspect_ratio and aspect_ratio != "Auto":
+                        image_config["aspectRatio"] = aspect_ratio
+                    if nb2_image_size:
+                        _s = str(nb2_image_size).upper()
+                        mapped_size = "4K" if "4K" in _s else ("2K" if "2K" in _s else ("1K" if "1K" in _s else None))
+                        if mapped_size:
+                            image_config["imageSize"] = mapped_size
+                        else:
+                            print(f"⚠️ 未识别的 imageSize: {nb2_image_size}，已忽略")
+                    if image_config:
+                        generation_config["imageConfig"] = image_config
+
+                    # 构建 parts：文本 + 所有图像
+                    parts = [{"text": full_prompt}]
+                    for image_part in all_image_parts:
+                        parts.append(image_part)
+
+                    request_data = {
+                        "contents": [{
+                            "parts": parts
+                        }],
+                        "generationConfig": generation_config
+                    }
+
+                    full_url = f"{api_url}/v1beta/models/gemini-3-pro-image-preview:generateContent"
+                    headers_nb2 = {
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {api_key.strip()}"
+                    }
+
+                    print(f"🔗 使用 API4GPT Nano Banana 2 多图编辑端点: {full_url}")
+                    response_nb2 = requests.post(
+                        full_url,
+                        headers=headers_nb2,
+                        json=request_data,
+                        proxies=proxies,
+                        timeout=300
+                    )
+                    response_nb2.raise_for_status()
+
+                    result_nb2 = response_nb2.json()
+                    # 解析 Gemini 响应
+                    candidates = result_nb2.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        base64_data = None
+                        for p in parts:
+                            if isinstance(p, dict) and "text" in p and isinstance(p["text"], str) and not response_text:
+                                response_text = p["text"]
+                            if "inlineData" in p and isinstance(p["inlineData"], dict):
+                                base64_data = p["inlineData"].get("data")
+                                if base64_data:
+                                    break
+                        if base64_data:
+                            from base64 import b64decode as _b64decode
+                            from io import BytesIO as _BytesIO
+                            img_bytes = _b64decode(base64_data)
+                            edited_image = Image.open(_BytesIO(img_bytes))
+
+                            # 🔍 Topaz Gigapixel AI智能放大（NB2 多图编辑）
+                            if upscale_factor and upscale_factor != "1x (不放大)" and isinstance(edited_image, Image.Image):
+                                try:
+                                    scale = int(upscale_factor.replace("x", "").strip().split()[0])
+                                    if scale > 1:
+                                        print(f"🔍 使用智能AI放大进行{scale}x放大，模型: {gigapixel_model}")
+                                        try:
+                                            from .banana_upscale import smart_upscale
+                                        except ImportError:
+                                            from banana_upscale import smart_upscale
+                                        target_w = edited_image.width * scale
+                                        target_h = edited_image.height * scale
+                                        upscaled_image = smart_upscale(edited_image, target_w, target_h, gigapixel_model)
+                                        if upscaled_image:
+                                            edited_image = upscaled_image
+                                            print(f"✅ 智能AI放大完成: {edited_image.size}")
+                                except Exception as e:
+                                    print(f"⚠️ 智能AI放大失败: {e}")
+
+                            # 返回编辑结果
+                            image_tensor = pil_to_tensor(edited_image)
+                            print("✅ 多图像编辑完成（API4GPT NB2）")
+                            if enable_iterative_refinement and unique_id:
+                                try:
+                                    append_turn(unique_id, enhanced_prompt, response_text or "")
+                                    if edited_image is not None:
+                                        cache_image(unique_id, edited_image)
+                                except Exception:
+                                    pass
+                            self._push_chat(enhanced_prompt, response_text or "", unique_id)
+                            return (image_tensor, response_text)
+                        else:
+                            raise Exception("API4GPT Nano Banana 2 多图编辑响应解析失败：未找到图片数据")
+                    else:
+                        raise Exception("API4GPT Nano Banana 2 多图编辑响应解析失败：未返回候选项")
+
+                except Exception as e:
+                    print(f"❌ API4GPT Nano Banana 2 多图编辑失败: {e}")
+                    raise
+
+            # 🔥 Nano Banana 1 使用 OpenAI 兼容格式（/v1/images/edits）
             # 参考文档：https://doc.api4gpt.com/api-341609442
             # API4GPT 支持多张图片上传
-            print(f"📤 API4GPT 准备上传 {len(all_input_pils)} 张图片进行编辑")
+            else:
+                print(f"📤 API4GPT 准备上传 {len(all_input_pils)} 张图片进行编辑（Nano Banana 1）")
 
-            if all_input_pils:
                 try:
                     # 将所有图像转换为字节流
                     import io
@@ -7779,6 +9231,14 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     # 转换为tensor
                     image_tensor = pil_to_tensor(edited_image)
                     print("✅ 多图像编辑完成（API4GPT）")
+                    # ♻️ 保存会话历史与缓存输出
+                    if enable_iterative_refinement and unique_id:
+                        try:
+                            append_turn(unique_id, enhanced_prompt, response_text or "")
+                            if edited_image is not None:
+                                cache_image(unique_id, edited_image)
+                        except Exception:
+                            pass
                     self._push_chat(enhanced_prompt, response_text or "", unique_id)
                     return (image_tensor, response_text)
 
@@ -7801,8 +9261,6 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     import traceback
                     traceback.print_exc()
                     raise ValueError(f"API4GPT API调用失败: {e}")
-            else:
-                raise ValueError("没有可用的输入图像进行编辑")
         elif is_openrouter_mirror:
             # OpenRouter镜像站
             print("🔗 检测到OpenRouter镜像站，使用OpenRouter API格式")
@@ -7924,12 +9382,22 @@ Execute the multi-image editing task now and return the edited image."""
                 "responseModalities": normalize_response_modalities(["Text", "Image"])
             }
 
-            # 📐 添加 aspect_ratio 支持（根据官方示例）
+            # 📐 Gemini官方API：Image Config控制（aspectRatio + imageSize）
             if aspect_ratio and aspect_ratio.strip() and aspect_ratio != "Auto":
-                generation_config["imageConfig"] = {
-                    "aspectRatio": aspect_ratio
-                }
-                print(f"📐 设置宽高比: {aspect_ratio}")
+                image_config = {"aspectRatio": aspect_ratio}
+
+                # 🔥 如果是 Nano Banana 2 且设置了 imageSize，添加到配置中
+                if is_nb2 and nb2_image_size:
+                    image_config["imageSize"] = nb2_image_size
+                    print(f"📐 设置图像配置: aspectRatio={aspect_ratio}, imageSize={nb2_image_size}")
+                else:
+                    print(f"📐 设置宽高比: {aspect_ratio}")
+
+                generation_config["imageConfig"] = image_config
+            elif is_nb2 and nb2_image_size:
+                # 只设置了 imageSize，没有 aspectRatio
+                generation_config["imageConfig"] = {"imageSize": nb2_image_size}
+                print(f"📐 设置图像配置: imageSize={nb2_image_size}（宽高比由模型默认）")
 
             # 添加 seed（如果有效）
             if seed and seed > 0:
@@ -8246,6 +9714,14 @@ Execute the multi-image editing task now and return the edited image."""
                     print(f"📝 响应文本长度: {len(response_text)}")
                     # print(f"📝 响应文本内容: {response_text[:200]}...")  # 注释掉可能包含base64数据的输出
                     print(f"📝 响应文本类型: {'包含图像数据' if 'data:image/' in response_text else '纯文本内容'}")
+                    # ♻️ 保存会话历史与缓存输出
+                    if enable_iterative_refinement and unique_id:
+                        try:
+                            append_turn(unique_id, enhanced_prompt, response_text or "")
+                            if edited_image is not None:
+                                cache_image(unique_id, edited_image)
+                        except Exception:
+                            pass
                     self._push_chat(enhanced_prompt, response_text or "", unique_id)
                     return (image_tensor, response_text)
 

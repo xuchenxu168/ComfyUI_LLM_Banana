@@ -10,6 +10,7 @@ pydub
 scipy
 httpx
 openai
+opencv-python  # 用于视频处理（tensor 转 MP4）
 
 # 可选依赖 / Optional dependencies
 # 人脸修复功能需要额外依赖，请参考 requirements_face_restore.txt
