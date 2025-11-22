@@ -4163,7 +4163,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     # 其他模型
                     "nano-banana [Comfly-T8]",
                     "nano-banana-hd [Comfly-T8]",
-                    "gemini-2.0-flash-preview-image-generation",
+
                     "gemini-2.5-flash-image-hd [API4GPT]",
                     "gemini-2.5-flash-image-vip [API4GPT]",
                     "google/gemini-2.5-flash-image [OpenRouter]",
@@ -5874,7 +5874,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     # 其他模型
                     "nano-banana [Comfly-T8]",
                     "nano-banana-hd [Comfly-T8]",
-                    "gemini-2.0-flash-preview-image-generation",
+
                     "gemini-2.5-flash-image-hd [API4GPT]",
                     "gemini-2.5-flash-image-vip [API4GPT]",
                     "google/gemini-2.5-flash-image [OpenRouter]",
