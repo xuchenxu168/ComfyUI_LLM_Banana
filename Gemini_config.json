@@ -1,7 +1,48 @@
 {
-    "api_key": "",
+    "api_key": "AIzaSyCkJx-iPkonwAqKBqY8mpJXOmXcDuUUWfQ",
     "base_url": "https://generativelanguage.googleapis.com",
     "proxy": "http://127.0.0.1:None",
+    "api_providers": {
+        "google": {
+            "api_key": "AIzaSyCkJx-iPkonwAqKBqY8mpJXOmXcDuUUWfQ",
+            "base_url": "https://generativelanguage.googleapis.com",
+            "models": [
+                "gemini-3-pro-preview"
+            ]
+        },
+        "comet": {
+            "api_key": "sk-tdbj8yCYH3p8uO1TYiEnKkBwJBNBIWUr3cLsW2aTjuvWi79f",
+            "base_url": "https://api.cometapi.com",
+            "models": [
+                "gemini-3-pro-preview",
+                "gemini-3-pro-preview-thinking"
+            ]
+        },
+        "T8的贞贞AI工坊": {
+            "api_key": "sk-NEF5kPDaUTzpLPwb9YLHHZtPeauRQBnPzc8MI4I7LJ3oadpG",
+            "base_url": "https://ai.t8star.cn/v1",
+            "models": [
+                "gemini-3-pro-preview",
+                "gemini-3-pro-preview-thinking"
+            ]
+        },
+        "comfly": {
+            "api_key": "sk-9wjYfsOrd1WxTd61AGxCcmI3tAubLnUvDOwaiuWE25XtYHNx",
+            "base_url": "https://ai.comfly.chat/v1/",
+            "models": [
+                "gemini-3-pro-preview",
+                "gemini-3-pro-preview-thinking"
+            ]
+        },
+        "aabao": {
+            "api_key": "sk-PY9TXCVwMzFWjGa9zmqagGpiZzguYYyNMCtCDv7Qn983G9PY",
+            "base_url": "https://api.aabao.top/v1",
+            "models": [
+                "gemini-3-pro-preview",
+                "gemini-3-pro-preview-thinking"
+            ]
+        }
+    },
     "default_model": {
         "text_gen": "gemini-2.0-flash-lite",
         "multimodal": "gemini-1.5-flash",
@@ -42,5 +83,9 @@
             "gemini-2.0-flash-exp-image-generation",
             "gemini-2.0-flash-preview-image-generation"
         ]
+    },
+    "video_processing": {
+        "max_frames": 10,
+        "max_frames_description": "视频处理时最多提取的帧数。增加此值会提高视频分析质量，但会增加API成本和处理时间。建议值: 10-30"
     }
-} 
+}

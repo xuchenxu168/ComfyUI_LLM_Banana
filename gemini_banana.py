@@ -4584,7 +4584,7 @@ Execute the image editing task now and return the generated image."""
 NODE_CLASS_MAPPINGS = {
     "KenChenLLMGeminiBananaTextToImageBananaNode": KenChenLLMGeminiBananaTextToImageBananaNode,
     "KenChenLLMGeminiBananaImageToImageBananaNode": KenChenLLMGeminiBananaImageToImageBananaNode,
-    "KenChenLLMGeminiBananaMultimodalBananaNode": KenChenLLMGeminiBananaMultimodalBananaNode,
+    # "KenChenLLMGeminiBananaMultimodalBananaNode": KenChenLLMGeminiBananaMultimodalBananaNode,  # Disabled by request
     "KenChenLLMGeminiBananaMultiImageEditBananaNode": KenChenLLMGeminiBananaMultiImageEditBananaNode,  # ✅ 修正：使用完整类名作为注册键
 }
 
@@ -4595,7 +4595,7 @@ if TRANSLATION_MODULE_AVAILABLE:
 NODE_DISPLAY_NAME_MAPPINGS = {
     "KenChenLLMGeminiBananaTextToImageBananaNode": "🍌 Gemini Banana Text to Image",
     "KenChenLLMGeminiBananaImageToImageBananaNode": "🍌 Gemini Banana Image Edit",
-    "KenChenLLMGeminiBananaMultimodalBananaNode": "🍌 Gemini Banana Multimodal",
+    # "KenChenLLMGeminiBananaMultimodalBananaNode": "🍌 Gemini Banana Multimodal",  # Disabled by request
     "KenChenLLMGeminiBananaMultiImageEditBananaNode": "🍌 Gemini Banana Multi Image Edit",  # ✅ 修正：使用完整类名作为注册键
 }
 

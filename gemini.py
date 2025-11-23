@@ -194,22 +194,22 @@ class KenChenLLMGeminiTextNode:
     def INPUT_TYPES(s):
         config = get_gemini_config()
         default_params = config.get('default_params', {})
-        
+
         # 添加默认模型列表，防止配置加载失败
         default_models = [
             "gemini-2.0-flash-lite",
             "gemini-1.5-pro",
             "gemini-1.5-flash-8b",
         ]
-        
+
         models = config.get('models', {}).get('text_models', default_models)
         if not models:
             models = default_models
             print("[LLM Prompt] 警告: 配置文件中的文本模型列表为空，使用默认模型列表")
-        
+
         default_model = config.get('default_model', {}).get('text_gen', "gemini-2.0-flash-lite")
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
-        
+
         return {
             "required": {
                 "api_key": ("STRING", {"default": "", "multiline": False}),
@@ -232,16 +232,16 @@ class KenChenLLMGeminiTextNode:
     RETURN_NAMES = ("text",)
     FUNCTION = "generate_text"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
-    
+
     def generate_text(
         self,
         api_key,
         prompt,
         model,
         proxy,
-        temperature, 
-        top_p, 
-        top_k, 
+        temperature,
+        top_p,
+        top_k,
         max_output_tokens,
         seed,
     ):
@@ -249,7 +249,7 @@ class KenChenLLMGeminiTextNode:
             genai = get_google_genai()
             if genai is None:
                 return (f"错误: 未安装google-genai库，请运行: pip install google-genai",)
-            
+
             config = get_gemini_config()
             final_api_key = api_key.strip() if api_key.strip() else config.get('api_key', '')
             final_proxy = proxy.strip() if proxy.strip() else config.get('proxy', '')
@@ -261,10 +261,10 @@ class KenChenLLMGeminiTextNode:
                 _log_info(f"已设置代理: {final_proxy}")
             elif final_proxy and "None" in final_proxy:
                 _log_info("跳过无效代理设置")
-            
+
             # 使用新的API结构
             client = genai.Client(api_key=final_api_key)
-            
+
             # 准备生成配置
             generation_config = {
                 "temperature": temperature,
@@ -274,14 +274,14 @@ class KenChenLLMGeminiTextNode:
             }
             if seed > 0:
                 generation_config["seed"] = seed
-            
+
             # 生成文本
             response = client.models.generate_content(
                 model=model,
                 contents=[{"parts": [{"text": prompt}]}],
                 config=generation_config
             )
-            
+
             if response.candidates and response.candidates[0].content.parts:
                 text = response.candidates[0].content.parts[0].text
                 _log_info(f"KenChen LLM Gemini文本生成成功，模型: {model}")
@@ -303,26 +303,24 @@ class KenChenLLMGeminiMultimodalNode:
     def INPUT_TYPES(s):
         config = get_gemini_config()
         default_params = config.get('default_params', {})
-        
-        # 添加默认模型列表，防止配置加载失败
+
+        # 添加默认模型列表（优先最新 Gemini 3 Pro Preview）
         default_models = [
-            "gemini-1.5-flash",
-            "gemini-2.0-flash",
-            "gemini-2.0-flash-exp-image-generation",
-            "gemini-2.0-flash-thinking-exp-01-21",
-            "gemini-2.5-pro-exp-03-25",
-            "gemini-2.5-flash-preview-04-17",
+            "gemini-3-pro-preview",
             "gemini-2.5-pro-preview-05-06",
+            "gemini-2.5-flash-preview-04-17",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
         ]
-        
+
         models = config.get('models', {}).get('multimodal_models', default_models)
         if not models:
             models = default_models
             print("[LLM Prompt] 警告: 配置文件中的多模态模型列表为空，使用默认模型列表")
-        
-        default_model = config.get('default_model', {}).get('multimodal', "gemini-1.5-flash")
+
+        default_model = "gemini-3-pro-preview"
         default_proxy = config.get('proxy', "http://127.0.0.1:None")
-        
+
         return {
             "required": {
                 "api_key": ("STRING", {"default": "", "multiline": False}),
@@ -331,30 +329,25 @@ class KenChenLLMGeminiMultimodalNode:
                     models,
                     {"default": default_model},
                 ),
-                "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
-                "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
-                "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
-                "top_k": ("INT", {"default": default_params.get('top_k', 40), "min": 0, "max": 100}),
-                "max_output_tokens": ("INT", {"default": default_params.get('max_output_tokens', 2048), "min": 0, "max": 8192}),
-                "seed": ("INT", {"default": default_params.get('seed', 0), "min": 0, "max": 0xfffffff}),
+                "api_provider": (["google", "custom"], {"default": "google", "tooltip": "API提供者：google=官方；custom=自定义基础URL"}),
+                "base_url": ("STRING", {"default": "", "multiline": False, "tooltip": "当选择 custom 时填写，如 https://one.api4gpt.com/v1beta"}),
+                "max_output_tokens": ("INT", {"default": 8192, "min": 1, "max": 8192}),
+                "temperature": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0}),
+                "thinking_level": (["high", "low"], {"default": "high"}),
+                "media_resolution": (["Auto", "media_resolution_low", "media_resolution_medium", "media_resolution_high"], {"default": "Auto"})
             },
             "optional": {
                 "image": ("IMAGE",),
                 "audio": ("AUDIO",),
                 "video": ("VIDEO",),
-                "max_video_frames": ("INT", {
-                    "default": 10,
-                    "min": 1,
-                    "max": 100,
-                    "tooltip": "视频处理时最多提取的帧数。增加此值会提高视频分析质量，但会增加API成本和处理时间。建议值: 10-30"
-                }),
+                "system_instruction": ("STRING", {"default": "", "multiline": True})
             },
         }
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("multimodal_text",)  # 改为唯一的名称
     FUNCTION = "generate_multimodal"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
-    
+
     def generate_multimodal(
         self,
         api_key,
@@ -386,10 +379,10 @@ class KenChenLLMGeminiMultimodalNode:
                 _log_info(f"已设置代理: {final_proxy}")
             elif final_proxy and "None" in final_proxy:
                 _log_info("跳过无效代理设置")
-            
+
             # 使用新的API结构
             client = genai.Client(api_key=final_api_key)
-            
+
             # 检查模型能力
             _log_info(f"使用模型: {model}")
             if "image-generation" in model.lower():
@@ -398,7 +391,7 @@ class KenChenLLMGeminiMultimodalNode:
                 _log_info(f"使用 Flash 模型: {model}，支持多模态输入")
             else:
                 _log_info(f"使用模型: {model}")
-            
+
             # 准备生成配置
             generation_config = {
                 "temperature": temperature,
@@ -408,7 +401,7 @@ class KenChenLLMGeminiMultimodalNode:
             }
             if seed > 0:
                 generation_config["seed"] = seed
-            
+
             # 准备内容
             # 如果有视频输入，需要在提示词中添加视频上下文
             video_context_added = False
@@ -443,50 +436,50 @@ class KenChenLLMGeminiMultimodalNode:
                 if isinstance(image, torch.Tensor):
                     try:
                         _log_info(f"开始处理输入图像，原始形状: {image.shape}, 数据类型: {image.dtype}")
-                        
+
                         # 检查图像维度
                         if image.dim() == 4:
                             image = image[0]  # 取第一张图片
                             _log_info(f"4D图像，取第一张，新形状: {image.shape}")
-                        
+
                         # 检查图像形状
                         if image.dim() != 3:
                             _log_warning(f"图像维度不正确: {image.dim()}, 期望3维")
                             return (f"错误: 图像维度不正确，期望3维，实际{image.dim()}维",)
-                        
+
                         # 检查图像尺寸和通道数
                         if len(image.shape) == 3:
                             # 判断是CHW还是HWC格式
                             if image.shape[0] in [1, 3, 4]:  # CHW格式
                                 channels, height, width = image.shape
                                 _log_info(f"CHW格式图像 - 通道: {channels}, 高度: {height}, 宽度: {width}")
-                                
+
                                 # 检查是否是正常的图像格式
                                 if channels not in [1, 3, 4]:
                                     _log_warning(f"通道数异常: {channels}, 期望1,3,4")
                                     return (f"错误: 通道数异常: {channels}, 期望1,3,4",)
-                                
+
                                 if height < 10 or width < 10:
                                     _log_warning(f"图像尺寸太小: {height}x{width}")
                                     return (f"错误: 图像尺寸太小: {height}x{width}",)
-                                    
+
                             elif image.shape[2] in [1, 3, 4]:  # HWC格式
                                 height, width, channels = image.shape
                                 _log_info(f"HWC格式图像 - 高度: {height}, 宽度: {width}, 通道: {channels}")
-                                
+
                                 # 检查是否是正常的图像格式
                                 if channels not in [1, 3, 4]:
                                     _log_warning(f"通道数异常: {channels}, 期望1,3,4")
                                     return (f"错误: 通道数异常: {channels}, 期望1,3,4",)
-                                
+
                                 if height < 10 or width < 10:
                                     _log_warning(f"图像尺寸太小: {height}x{width}")
                                     return (f"错误: 图像尺寸太小: {height}x{width}",)
-                                    
+
                             else:
                                 _log_warning(f"无法识别的图像格式: {image.shape}")
                                 return (f"错误: 无法识别的图像格式: {image.shape}",)
-                        
+
                         # 转换为PIL图像
                         try:
                             # 确保是CHW格式
@@ -495,37 +488,37 @@ class KenChenLLMGeminiMultimodalNode:
                             else:
                                 # 如果已经是HWC格式，直接转换
                                 image_np = image.cpu().numpy()
-                            
+
                             _log_info(f"转换为numpy数组，形状: {image_np.shape}, 数据类型: {image_np.dtype}")
-                            
+
                             # 检查数据类型和范围
                             if image_np.dtype != np.float32 and image_np.dtype != np.float64:
                                 image_np = image_np.astype(np.float32)
-                            
+
                             # 确保值在0-1范围内
                             if image_np.max() > 1.0:
                                 image_np = image_np / 255.0
-                            
+
                             # 转换为uint8
                             image_np = (image_np * 255).astype(np.uint8)
-                            
+
                             # 处理单通道图像
                             if image_np.shape[2] == 1:
                                 image_np = np.repeat(image_np, 3, axis=2)
                                 _log_info("单通道图像转换为RGB")
-                            
+
                             # 处理RGBA图像
                             if image_np.shape[2] == 4:
                                 image_np = image_np[:, :, :3]
                                 _log_info("RGBA图像转换为RGB")
-                            
+
                             pil_image = Image.fromarray(image_np)
                             _log_info(f"成功创建PIL图像，尺寸: {pil_image.size}, 模式: {pil_image.mode}")
-                            
+
                         except Exception as permute_error:
                             _log_error(f"图像转换失败: {permute_error}")
                             return (f"错误: 图像转换失败: {permute_error}",)
-                        
+
                         # 转换为base64
                         buffer = BytesIO()
                         pil_image.save(buffer, format='PNG')
@@ -537,23 +530,23 @@ class KenChenLLMGeminiMultimodalNode:
                             }
                         })
                         _log_info(f"成功处理输入图像，最终尺寸: {pil_image.size}")
-                        
+
                     except Exception as e:
                         _log_error(f"处理输入图像时出错: {e}")
                         return (f"错误: 处理输入图像失败: {e}",)
-            
+
             # 处理音频
             if audio is not None:
                 _log_info(f"检测到音频输入，类型: {type(audio)}")
-                
+
                 # 保存原始音频字典以便获取采样率
                 original_audio_dict = None
-                
+
                 # 处理字典格式的音频输入（ComfyUI音频节点输出）
                 if isinstance(audio, dict):
                     _log_info(f"音频输入为字典格式，键: {list(audio.keys())}")
                     original_audio_dict = audio  # 保存原始字典
-                    
+
                     # 尝试从字典中提取音频数据
                     audio_tensor = None
                     if 'waveform' in audio:
@@ -571,23 +564,23 @@ class KenChenLLMGeminiMultimodalNode:
                     else:
                         _log_warning(f"无法从音频字典中找到音频数据，可用键: {list(audio.keys())}")
                         return (f"错误: 无法从音频字典中找到音频数据，可用键: {list(audio.keys())}",)
-                    
+
                     # 如果提取的是numpy数组，转换为tensor
                     if isinstance(audio_tensor, np.ndarray):
                         audio_tensor = torch.from_numpy(audio_tensor)
                         _log_info("将numpy数组转换为torch.Tensor")
-                    
+
                     if not isinstance(audio_tensor, torch.Tensor):
                         _log_warning(f"提取的音频数据类型不正确: {type(audio_tensor)}, 期望 torch.Tensor")
                         return (f"错误: 提取的音频数据类型不正确: {type(audio_tensor)}, 期望 torch.Tensor",)
-                    
+
                     audio = audio_tensor  # 替换为提取的tensor
-                
+
                 # 处理torch.Tensor格式的音频
                 if isinstance(audio, torch.Tensor):
                     try:
                         _log_info(f"开始处理输入音频，原始形状: {audio.shape}, 数据类型: {audio.dtype}")
-                        
+
                         # 检查音频维度
                         if audio.dim() == 1:
                             # 单声道音频
@@ -614,27 +607,27 @@ class KenChenLLMGeminiMultimodalNode:
                         else:
                             _log_warning(f"音频维度不正确: {audio.dim()}, 期望1、2或3维")
                             return (f"错误: 音频维度不正确，期望1、2或3维，实际{audio.dim()}维",)
-                        
+
                         # 检查音频长度
                         if len(audio_np) < 1000:
                             _log_warning(f"音频太短: {len(audio_np)} 采样点")
                             return (f"错误: 音频太短: {len(audio_np)} 采样点",)
-                        
+
                         # 确保数据类型正确
                         if audio_np.dtype != np.float32 and audio_np.dtype != np.float64:
                             audio_np = audio_np.astype(np.float32)
-                        
+
                         # 确保值在合理范围内
                         if audio_np.max() > 1.0 or audio_np.min() < -1.0:
                             audio_np = np.clip(audio_np, -1.0, 1.0)
                             _log_info("音频值已裁剪到 [-1, 1] 范围")
-                        
+
                         # 获取采样率（如果原始音频字典中有的话）
                         sample_rate = 44100  # 默认采样率
                         if original_audio_dict and 'sample_rate' in original_audio_dict:
                             sample_rate = original_audio_dict['sample_rate']
                             _log_info(f"使用原始采样率: {sample_rate} Hz")
-                        
+
                         # 转换为WAV字节
                         buffer = BytesIO()
                         try:
@@ -652,7 +645,7 @@ class KenChenLLMGeminiMultimodalNode:
                         except ImportError:
                             _log_error("scipy 库未安装，无法处理音频")
                             return (f"错误: scipy 库未安装，请运行: pip install scipy",)
-                        
+
                     except Exception as e:
                         _log_error(f"处理输入音频时出错: {e}")
                         return (f"错误: 处理输入音频失败: {e}",)
@@ -661,7 +654,7 @@ class KenChenLLMGeminiMultimodalNode:
                     return (f"错误: 音频输入类型不正确: {type(audio)}, 期望 dict 或 torch.Tensor",)
             else:
                 _log_info("没有音频输入")
-            
+
             # 🎬 处理视频 - 使用 File API
             uploaded_video_file = None
             temp_video_path = None
@@ -741,7 +734,7 @@ class KenChenLLMGeminiMultimodalNode:
                     import traceback
                     traceback.print_exc()
                     temp_video_path = None
-            
+
             # 🎬 如果有视频文件，使用 SDK 调用
             if uploaded_video_file and GENAI_SDK_AVAILABLE:
                 _log_info(f"🔍 使用 Gemini SDK 进行视频分析...")
@@ -851,7 +844,7 @@ class KenChenLLMGeminiMultimodalNode:
                     _log_info("🗑️ 临时视频文件已删除")
                 except:
                     pass
-            
+
             if response.candidates and response.candidates[0].content.parts:
                 text = response.candidates[0].content.parts[0].text
                 _log_info(f"KenChen LLM Gemini多模态生成成功，模型: {model}")
@@ -873,20 +866,21 @@ class KenChenLLMGeminiImageGenerationNode:
     def INPUT_TYPES(s):
         config = get_gemini_config()
         default_params = config.get('default_params', {})
-        
-        # 图像生成专用模型
+
+        # 图像生成专用模型（将 Gemini 3 Pro Image 作为首选）
         default_models = [
+            "gemini-3-pro-image-preview",
             "gemini-2.0-flash-preview-image-generation",
             "gemini-2.0-flash-exp-image-generation",
         ]
-        
+
         models = config.get('models', {}).get('image_gen_models', default_models)
         if not models:
             models = default_models
-        
-        default_model = "gemini-2.0-flash-preview-image-generation"
+
+        default_model = "gemini-3-pro-image-preview"
         default_proxy = "http://127.0.0.1:None"
-        
+
         return {
             "required": {
                 "api_key": ("STRING", {"default": "", "multiline": False}),
@@ -898,6 +892,11 @@ class KenChenLLMGeminiImageGenerationNode:
                 "top_k": ("INT", {"default": 40, "min": 0, "max": 100}),
                 "max_output_tokens": ("INT", {"default": 2048, "min": 0, "max": 32768}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xfffffff}),
+                "enable_google_search": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "🔍 启用 Google 搜索接地（Grounding）\n模型将自动搜索实时信息来辅助图像生成"
+                }),
+
             },
             "optional": {
                 "image": ("IMAGE",),
@@ -907,22 +906,29 @@ class KenChenLLMGeminiImageGenerationNode:
     RETURN_NAMES = ("generation_text", "generated_image",)
     FUNCTION = "generate_image"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
-    
-    def generate_image(self, api_key, prompt, model, proxy, temperature, top_p, top_k, max_output_tokens, seed, image=None):
+
+    def generate_image(self, api_key, prompt, model, proxy, temperature, top_p, top_k, max_output_tokens, seed, enable_google_search=False, image=None):
         try:
             genai = get_google_genai()
             if genai is None:
                 dummy_image = torch.zeros(1, 512, 512, 3, dtype=torch.float32)
                 return (f"错误: 未安装google-genai库，请运行: pip install google-genai", dummy_image)
-            
+
             config = get_gemini_config()
             final_api_key = api_key.strip() if api_key.strip() else config.get('api_key', '')
             if not final_api_key:
                 dummy_image = torch.zeros(1, 512, 512, 3, dtype=torch.float32)
                 return (f"错误: 请提供Gemini API Key", dummy_image)
-            
+
+            # 设置代理（如果提供）
+            final_proxy = proxy.strip() if proxy.strip() else config.get('proxy', '')
+            if final_proxy and final_proxy.strip() and "None" not in final_proxy:
+                os.environ['HTTPS_PROXY'] = final_proxy
+                os.environ['HTTP_PROXY'] = final_proxy
+                _log_info(f"已设置代理: {final_proxy}")
+
             client = genai.Client(api_key=final_api_key)
-            
+
             generation_config = {
                 "temperature": temperature,
                 "top_p": top_p,
@@ -932,33 +938,40 @@ class KenChenLLMGeminiImageGenerationNode:
             }
             if seed > 0:
                 generation_config["seed"] = seed
-            
+
+            # 准备 tools（Google Search Grounding）
+            tools = None
+            if enable_google_search:
+                from google.genai import types
+                tools = [types.Tool(google_search=types.GoogleSearch())]
+                _log_info("🔍 已启用 Google Search Grounding - 模型将自动搜索实时信息来辅助图像生成")
+
             content_parts = [{"text": prompt}]
-            
+
             # 处理输入图像（图生图功能）
             if image is not None:
                 if isinstance(image, torch.Tensor):
                     if image.dim() == 4:
                         image = image[0]
-                    
+
                     if image.shape[0] in [1, 3, 4]:
                         image_np = image.permute(1, 2, 0).cpu().numpy()
                     else:
                         image_np = image.cpu().numpy()
-                    
+
                     if image_np.dtype != np.float32:
                         image_np = image_np.astype(np.float32)
-                    
+
                     if image_np.max() > 1.0:
                         image_np = image_np / 255.0
-                    
+
                     image_np = (image_np * 255).astype(np.uint8)
-                    
+
                     if image_np.shape[2] == 1:
                         image_np = np.repeat(image_np, 3, axis=2)
                     elif image_np.shape[2] == 4:
                         image_np = image_np[:, :, :3]
-                    
+
                     pil_image = Image.fromarray(image_np)
                     buffer = BytesIO()
                     pil_image.save(buffer, format='PNG')
@@ -969,16 +982,51 @@ class KenChenLLMGeminiImageGenerationNode:
                             "data": img_base64
                         }
                     })
-            
+
+            # 构建 GenerateContentConfig
+            from google.genai import types
+            config_obj = types.GenerateContentConfig(**generation_config)
+
+            # 如果启用了 Google Search，添加 tools
+            if tools:
+                config_obj.tools = tools
+
+            # 按官方用法：仅在 config 中设置 tools，不在顶层传递 tools 参数
             response = client.models.generate_content(
                 model=model,
                 contents=[{"parts": content_parts}],
-                config=generation_config
+                config=config_obj
             )
-            
+
             if response.candidates and response.candidates[0].content.parts:
                 text = response.candidates[0].content.parts[0].text if response.candidates[0].content.parts[0].text else "图像生成完成"
-                
+
+                # 检查并输出 Grounding Metadata
+                if enable_google_search and hasattr(response.candidates[0], 'grounding_metadata') and response.candidates[0].grounding_metadata:
+                    grounding_metadata = response.candidates[0].grounding_metadata
+                    _log_info("=" * 60)
+                    _log_info("🔍 Google Search Grounding 结果:")
+
+                    # 输出搜索查询
+                    if hasattr(grounding_metadata, 'web_search_queries') and grounding_metadata.web_search_queries:
+                        _log_info(f"🔍 搜索查询: {list(grounding_metadata.web_search_queries)}")
+
+                    # 输出引用来源
+                    if hasattr(grounding_metadata, 'grounding_chunks') and grounding_metadata.grounding_chunks:
+                        _log_info(f"📚 引用来源数量: {len(grounding_metadata.grounding_chunks)}")
+                        for i, chunk in enumerate(grounding_metadata.grounding_chunks[:5]):  # 只显示前5个
+                            if hasattr(chunk, 'web') and chunk.web:
+                                _log_info(f"  [{i+1}] {chunk.web.title}: {chunk.web.uri}")
+
+                    # 输出支持信息
+                    if hasattr(grounding_metadata, 'grounding_supports') and grounding_metadata.grounding_supports:
+                        _log_info(f"🔗 文本引用数量: {len(grounding_metadata.grounding_supports)}")
+
+                    _log_info("=" * 60)
+                else:
+                    if enable_google_search:
+                        _log_info("ℹ️ 模型未使用 Google Search（可能认为不需要搜索）")
+
                 for part in response.candidates[0].content.parts:
                     if hasattr(part, 'inline_data') and part.inline_data and part.inline_data.mime_type.startswith('image/'):
                         try:
@@ -986,30 +1034,30 @@ class KenChenLLMGeminiImageGenerationNode:
                                 img_data = part.inline_data.data
                             else:
                                 img_data = base64.b64decode(part.inline_data.data)
-                            
+
                             pil_image = Image.open(BytesIO(img_data))
                             img_array = np.array(pil_image)
-                            
+
                             if len(img_array.shape) == 3 and img_array.shape[2] == 4:
                                 img_array = img_array[:, :, :3]
-                            
+
                             img_tensor = torch.from_numpy(img_array).float() / 255.0
                             if len(img_tensor.shape) == 3 and img_tensor.shape[2] == 3:
                                 img_tensor = img_tensor.unsqueeze(0)
                             else:
                                 img_tensor = img_tensor.permute(1, 2, 0).unsqueeze(0)
-                            
+
                             return (text, img_tensor)
                         except Exception as img_error:
                             _log_error(f"处理生成的图像时出错: {img_error}")
                             continue
-                
+
                 dummy_image = torch.zeros(1, 512, 512, 3, dtype=torch.float32)
                 return (text, dummy_image)
-            
+
             dummy_image = torch.zeros(1, 512, 512, 3, dtype=torch.float32)
             return (f"错误: 未生成有效图像", dummy_image)
-            
+
         except Exception as e:
             error_msg = str(e)
             if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
@@ -1024,21 +1072,21 @@ class KenChenLLMGeminiImageAnalysisNode:
     def INPUT_TYPES(s):
         config = get_gemini_config()
         default_params = config.get('default_params', {})
-        
+
         # 图像分析专用模型
         default_models = [
             "gemini-1.5-flash",
             "gemini-2.0-flash",
             "gemini-1.5-pro",
         ]
-        
+
         models = config.get('models', {}).get('multimodal_models', default_models)
         if not models:
             models = default_models
-        
+
         default_model = "gemini-1.5-flash"
         default_proxy = "http://127.0.0.1:None"
-        
+
         return {
             "required": {
                 "api_key": ("STRING", {"default": "", "multiline": False}),
@@ -1059,23 +1107,23 @@ class KenChenLLMGeminiImageAnalysisNode:
     RETURN_NAMES = ("analysis_text",)
     FUNCTION = "analyze_image"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
-    
+
     def analyze_image(self, api_key, prompt, model, proxy, temperature, top_p, top_k, max_output_tokens, seed, image=None):
         try:
             genai = get_google_genai()
             if genai is None:
                 return (f"错误: 未安装google-genai库，请运行: pip install google-genai",)
-            
+
             config = get_gemini_config()
             final_api_key = api_key.strip() if api_key.strip() else config.get('api_key', '')
             if not final_api_key:
                 return (f"错误: 请提供Gemini API Key",)
-            
+
             if image is None:
                 return (f"错误: 请提供要分析的图像",)
-            
+
             client = genai.Client(api_key=final_api_key)
-            
+
             generation_config = {
                 "temperature": temperature,
                 "top_p": top_p,
@@ -1084,32 +1132,32 @@ class KenChenLLMGeminiImageAnalysisNode:
             }
             if seed > 0:
                 generation_config["seed"] = seed
-            
+
             content_parts = [{"text": prompt}]
-            
+
             # 处理输入图像
             if isinstance(image, torch.Tensor):
                 if image.dim() == 4:
                     image = image[0]
-                
+
                 if image.shape[0] in [1, 3, 4]:
                     image_np = image.permute(1, 2, 0).cpu().numpy()
                 else:
                     image_np = image.cpu().numpy()
-                
+
                 if image_np.dtype != np.float32:
                     image_np = image_np.astype(np.float32)
-                
+
                 if image_np.max() > 1.0:
                     image_np = image_np / 255.0
-                
+
                 image_np = (image_np * 255).astype(np.uint8)
-                
+
                 if image_np.shape[2] == 1:
                     image_np = np.repeat(image_np, 3, axis=2)
                 elif image_np.shape[2] == 4:
                     image_np = image_np[:, :, :3]
-                
+
                 pil_image = Image.fromarray(image_np)
                 buffer = BytesIO()
                 pil_image.save(buffer, format='PNG')
@@ -1120,20 +1168,20 @@ class KenChenLLMGeminiImageAnalysisNode:
                         "data": img_base64
                     }
                 })
-            
+
             response = client.models.generate_content(
                 model=model,
                 contents=[{"parts": content_parts}],
                 config=generation_config
             )
-            
+
             if response.candidates and response.candidates[0].content.parts:
                 text = response.candidates[0].content.parts[0].text
                 _log_info(f"KenChen LLM Gemini图像分析成功，模型: {model}")
                 return (text,)
             else:
                 return (f"错误: 未获得有效响应",)
-                
+
         except Exception as e:
             error_msg = str(e)
             if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
@@ -1144,17 +1192,278 @@ class KenChenLLMGeminiImageAnalysisNode:
                 _log_error(error_msg)
                 return (error_msg,)
 
-# 节点映射
+# 节点映射将于文件末尾定义，仅暴露新版 Multimodal 节点
+class KenChenLLMGeminiMultimodalNode:
+    @classmethod
+    def INPUT_TYPES(s):
+        # 参照 ComfyUI-Gemini-3 多模态分析节点的接口样式
+        import os
+        # 动态从 ComfyUI-Gemini-3/config.json 汇总各供应者支持的模型，用于为 3-pro/3-pro-thinking 添加标识
+        base_models = [
+            "gemini-3-pro-preview",
+            "gemini-3-pro-preview-thinking",
+            "gemini-2.5-pro-preview-05-06",
+            "gemini-2.5-flash-preview-04-17",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+        ]
+        labelled = []
+        providers_by_model = {}
+        cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ComfyUI-Gemini-3", "config.json")
+        try:
+            if os.path.exists(cfg_path):
+                import json
+                with open(cfg_path, 'r', encoding='utf-8') as _f:
+                    _cfg = json.load(_f)
+                    for prov, detail in (_cfg.get("api_providers", {}) or {}).items():
+                        for m in (detail.get("models") or []):
+                            providers_by_model.setdefault(m, []).append(prov)
+        except Exception:
+            pass
+
+        for m in base_models:
+            if m == "gemini-3-pro-preview-thinking":
+                provs = providers_by_model.get(m, [])
+                tag = "[all]" if not provs else f"[{ '/'.join(provs) }]"
+                labelled.append(f"{m} {tag}")
+            else:
+                labelled.append(f"{m} [all]")
+
+        default_label = labelled[0]
+        return {
+            "required": {
+                "prompt": ("STRING", {"default": "请对所有提供的媒体进行详细的综合分析。", "multiline": True}),
+                "model": (labelled, {"default": default_label}),
+                "api_provider": (["google", "comet", "T8的贞贞AI工坊", "comfly", "aabao", "custom"], {"default": "google"}),
+                "api_key": ("STRING", {"default": "", "multiline": False}),
+                "base_url": ("STRING", {"default": "", "multiline": False, "tooltip": "custom时填写，如 https://one.api4gpt.com/v1beta"}),
+                "max_output_tokens": ("INT", {"default": 8192, "min": 1, "max": 8192}),
+                "temperature": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0}),
+                "thinking_level": (["high", "low"], {"default": "high"}),
+                "media_resolution": (["Auto", "media_resolution_low", "media_resolution_medium", "media_resolution_high"], {"default": "Auto"}),
+            },
+            "optional": {
+                "image_1": ("IMAGE",),
+                "image_2": ("IMAGE",),
+                "image_3": ("IMAGE",),
+                "image_4": ("IMAGE",),
+                "video": ("VIDEO",),
+                "audio": ("AUDIO",),
+                "system_instruction": ("STRING", {"default": "", "multiline": True}),
+            },
+        }
+
+    RETURN_TYPES = ("STRING", "STRING", "STRING")
+    RETURN_NAMES = ("response", "thought_signature", "usage_info")
+    FUNCTION = "analyze_multimodal_v3"
+    CATEGORY = "Ken-Chen/LLM-Nano-Banana"
+
+    def analyze_multimodal_v3(
+        self,
+        api_key,
+        prompt,
+        model, # model will come with label, e.g., "gemini-3-pro-preview [google/comet]"
+        api_provider,
+        base_url,
+        max_output_tokens,
+        temperature,
+        thinking_level,
+        media_resolution,
+        image_1=None,
+        image_2=None,
+        image_3=None,
+        image_4=None,
+        video=None,
+        audio=None,
+        system_instruction="",
+    ):
+        # 从带标签的模型名称中提取真实模型ID
+        model_id = model.split(' ')[0]
+        try:
+            import base64, json, os
+            import numpy as np
+            import requests
+            from io import BytesIO
+            from PIL import Image
+            import torch
+
+            # 1) 内容 parts
+            parts = [{"text": prompt}]
+
+            # image -> base64 (支持最多4张图)
+            for image in [image_1, image_2, image_3, image_4]:
+                if image is not None and isinstance(image, torch.Tensor):
+                    img = image
+                    if img.dim() == 4:
+                        img = img[0]
+                    if img.shape[0] in [1,3,4]:
+                        img_np = img.permute(1,2,0).cpu().numpy()
+                    else:
+                        img_np = img.cpu().numpy()
+                    if img_np.dtype != np.float32:
+                        img_np = img_np.astype(np.float32)
+                    if img_np.max() > 1.0:
+                        img_np = img_np / 255.0
+                    img_np = (img_np * 255).astype(np.uint8)
+                    if img_np.shape[2] == 1:
+                        img_np = np.repeat(img_np, 3, axis=2)
+                    if img_np.shape[2] == 4:
+                        img_np = img_np[:,:,:3]
+                    pil = Image.fromarray(img_np)
+                    buf = BytesIO()
+                    pil.save(buf, format='PNG')
+                    img_b64 = base64.b64encode(buf.getvalue()).decode()
+                    part = {"inline_data": {"mime_type": "image/png", "data": img_b64}}
+                    if media_resolution != "Auto":
+                        part["media_resolution"] = {"level": media_resolution}
+                    parts.append(part)
+
+            # video -> 临时保存/读取为mp4
+            def _to_mp4_bytes(video_input):
+                try:
+                    if isinstance(video_input, str) and os.path.exists(video_input):
+                        with open(video_input, 'rb') as f:
+                            return f.read()
+                    import tempfile
+                    if isinstance(video_input, torch.Tensor) and video_input.dim() == 4:
+                        tmp = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
+                        path = tmp.name
+                        tmp.close()
+                        saved = save_video_tensor_to_mp4(video_input, path, fps=30)
+                        if saved and os.path.exists(saved):
+                            with open(saved, 'rb') as f:
+                                data = f.read()
+                            try:
+                                os.unlink(saved)
+                            except Exception:
+                                pass
+                            return data
+                except Exception:
+                    return None
+                return None
+
+            if video is not None:
+                vb = _to_mp4_bytes(video)
+                if vb:
+                    v_b64 = base64.b64encode(vb).decode()
+                    part = {"inline_data": {"mime_type": "video/mp4", "data": v_b64}}
+                    if media_resolution != "Auto":
+                        part["media_resolution"] = {"level": media_resolution}
+                    parts.append(part)
+
+            # audio (尽量支持字典 waveform+sample_rate；否则忽略)
+            if isinstance(audio, dict) and 'waveform' in audio and 'sample_rate' in audio:
+                try:
+                    import scipy.io.wavfile as wavfile
+                    import numpy as np
+                    wf = audio['waveform']
+                    sr = int(audio['sample_rate'])
+                    if isinstance(wf, torch.Tensor):
+                        wf = wf.cpu().numpy()
+                    wf = np.squeeze(wf)
+                    from io import BytesIO as _BIO
+                    b = _BIO()
+                    wavfile.write(b, sr, (wf * 32767).astype(np.int16))
+                    a_b64 = base64.b64encode(b.getvalue()).decode()
+                    parts.append({"inline_data": {"mime_type": "audio/wav", "data": a_b64}})
+                except Exception:
+                    pass
+
+            contents = [{"role": "user", "parts": parts}]
+
+            # 2) generationConfig（按REST格式）
+            gen_cfg = {
+                "temperature": float(temperature),
+                "maxOutputTokens": int(max_output_tokens),
+                "thinkingConfig": {"thinkingLevel": thinking_level},
+            }
+
+            # 3) systemInstruction（可选）
+            sys_inst = None
+            if system_instruction and system_instruction.strip():
+                sys_inst = {"role": "system", "parts": [{"text": system_instruction.strip()}]}
+
+            # 4) 根据提供者解析 API Key 与 Base URL（参考 ComfyUI-Gemini-3/config.json）
+            final_api_key = (api_key or "").strip()
+            cfg_api_key = None
+            cfg_base_url = None
+            try:
+                cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ComfyUI-Gemini-3", "config.json")
+                if os.path.exists(cfg_path):
+                    with open(cfg_path, 'r', encoding='utf-8') as _f:
+                        _cfg = json.load(_f)
+                        provs = _cfg.get("api_providers", {})
+                        if api_provider in provs:
+                            cfg_api_key = (provs[api_provider].get("api_key") or "").strip()
+                            cfg_base_url = (provs[api_provider].get("base_url") or "").strip()
+            except Exception:
+                pass
+
+            if not final_api_key:
+                final_api_key = cfg_api_key or ""
+            if not final_api_key:
+                return ("错误: 需要 API Key（在节点或 ComfyUI-Gemini-3/config.json 中提供）", "", "")
+
+            # 默认 base url（当用户未填且配置文件也没有时提供合理默认）
+            provider_defaults = {
+                "google": "https://generativelanguage.googleapis.com",
+                "comet": "https://api.cometapi.com",
+                "T8的贞贞AI工坊": "https://ai.t8star.cn/v1",
+                "comfly": "https://ai.comfly.chat/v1",
+                "aabao": "https://api.aabao.top/v1",
+            }
+            final_base = (base_url or cfg_base_url or provider_defaults.get(api_provider) or "").strip()
+
+            # 5) 构建端点 URL
+            def _build_url():
+                if api_provider == "google":
+                    ver = "v1alpha" if media_resolution != "Auto" else "v1beta"
+                    return f"https://generativelanguage.googleapis.com/{ver}/models/{model_id}:generateContent"
+                u = (final_base or "https://generativelanguage.googleapis.com/v1beta").rstrip('/')
+                if '/models/' in u and ':generateContent' in u:
+                    return u
+                # 非 google 默认走 v1 路径（多数镜像与代理使用 /v1）
+                if u.endswith('/v1') or u.endswith('/v1beta') or u.endswith('/v1alpha'):
+                    return f"{u}/models/{model_id}:generateContent"
+                # 无版本后缀，非 google 使用 v1，google 使用 v1beta
+                return f"{u}/v1/models/{model_id}:generateContent"
+
+            url = _build_url()
+
+            # 6) 请求头：google 用 x-goog-api-key；其他供应者常用 Authorization: Bearer
+            headers = {"Content-Type": "application/json"}
+            if api_provider == "google":
+                headers["x-goog-api-key"] = final_api_key
+            else:
+                headers["Authorization"] = f"Bearer {final_api_key}"
+
+            payload = {"contents": contents, "generationConfig": gen_cfg}
+            if sys_inst:
+                payload["systemInstruction"] = sys_inst
+
+            resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=120)
+            if resp.status_code != 200:
+                return (f"HTTP {resp.status_code}: {resp.text}", "", "")
+            data = resp.json()
+
+            if not data.get('candidates'):
+                return ("错误: 无候选结果", "", "")
+
+            cand = data['candidates'][0]
+            parts_out = cand.get('content', {}).get('parts', [])
+            out_text = "".join([p.get('text','') for p in parts_out if isinstance(p, dict)])
+            sig = "".join([p.get('thoughtSignature','') for p in parts_out if isinstance(p, dict)])
+            usage_info = json.dumps(data.get('usageMetadata', {}), ensure_ascii=False, indent=2)
+            return (out_text, sig, usage_info)
+        except Exception as e:
+            return (f"错误: {e}", "", "")
+
+
+# 仅导出新版多模态节点
 NODE_CLASS_MAPPINGS = {
-    "KenChenLLMPromptGeminiText": KenChenLLMGeminiTextNode,
     "KenChenLLMPromptGeminiMultimodal": KenChenLLMGeminiMultimodalNode,
-    "KenChenLLMPromptGeminiImageGeneration": KenChenLLMGeminiImageGenerationNode,
-    "KenChenLLMPromptGeminiImageAnalysis": KenChenLLMGeminiImageAnalysisNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "KenChenLLMPromptGeminiText": "Gemini-Text",
     "KenChenLLMPromptGeminiMultimodal": "Gemini-Multimodal",
-    "KenChenLLMPromptGeminiImageGeneration": "Gemini-Image-Generation",
-    "KenChenLLMPromptGeminiImageAnalysis": "Gemini-Image-Analysis",
 }
