@@ -1,17 +1,17 @@
 {
-    "api_key": "AIzaSyCkJx-iPkonwAqKBqY8mpJXOmXcDuUUWfQ",
+    "api_key": "",
     "base_url": "https://generativelanguage.googleapis.com",
     "proxy": "http://127.0.0.1:None",
     "api_providers": {
         "google": {
-            "api_key": "AIzaSyCkJx-iPkonwAqKBqY8mpJXOmXcDuUUWfQ",
+            "api_key": "",
             "base_url": "https://generativelanguage.googleapis.com",
             "models": [
                 "gemini-3-pro-preview"
             ]
         },
         "comet": {
-            "api_key": "sk-tdbj8yCYH3p8uO1TYiEnKkBwJBNBIWUr3cLsW2aTjuvWi79f",
+            "api_key": "",
             "base_url": "https://api.cometapi.com",
             "models": [
                 "gemini-3-pro-preview",
@@ -19,7 +19,7 @@
             ]
         },
         "T8的贞贞AI工坊": {
-            "api_key": "sk-NEF5kPDaUTzpLPwb9YLHHZtPeauRQBnPzc8MI4I7LJ3oadpG",
+            "api_key": "",
             "base_url": "https://ai.t8star.cn/v1",
             "models": [
                 "gemini-3-pro-preview",
@@ -27,7 +27,7 @@
             ]
         },
         "comfly": {
-            "api_key": "sk-9wjYfsOrd1WxTd61AGxCcmI3tAubLnUvDOwaiuWE25XtYHNx",
+            "api_key": "",
             "base_url": "https://ai.comfly.chat/v1/",
             "models": [
                 "gemini-3-pro-preview",
@@ -35,7 +35,7 @@
             ]
         },
         "aabao": {
-            "api_key": "sk-PY9TXCVwMzFWjGa9zmqagGpiZzguYYyNMCtCDv7Qn983G9PY",
+            "api_key": "",
             "base_url": "https://api.aabao.top/v1",
             "models": [
                 "gemini-3-pro-preview",
