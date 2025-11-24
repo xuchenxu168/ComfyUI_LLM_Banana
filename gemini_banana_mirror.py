@@ -4145,12 +4145,8 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "multiline": False,
                     "placeholder": "镜像站API密钥（可选，留空时自动获取）"
                 }),
-                "base_url": ("STRING", {
-                    "default": "",
-                    "multiline": False,
-                    "placeholder": "custom时填写，如 https://one.api4gpt.com",
-                    "tooltip": "仅在选择 custom 镜像站时需要填写"
-                }),
+                "prompt": ("STRING", {"default": "A beautiful mountain landscape at sunset", "multiline": True}),
+                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
                 # 🚀 Nano Banana 2 智能版本切换 + 完整模型支持
                 "model": ([
                     "Auto (Latest Gemini 3 Pro) 🤖",  # 智能选择最新版本
@@ -4173,8 +4169,6 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "google/gemini-2.5-flash-image [OpenRouter]",
                     "google/gemini-2.5-flash-image-preview [OpenRouter]"
                 ], {"default": "Auto (Latest Gemini 3 Pro) 🤖"}),
-                "prompt": ("STRING", {"default": "A beautiful mountain landscape at sunset", "multiline": True}),
-                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
 
                 # 📐 Gemini官方API图像控制参数
@@ -4348,7 +4342,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             traceback.print_exc()
             pass
 
-    def generate_image(self, mirror_site: str, api_key: str, base_url: str, prompt: str, negative_prompt: str, model: str,
+    def generate_image(self, mirror_site: str, api_key: str, prompt: str, negative_prompt: str, model: str,
                       proxy: str, aspect_ratio: str, response_modality: str, output_resolution: str, upscale_factor: str, gigapixel_model: str,
                       quality: str, style: str, detail_level: str, camera_control: str, lighting_control: str,
                       template_selection: str, temperature: float, top_p: float, top_k: int,
@@ -4403,22 +4397,14 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
             print(f"💡 只有 Nano Banana 2 (gemini-3-pro-image/gemini-3-pro-image-preview) 支持 1K/2K/4K 分辨率控制")
 
         # 根据镜像站从配置获取URL和API Key
-        if mirror_site == "custom":
-            # custom 镜像站使用用户提供的 base_url
-            api_url = base_url.strip()
-            if not api_url:
-                raise ValueError("选择 custom 镜像站时，必须填写 base_url 参数")
-            print(f"🔗 使用自定义镜像站URL: {api_url}")
-            site_config = {"url": api_url, "api_key": ""}
-        else:
-            site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
-            api_url = site_config.get("url", "").strip()
-            if site_config.get("api_key") and not api_key.strip():
-                api_key = site_config["api_key"]
-                print(f"🔑 自动使用镜像站API Key: {api_key[:8]}...")
-            if not api_url:
-                raise ValueError("配置文件中缺少该镜像站的API URL")
-            print(f"🔗 自动使用镜像站URL: {api_url}")
+        site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
+        api_url = site_config.get("url", "").strip()
+        if site_config.get("api_key") and not api_key.strip():
+            api_key = site_config["api_key"]
+            print(f"🔑 自动使用镜像站API Key: {api_key[:8]}...")
+        if not api_url:
+            raise ValueError("配置文件中缺少该镜像站的API URL")
+        print(f"🔗 自动使用镜像站URL: {api_url}")
 
         # 验证API URL
         if not validate_api_url(api_url):
@@ -5869,13 +5855,10 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "multiline": False,
                     "placeholder": "镜像站API密钥（可选，留空时自动获取）"
                 }),
-                "base_url": ("STRING", {
-                    "default": "",
-                    "multiline": False,
-                    "placeholder": "custom时填写，如 https://one.api4gpt.com",
-                    "tooltip": "仅在选择 custom 镜像站时需要填写"
-                }),
-                # 🚀 Nano Banana 2 智能版本切换 + 完整模型支持（位置提前到 base_url 之后）
+                "image": ("IMAGE",),
+                "prompt": ("STRING", {"default": "Can you add a llama next to me?", "multiline": True}),
+                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
+                # 🚀 Nano Banana 2 智能版本切换 + 完整模型支持
                 "model": ([
                     "Auto (Latest Gemini 3 Pro) 🤖",  # 智能选择最新版本
 
@@ -5897,9 +5880,6 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "google/gemini-2.5-flash-image [OpenRouter]",
                     "google/gemini-2.5-flash-image-preview [OpenRouter]"
                 ], {"default": "Auto (Latest Gemini 3 Pro) 🤖"}),
-                "image": ("IMAGE",),
-                "prompt": ("STRING", {"default": "Can you add a llama next to me?", "multiline": True}),
-                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
 
                 # 📐 Gemini官方API图像控制参数
@@ -6072,7 +6052,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             traceback.print_exc()
             pass
 
-    def edit_image(self, mirror_site: str, api_key: str, base_url: str, image: torch.Tensor, prompt: str, negative_prompt: str, model: str,
+    def edit_image(self, mirror_site: str, api_key: str, image: torch.Tensor, prompt: str, negative_prompt: str, model: str,
                     proxy: str, aspect_ratio: str, response_modality: str, output_resolution: str, quality: str, style: str,
                     detail_level: str, camera_control: str, lighting_control: str, template_selection: str,
                     upscale_factor: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
@@ -6126,22 +6106,14 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
             print(f"💡 只有 Nano Banana 2 (gemini-3-pro-image/gemini-3-pro-image-preview) 支持 1K/2K/4K 分辨率控制")
 
         # 根据镜像站从配置获取URL和API Key
-        if mirror_site == "custom":
-            # custom 镜像站使用用户提供的 base_url
-            api_url = base_url.strip()
-            if not api_url:
-                raise ValueError("选择 custom 镜像站时，必须填写 base_url 参数")
-            print(f"🔗 使用自定义镜像站URL: {api_url}")
-            site_config = {"url": api_url, "api_key": ""}
-        else:
-            site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
-            api_url = site_config.get("url", "").strip()
-            if site_config.get("api_key") and not api_key.strip():
-                api_key = site_config["api_key"]
-                print(f"🔑 自动使用镜像站API Key: {api_key[:8]}...")
-            if not api_url:
-                raise ValueError("配置文件中缺少该镜像站的API URL")
-            print(f"🔗 自动使用镜像站URL: {api_url}")
+        site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
+        api_url = site_config.get("url", "").strip()
+        if site_config.get("api_key") and not api_key.strip():
+            api_key = site_config["api_key"]
+            print(f"🔑 自动使用镜像站API Key: {api_key[:8]}...")
+        if not api_url:
+            raise ValueError("配置文件中缺少该镜像站的API URL")
+        print(f"🔗 自动使用镜像站URL: {api_url}")
 
         if not validate_api_url(api_url):
             raise ValueError("API URL格式无效，请检查配置文件")
@@ -7841,13 +7813,9 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "multiline": False,
                     "placeholder": "镜像站API密钥（可选，留空时自动获取）"
                 }),
-                "base_url": ("STRING", {
-                    "default": "",
-                    "multiline": False,
-                    "placeholder": "custom时填写，如 https://one.api4gpt.com",
-                    "tooltip": "仅在选择 custom 镜像站时需要填写"
-                }),
-                # 🚀 Nano Banana 2 智能版本切换 + 完整模型支持（位置调整到 base_url 后面）
+                "prompt": ("STRING", {"default": "请根据这些图片进行专业的图像编辑", "multiline": True}),
+                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
+                # 🚀 Nano Banana 2 智能版本切换 + 完整模型支持
                 "model": ([
                     "Auto (Latest Gemini 3 Pro) 🤖",  # 智能选择最新版本
 
@@ -7869,8 +7837,6 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "google/gemini-2.5-flash-image [OpenRouter]",
                     "google/gemini-2.5-flash-image-preview [OpenRouter]"
                 ], {"default": "Auto (Latest Gemini 3 Pro) 🤖"}),
-                "prompt": ("STRING", {"default": "请根据这些图片进行专业的图像编辑", "multiline": True}),
-                "negative_prompt": ("STRING", {"default": "", "multiline": True, "placeholder": "Negative prompt words..."}),
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
 
                 # 📐 Gemini官方API图像控制参数
@@ -8030,7 +7996,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             traceback.print_exc()
             pass
 
-    def edit_multiple_images(self, mirror_site: str, api_key: str, base_url: str, prompt: str, negative_prompt: str, model: str,
+    def edit_multiple_images(self, mirror_site: str, api_key: str, prompt: str, negative_prompt: str, model: str,
                            proxy: str, aspect_ratio: str, response_modality: str, output_resolution: str, quality: str, style: str,
                            detail_level: str, camera_control: str, lighting_control: str, template_selection: str,
                            upscale_factor: str, gigapixel_model: str, temperature: float, top_p: float, top_k: int, max_output_tokens: int, seed: int,
@@ -8084,22 +8050,14 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
             print(f"💡 只有 Nano Banana 2 (gemini-3-pro-image/gemini-3-pro-image-preview) 支持 1K/2K/4K 分辨率控制")
 
         # 根据镜像站从配置获取URL和API Key
-        if mirror_site == "custom":
-            # custom 镜像站使用用户提供的 base_url
-            api_url = base_url.strip()
-            if not api_url:
-                raise ValueError("选择 custom 镜像站时，必须填写 base_url 参数")
-            print(f"🔗 使用自定义镜像站URL: {api_url}")
-            site_config = {"url": api_url, "api_key": ""}
-        else:
-            site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
-            api_url = site_config.get("url", "").strip()
-            if site_config.get("api_key") and not api_key.strip():
-                api_key = site_config["api_key"]
-                print(f"🔑 自动使用镜像站API Key: {api_key[:8]}...")
-            if not api_url:
-                raise ValueError("配置文件中缺少该镜像站的API URL")
-            print(f"🔗 自动使用镜像站URL: {api_url}")
+        site_config = get_mirror_site_config(mirror_site) if mirror_site else {"url": "", "api_key": ""}
+        api_url = site_config.get("url", "").strip()
+        if site_config.get("api_key") and not api_key.strip():
+            api_key = site_config["api_key"]
+            print(f"🔑 自动使用镜像站API Key: {api_key[:8]}...")
+        if not api_url:
+            raise ValueError("配置文件中缺少该镜像站的API URL")
+        print(f"🔗 自动使用镜像站URL: {api_url}")
 
         if not validate_api_url(api_url):
             raise ValueError("API URL格式无效，请检查配置文件")
