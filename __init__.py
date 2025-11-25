@@ -16,10 +16,10 @@ WEB_DIRECTORY = "./web"
 # Delay module import to avoid startup import errors
 def load_modules():
     global NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS
-    
+
     # Get current directory
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    
+
     # 尝试导入GLM模块
     try:
         # Try relative import
@@ -130,6 +130,23 @@ def load_modules():
             NODE_CLASS_MAPPINGS.update(image_collage_node.NODE_CLASS_MAPPINGS)
         if hasattr(image_collage_node, 'NODE_DISPLAY_NAME_MAPPINGS'):
             NODE_DISPLAY_NAME_MAPPINGS.update(image_collage_node.NODE_DISPLAY_NAME_MAPPINGS)
+    except Exception as e:
+        pass
+
+
+    # Try to import General API module
+    try:
+        # Try relative import
+        try:
+            from . import general_api
+        except (ImportError, ValueError):
+            # If relative import fails, try absolute import
+            general_api = importlib.import_module('general_api')
+
+        if hasattr(general_api, 'NODE_CLASS_MAPPINGS'):
+            NODE_CLASS_MAPPINGS.update(general_api.NODE_CLASS_MAPPINGS)
+        if hasattr(general_api, 'NODE_DISPLAY_NAME_MAPPINGS'):
+            NODE_DISPLAY_NAME_MAPPINGS.update(general_api.NODE_DISPLAY_NAME_MAPPINGS)
     except Exception as e:
         pass
 
