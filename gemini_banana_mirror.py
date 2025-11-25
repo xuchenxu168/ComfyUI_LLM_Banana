@@ -4136,6 +4136,8 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
+        if "None" not in style_presets:
+            style_presets = ["None"] + style_presets
 
         return {
             "required": {
@@ -4206,10 +4208,10 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 "style": (style_presets, {"default": image_settings.get('default_style', "natural")}),
 
                 # 🎨 智能图像控制组（放在style下面）
-                "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
-                "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
-                "lighting_control": (["Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
-                "template_selection": (["Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
+                "detail_level": (["None", "Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
+                "camera_control": (["None", "Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
+                "lighting_control": (["None", "Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
+                "template_selection": (["None", "Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
 
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
@@ -5846,6 +5848,8 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
+        if "None" not in style_presets:
+            style_presets = ["None"] + style_presets
 
         return {
             "required": {
@@ -5907,10 +5911,10 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 "style": (style_presets, {"default": image_settings.get('default_style', "natural")}),
 
                 # 🎨 智能图像控制组（放在style下面）
-                "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
-                "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
-                "lighting_control": (["Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
-                "template_selection": (["Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
+                "detail_level": (["None", "Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
+                "camera_control": (["None", "Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
+                "lighting_control": (["None", "Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
+                "template_selection": (["None", "Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
 
                 # 🔍 Topaz Gigapixel AI智能放大
                 "upscale_factor": (["1x (不放大)", "2x", "4x", "6x"], {
@@ -7804,6 +7808,8 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
+        if "None" not in style_presets:
+            style_presets = ["None"] + style_presets
 
         return {
             "required": {
@@ -7864,10 +7870,10 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 "style": (style_presets, {"default": image_settings.get('default_style', "natural")}),
 
                 # 🎨 智能图像控制组（放在style下面）
-                "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
-                "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
-                "lighting_control": (["Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
-                "template_selection": (["Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
+                "detail_level": (["None", "Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
+                "camera_control": (["None", "Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
+                "lighting_control": (["None", "Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
+                "template_selection": (["None", "Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
 
                 # 🔍 Topaz Gigapixel AI智能放大
                 "upscale_factor": (["1x (不放大)", "2x", "4x", "6x"], {

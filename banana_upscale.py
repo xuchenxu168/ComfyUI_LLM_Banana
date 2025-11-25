@@ -421,6 +421,12 @@ def _upscale_with_gigapixel_ai(img: Image.Image, target_w: int, target_h: int, g
 	使用 Gigapixel AI 进行精确倍数放大
 	支持任意放大倍数，质量最高
 	"""
+	# 创建临时目录（在函数开始时创建，确保后续可以清理）
+	temp_base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'temp_gigapixel')
+	temp_dir = None
+	input_path = None
+	output_dir = None
+
 	try:
 		# 加载配置
 		config = _load_gigapixel_config()
@@ -470,13 +476,12 @@ def _upscale_with_gigapixel_ai(img: Image.Image, target_w: int, target_h: int, g
 		print(f"[Gigapixel] 精确放大倍数: {scale:.3f}x ({img.size} -> ({target_w}, {target_h}))")
 
 		# 创建临时目录
-		temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'temp_gigapixel')
-		os.makedirs(temp_dir, exist_ok=True)
+		os.makedirs(temp_base_dir, exist_ok=True)
 
 		# 保存输入图像
 		timestamp = int(time.time() * 1000)
-		input_path = os.path.join(temp_dir, f'input_{timestamp}.png')
-		output_dir = os.path.join(temp_dir, f'output_{timestamp}')
+		input_path = os.path.join(temp_base_dir, f'input_{timestamp}.png')
+		output_dir = os.path.join(temp_base_dir, f'output_{timestamp}')
 		os.makedirs(output_dir, exist_ok=True)
 
 		img.save(input_path, 'PNG')
@@ -549,22 +554,12 @@ def _upscale_with_gigapixel_ai(img: Image.Image, target_w: int, target_h: int, g
 
 		# 加载放大后的图像
 		output_path = output_files[0]
-		upscaled_img = Image.open(output_path)
+		upscaled_img = Image.open(output_path).copy()  # 使用 .copy() 确保文件可以被删除
 
 		# 如果放大后的尺寸不是精确的目标尺寸，进行微调
 		if upscaled_img.size != (target_w, target_h):
 			print(f"[Gigapixel] 微调尺寸: {upscaled_img.size} -> ({target_w}, {target_h})")
 			upscaled_img = upscaled_img.resize((target_w, target_h), Image.Resampling.LANCZOS)
-
-		# 清理临时文件（根据配置）
-		if gigapixel_config.get("temp_cleanup", True):
-			try:
-				shutil.rmtree(temp_dir)
-				print(f"[Gigapixel] 已清理临时文件")
-			except Exception as e:
-				print(f"[Gigapixel] 清理临时文件失败: {e}")
-		else:
-			print(f"[Gigapixel] 保留临时文件: {temp_dir}")
 
 		print(f"[Gigapixel] 放大成功: {img.size} -> {upscaled_img.size}")
 		return upscaled_img
@@ -574,7 +569,48 @@ def _upscale_with_gigapixel_ai(img: Image.Image, target_w: int, target_h: int, g
 		return None
 	except Exception as e:
 		print(f"[Gigapixel] 执行失败: {e}")
+		import traceback
+		traceback.print_exc()
 		return None
+	finally:
+		# 无论成功还是失败，都清理临时文件
+		config = _load_gigapixel_config()
+		gigapixel_config = config.get("gigapixel_ai", {})
+
+		if gigapixel_config.get("temp_cleanup", True):
+			try:
+				# 清理本次创建的临时文件
+				if input_path and os.path.exists(input_path):
+					os.remove(input_path)
+					print(f"[Gigapixel] 已删除输入文件: {input_path}")
+
+				if output_dir and os.path.exists(output_dir):
+					shutil.rmtree(output_dir)
+					print(f"[Gigapixel] 已删除输出目录: {output_dir}")
+
+				# 清理整个 temp_gigapixel 目录中的所有旧文件
+				if os.path.exists(temp_base_dir):
+					# 删除所有临时文件和目录
+					for item in os.listdir(temp_base_dir):
+						item_path = os.path.join(temp_base_dir, item)
+						try:
+							if os.path.isfile(item_path):
+								os.remove(item_path)
+							elif os.path.isdir(item_path):
+								shutil.rmtree(item_path)
+						except Exception as e:
+							print(f"[Gigapixel] 清理文件失败 {item_path}: {e}")
+
+					# 如果目录为空，删除整个目录
+					if not os.listdir(temp_base_dir):
+						os.rmdir(temp_base_dir)
+						print(f"[Gigapixel] 已删除空的临时目录")
+
+					print(f"[Gigapixel] 临时文件清理完成")
+			except Exception as e:
+				print(f"[Gigapixel] 清理临时文件失败: {e}")
+		else:
+			print(f"[Gigapixel] 保留临时文件: {temp_base_dir}")
 
 
 def _detect_gigapixel_ai() -> bool:

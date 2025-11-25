@@ -1,6 +1,6 @@
 {
-    "api_key": "",
-    "multimodal_api_key": "",
+    "api_key": "AIzaSyCkJx-iPkonwAqKBqY8mpJXOmXcDuUUWfQ",
+    "multimodal_api_key": "AIzaSyCkJx-iPkonwAqKBqY8mpJXOmXcDuUUWfQ",
     "base_url": "https://generativelanguage.googleapis.com",
     "proxy": "None",
     "default_model": {
@@ -26,7 +26,7 @@
     "mirror_sites": {
         "nano-banana官方": {
             "url": "https://generativelanguage.googleapis.com",
-            "api_key": "",
+            "api_key": "AIzaSyCkJx-iPkonwAqKBqY8mpJXOmXcDuUUWfQ",
             "api_format": "gemini",
             "models": [
                 "gemini-2.0-flash-lite",
@@ -46,39 +46,39 @@
         },
         "comfly": {
             "url": "https://ai.comfly.chat/v1",
-            "api_key": ""
+            "api_key": "sk-9wjYfsOrd1WxTd61AGxCcmI3tAubLnUvDOwaiuWE25XtYHNx"
         },
         "Kuai API": {
             "url": "https://apis.kuai.host",
-            "api_key": "",
+            "api_key": "sk-NCi6n7idUu2iz4y6rqT2aLBEp5RcHvlu62fnVdecrdkaOgFF",
             "api_format": "gemini",
             "models": ["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"],
             "description": "Kuai API（酷爱API）镜像站，支持Gemini原生接口格式，API Key通过URL参数传递"
         },
         "T8的贞贞AI工坊": {
             "url": "https://ai.t8star.cn",
-            "api_key": "",
+            "api_key": "sk-NEF5kPDaUTzpLPwb9YLHHZtPeauRQBnPzc8MI4I7LJ3oadpG",
             "api_format": "openai",
             "models": ["gemini-2.5-flash-image-preview"],
             "description": "T8贞贞的AI工坊镜像站，支持Gemini 2.5 Flash Image Preview模型，使用OpenAI兼容的API格式"
         },
         "API4GPT": {
             "url": "https://one.api4gpt.com",
-            "api_key": "",
+            "api_key": "sk-7vQ50rx6H3nYp5g0lBK81oJNZCcqAnJeNgOI6AEUEZncsOGB",
             "api_format": "openai",
             "models": ["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.5-flash-image-hd", "gemini-2.5-flash-image-vip"],
             "description": "API4GPT镜像站，使用OpenAI兼容格式，支持nano-banana图像生成服务"
         },
         "OpenRouter": {
             "url": "https://openrouter.ai/api/v1",
-            "api_key": "",
+            "api_key": "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",
             "api_format": "openrouter",
             "models": ["google/gemini-3-pro-image-preview", "gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation", "google/gemini-2.5-flash-image-preview:free", "google/gemini-2.5-flash-image-preview"],
             "description": "OpenRouter镜像站，支持多种AI模型和图像生成服务，使用 google/ 前缀的模型名称"
         },
         "Comet": {
             "url": "https://api.cometapi.com",
-            "api_key": "",
+            "api_key": "sk-tdbj8yCYH3p8uO1TYiEnKkBwJBNBIWUr3cLsW2aTjuvWi79f",
             "api_format": "gemini",
             "models": ["gemini-3-pro-image", "gemini-3-pro-image-preview", "gemini-2.5-flash-image", "gemini-2.5-flash-image-preview"],
             "description": "CometAPI镜像站，支持Gemini原生接口格式，提供gemini-3-pro-image (Nano Banana 2)最新模型，定价$0.03120（比官方低20%）",
@@ -99,7 +99,7 @@
         },
         "api.aabao": {
             "url": "https://api.aabao.top",
-            "api_key": "",
+            "api_key": "sk-PY9TXCVwMzFWjGa9zmqagGpiZzguYYyNMCtCDv7Qn983G9PY",
             "api_format": "gemini",
             "models": ["gemini-2.5-flash-image", "gemini-2.5-flash-image-preview", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"],
             "description": "api.aabao 镜像站（One API 系统），支持 Gemini 原生接口格式 (/v1beta/models/gemini-2.5-flash-image:generateContent)，使用 Authorization: Bearer 认证，按次计费：次卡模型分组 $0.018/次，绘画定制-1分组 $0.120/次",
@@ -131,7 +131,7 @@
     },
     "safety_settings": {
         "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_NONE",
-        "HARM_CATEGORY_HATE_SPEECH": "BLOCK_NONE", 
+        "HARM_CATEGORY_HATE_SPEECH": "BLOCK_NONE",
         "HARM_CATEGORY_HARASSMENT": "BLOCK_NONE",
         "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_NONE"
     },
@@ -257,6 +257,7 @@
         "response_modalities": ["TEXT_AND_IMAGE", "IMAGE_ONLY"],
         "quality_presets": ["standard", "hd", "ultra_hd", "ai_enhanced", "ai_ultra"],
         "style_presets": [
+            "None",
             "vivid", "natural", "artistic", "cinematic", "photographic",
             "professional_portrait", "cinematic_landscape", "product_photography",
             "digital_concept_art", "anime_style_art", "photorealistic_render",
@@ -268,9 +269,35 @@
         "default_response_modality": "TEXT_AND_IMAGE",
         "default_quality": "hd",
         "default_style": "natural",
-        "default_detail_level": "Professional Detail",
+        "default_detail_level": "None",
         "default_camera_control": "Auto Select",
         "default_lighting_control": "Auto Settings",
+        "lighting_presets": [
+            "None",
+            "Auto Settings",
+            "Natural Light",
+            "Studio Lighting",
+            "Dramatic Shadows",
+            "Soft Glow",
+            "Golden Hour",
+            "Blue Hour"
+        ],
+        "template_presets": [
+            "None",
+            "Auto Select",
+            "Professional Portrait",
+            "Cinematic Landscape",
+            "Product Photography",
+            "Digital Concept Art",
+            "Anime Style Art",
+            "Photorealistic Render",
+            "Classical Oil Painting",
+            "Watercolor Painting",
+            "Cyberpunk Future",
+            "Vintage Film Photography",
+            "Architectural Photography",
+            "Gourmet Food Photography"
+        ],
         "default_template": "Auto Select"
     },
     "prompt_templates": {
@@ -330,7 +357,7 @@
     },
     "pricing_info": {
         "image_generation_cost_per_image": "$0.039",
-        "image_editing_cost_per_request": "$0.039", 
+        "image_editing_cost_per_request": "$0.039",
         "tokens_per_image": 1290,
         "cost_per_million_tokens": "$30.00"
     },

@@ -298,74 +298,8 @@ class KenChenLLMGeminiTextNode:
                 _log_error(error_msg)
                 return (error_msg,)
 
-class KenChenLLMGeminiMultimodalNode:
-    @classmethod
-    def INPUT_TYPES(s):
-        config = get_gemini_config()
-        default_params = config.get('default_params', {})
 
-        # 添加默认模型列表（优先最新 Gemini 3 Pro Preview）
-        default_models = [
-            "gemini-3-pro-preview",
-            "gemini-2.5-pro-preview-05-06",
-            "gemini-2.5-flash-preview-04-17",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-        ]
-
-        models = config.get('models', {}).get('multimodal_models', default_models)
-        if not models:
-            models = default_models
-            print("[LLM Prompt] 警告: 配置文件中的多模态模型列表为空，使用默认模型列表")
-
-        default_model = "gemini-3-pro-preview"
-        default_proxy = config.get('proxy', "http://127.0.0.1:None")
-
-        return {
-            "required": {
-                "api_key": ("STRING", {"default": "", "multiline": False}),
-                "prompt": ("STRING", {"default": "", "multiline": True}),
-                "model": (
-                    models,
-                    {"default": default_model},
-                ),
-                "api_provider": (["google", "custom"], {"default": "google", "tooltip": "API提供者：google=官方；custom=自定义基础URL"}),
-                "base_url": ("STRING", {"default": "", "multiline": False, "tooltip": "当选择 custom 时填写，如 https://one.api4gpt.com/v1beta"}),
-                "max_output_tokens": ("INT", {"default": 8192, "min": 1, "max": 8192}),
-                "temperature": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0}),
-                "thinking_level": (["high", "low"], {"default": "high"}),
-                "media_resolution": (["Auto", "media_resolution_low", "media_resolution_medium", "media_resolution_high"], {"default": "Auto"})
-            },
-            "optional": {
-                "image": ("IMAGE",),
-                "audio": ("AUDIO",),
-                "video": ("VIDEO",),
-                "system_instruction": ("STRING", {"default": "", "multiline": True})
-            },
-        }
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("multimodal_text",)  # 改为唯一的名称
-    FUNCTION = "generate_multimodal"
-    CATEGORY = "Ken-Chen/LLM-Nano-Banana"
-
-    def generate_multimodal(
-        self,
-        api_key,
-        prompt,
-        model,
-        proxy,
-        temperature,
-        top_p,
-        top_k,
-        max_output_tokens,
-        seed,
-        image=None,
-        audio=None,
-        video=None,
-        max_video_frames=10,
-    ):
-        try:
-            genai = get_google_genai()
+# 旧的图像生成节点已移除，请使用新版多模态节点
             if genai is None:
                 return (f"错误: 未安装google-genai库，请运行: pip install google-genai",)
             config = get_gemini_config()
@@ -1209,15 +1143,11 @@ class KenChenLLMGeminiMultimodalNode:
         ]
         labelled = []
         providers_by_model = {}
-        cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ComfyUI-Gemini-3", "config.json")
         try:
-            if os.path.exists(cfg_path):
-                import json
-                with open(cfg_path, 'r', encoding='utf-8') as _f:
-                    _cfg = json.load(_f)
-                    for prov, detail in (_cfg.get("api_providers", {}) or {}).items():
-                        for m in (detail.get("models") or []):
-                            providers_by_model.setdefault(m, []).append(prov)
+            _cfg = get_gemini_config()
+            for prov, detail in (_cfg.get("api_providers", {}) or {}).items():
+                for m in (detail.get("models") or []):
+                    providers_by_model.setdefault(m, []).append(prov)
         except Exception:
             pass
 
@@ -1236,7 +1166,6 @@ class KenChenLLMGeminiMultimodalNode:
                 "model": (labelled, {"default": default_label}),
                 "api_provider": (["google", "comet", "T8的贞贞AI工坊", "comfly", "aabao", "custom"], {"default": "google"}),
                 "api_key": ("STRING", {"default": "", "multiline": False}),
-                "base_url": ("STRING", {"default": "", "multiline": False, "tooltip": "custom时填写，如 https://one.api4gpt.com/v1beta"}),
                 "max_output_tokens": ("INT", {"default": 8192, "min": 1, "max": 8192}),
                 "temperature": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0}),
                 "thinking_level": (["high", "low"], {"default": "high"}),
@@ -1264,7 +1193,6 @@ class KenChenLLMGeminiMultimodalNode:
         prompt,
         model, # model will come with label, e.g., "gemini-3-pro-preview [google/comet]"
         api_provider,
-        base_url,
         max_output_tokens,
         temperature,
         thinking_level,
@@ -1383,26 +1311,28 @@ class KenChenLLMGeminiMultimodalNode:
             if system_instruction and system_instruction.strip():
                 sys_inst = {"role": "system", "parts": [{"text": system_instruction.strip()}]}
 
-            # 4) 根据提供者解析 API Key 与 Base URL（参考 ComfyUI-Gemini-3/config.json）
+            # 4) 根据提供者解析 API Key 与 Base URL（参考本项目 Gemini_config.json）
             final_api_key = (api_key or "").strip()
             cfg_api_key = None
             cfg_base_url = None
             try:
-                cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ComfyUI-Gemini-3", "config.json")
-                if os.path.exists(cfg_path):
-                    with open(cfg_path, 'r', encoding='utf-8') as _f:
-                        _cfg = json.load(_f)
-                        provs = _cfg.get("api_providers", {})
-                        if api_provider in provs:
-                            cfg_api_key = (provs[api_provider].get("api_key") or "").strip()
-                            cfg_base_url = (provs[api_provider].get("base_url") or "").strip()
+                _cfg = get_gemini_config() or {}
+                provs = _cfg.get("api_providers", {}) or {}
+                top_api_key = (_cfg.get("api_key") or "").strip()
+                top_base = (_cfg.get("base_url") or "").strip()
+                if api_provider in provs:
+                    cfg_api_key = (provs[api_provider].get("api_key") or top_api_key or "").strip()
+                    cfg_base_url = (provs[api_provider].get("base_url") or top_base or "").strip()
+                else:
+                    cfg_api_key = top_api_key
+                    cfg_base_url = top_base
             except Exception:
                 pass
 
             if not final_api_key:
                 final_api_key = cfg_api_key or ""
             if not final_api_key:
-                return ("错误: 需要 API Key（在节点或 ComfyUI-Gemini-3/config.json 中提供）", "", "")
+                return ("错误: 需要 API Key（在节点或 Gemini_config.json 中提供）", "", "")
 
             # 默认 base url（当用户未填且配置文件也没有时提供合理默认）
             provider_defaults = {
@@ -1412,7 +1342,7 @@ class KenChenLLMGeminiMultimodalNode:
                 "comfly": "https://ai.comfly.chat/v1",
                 "aabao": "https://api.aabao.top/v1",
             }
-            final_base = (base_url or cfg_base_url or provider_defaults.get(api_provider) or "").strip()
+            final_base = (cfg_base_url or provider_defaults.get(api_provider) or "").strip()
 
             # 5) 构建端点 URL
             def _build_url():

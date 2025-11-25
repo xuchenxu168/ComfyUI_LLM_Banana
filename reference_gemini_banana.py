@@ -97,22 +97,36 @@ def process_image_controls(size: str, quality: str, style: str, custom_size: str
 def enhance_prompt_with_controls(prompt: str, controls: dict) -> str:
     """
     使用图像控制参数增强提示词，参考 OpenRouter 的实现方式
-    
-    Args:
-        prompt: 原始提示词
-        controls: 图像控制配置
-        
-    Returns:
-        str: 增强后的提示词
+
+    当 style 为 None/空字符串 时，不在提示词中写入风格要求。
     """
+    size_line = f"1. 输出尺寸：{controls['size']}"
+    quality_line = f"2. 质量：{'高质量' if controls['quality'] == 'hd' else '标准质量'}"
+
+    style_raw = str(controls.get('style', '') or '').strip().lower()
+    style_line = ""
+    if style_raw not in ("none", ""):
+        # 简单映射：vivid->生动风格；natural->自然风格；其他直接显示原值
+        if style_raw == "vivid":
+            style_text = "生动风格"
+        elif style_raw == "natural":
+            style_text = "自然风格"
+        else:
+            style_text = controls.get('style', '')
+        style_line = f"3. 风格：{style_text}"
+
+    # 组装要求块
+    lines = [size_line, quality_line]
+    if style_line:
+        lines.append(style_line)
+    req_block = "\n".join(lines)
+
     enhanced_prompt = f"""你是一个专业的图像生成专家。请根据以下要求生成图像：
 
 {prompt}
 
 具体要求：
-1. 输出尺寸：{controls['size']}
-2. 质量：{'高质量' if controls['quality'] == 'hd' else '标准质量'}
-3. 风格：{'生动风格' if controls['style'] == 'vivid' else '自然风格'}
+{req_block}
 
 构图要求：
 - 使用平衡的构图，主体与背景比例适当
@@ -122,8 +136,7 @@ def enhance_prompt_with_controls(prompt: str, controls: dict) -> str:
 - 避免过度特写和过于遥远的拍摄角度
 - 确保主体完全在画面边界内且与环境和谐统一
 
-请严格按照上述要求生成图像，确保输出尺寸、质量、风格和构图完全符合要求。不要描述图片，直接生成符合规格的图像。"""
-    
+请严格按照上述要求生成图像，确保输出尺寸、质量和构图完全符合要求。不要描述图片，直接生成符合规格的图像。"""
     return enhanced_prompt
 
 
@@ -465,6 +478,8 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         size_presets = image_settings.get('size_presets', ["512x512", "768x768", "1024x1024", "1024x1792", "1792x1024"])
         quality_presets = image_settings.get('quality_presets', ["standard", "hd"])
         style_presets = image_settings.get('style_presets', ["vivid", "natural"])
+        if "None" not in style_presets:
+            style_presets = ["None"] + style_presets
         
         return {
             "required": {
@@ -743,6 +758,8 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         size_presets = image_settings.get('size_presets', ["512x512", "768x768", "1024x1024", "1024x1792", "1792x1024"])
         quality_presets = image_settings.get('quality_presets', ["standard", "hd"])
         style_presets = image_settings.get('style_presets', ["vivid", "natural"])
+        if "None" not in style_presets:
+            style_presets = ["None"] + style_presets
         
         return {
             "required": {

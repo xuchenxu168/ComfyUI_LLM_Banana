@@ -1163,26 +1163,41 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
 
     # 🚀 构建超越参考项目的增强提示词
     # 🎯 平衡修复：适度的构图控制，避免主体过大或过小
-    enhanced_parts = [
-        style_config["prefix"],
-        prompt.strip(),
-        style_config["suffix"],
-        # 平衡的构图控制指令
-        "Use balanced composition with proper subject-to-background ratio.",
-        "Subject should be clearly visible and well-framed, occupying 40-60% of the image area.",
-        "Include rich background environment and context to create depth and atmosphere.",
-        "Use medium shot framing that shows the subject in their environment with meaningful background.",
-        "Prioritize clear subject visibility while maintaining environmental context.",
-        "Show meaningful background elements and environmental details.",
-        "Avoid extreme close-ups that eliminate all background context."
-    ]
+    # 当用户选择不使用风格（None）时，不注入任何风格相关的前后缀/相机/灯光
+    style_value = (controls.get('style') or '').strip().lower()
+    if style_value in ('none', ''):
+        enhanced_parts = [
+            prompt.strip(),
+            # 一些通用的构图建议（非风格信息）
+            "Use balanced composition with proper subject-to-background ratio.",
+            "Subject should be clearly visible and well-framed, occupying 40-60% of the image area.",
+            "Include rich background environment and context to create depth and atmosphere.",
+            "Use medium shot framing that shows the subject in their environment with meaningful background.",
+            "Prioritize clear subject visibility while maintaining environmental context.",
+            "Show meaningful background elements and environmental details.",
+            "Avoid extreme close-ups that eliminate all background context."
+        ]
+    else:
+        enhanced_parts = [
+            style_config["prefix"],
+            prompt.strip(),
+            style_config["suffix"],
+            # 平衡的构图控制指令
+            "Use balanced composition with proper subject-to-background ratio.",
+            "Subject should be clearly visible and well-framed, occupying 40-60% of the image area.",
+            "Include rich background environment and context to create depth and atmosphere.",
+            "Use medium shot framing that shows the subject in their environment with meaningful background.",
+            "Prioritize clear subject visibility while maintaining environmental context.",
+            "Show meaningful background elements and environmental details.",
+            "Avoid extreme close-ups that eliminate all background context."
+        ]
 
-    # 🎨 添加参考项目的专业控制参数（超越参考项目）
-    if "camera_settings" in style_config:
-        enhanced_parts.append(f"Camera Settings: {style_config['camera_settings']}")
+        # 🎨 添加参考项目的专业控制参数（超越参考项目）
+        if "camera_settings" in style_config:
+            enhanced_parts.append(f"Camera Settings: {style_config['camera_settings']}")
 
-    if "lighting" in style_config:
-        enhanced_parts.append(f"Lighting: {style_config['lighting']}")
+        if "lighting" in style_config:
+            enhanced_parts.append(f"Lighting: {style_config['lighting']}")
 
     # 添加质量控制
     if controls['quality'] == "hd":
@@ -1197,7 +1212,7 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
     enhanced_parts.append("Use your image generation capabilities to create the visual content.")
 
     # 🎨 应用所有界面参数
-    if detail_level != "Auto Select":
+    if detail_level not in ("Auto Select", "None", ""):
         detail_instructions = {
             "Basic Detail": "Focus on essential details and clean composition.",
             "Professional Detail": "Include professional-level detail and refined elements.",
@@ -1206,7 +1221,7 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
         }
         enhanced_parts.append(f"Detail Level: {detail_level} - {detail_instructions.get(detail_level, '')}")
 
-    if camera_control != "Auto Select":
+    if camera_control not in ("Auto Select", "None", ""):
         camera_instructions = {
             "Wide-angle Lens": "Use wide-angle perspective for expansive composition.",
             "Macro Shot": "Focus on close-up details with macro photography techniques.",
@@ -1217,7 +1232,7 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
         }
         enhanced_parts.append(f"Camera Control: {camera_control} - {camera_instructions.get(camera_control, '')}")
 
-    if lighting_control != "Auto Settings":
+    if lighting_control not in ("Auto Settings", "None", ""):
         lighting_instructions = {
             "Natural Light": "Use natural lighting with soft, diffused illumination",
             "Studio Lighting": "Use professional studio lighting setup with controlled shadows",
@@ -1228,7 +1243,7 @@ def enhance_prompt_with_controls(prompt: str, controls: dict, detail_level: str 
         }
         enhanced_parts.append(f"Lighting Control: {lighting_control} - {lighting_instructions.get(lighting_control, '')}")
 
-    if template_selection != "Auto Select":
+    if template_selection not in ("Auto Select", "None", ""):
         template_instructions = {
             "Professional Portrait": "Apply professional portrait photography techniques and composition",
             "Cinematic Landscape": "Use cinematic landscape photography composition and lighting",
@@ -2382,6 +2397,8 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
+        if "None" not in style_presets:
+            style_presets = ["None"] + style_presets
 
         return {
             "required": {
@@ -2433,10 +2450,10 @@ class KenChenLLMGeminiBananaTextToImageBananaNode:
                 "style": (style_presets, {"default": image_settings.get('default_style', "natural")}),
 
                 # 🎨 智能图像控制组（放在style下面）
-                "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
-                "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
-                "lighting_control": (["Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
-                "template_selection": (["Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
+                "detail_level": (["None", "Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
+                "camera_control": (["None", "Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
+                "lighting_control": (["None", "Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
+                "template_selection": (["None", "Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
 
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
@@ -3014,6 +3031,8 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
+        if "None" not in style_presets:
+            style_presets = ["None"] + style_presets
 
         return {
             "required": {
@@ -3066,10 +3085,10 @@ class KenChenLLMGeminiBananaImageToImageBananaNode:
                 "style": (style_presets, {"default": image_settings.get('default_style', "natural")}),
 
                 # 🎨 智能图像控制组（放在style下面）
-                "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
-                "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
-                "lighting_control": (["Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
-                "template_selection": (["Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
+                "detail_level": (["None", "Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
+                "camera_control": (["None", "Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
+                "lighting_control": (["None", "Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
+                "template_selection": (["None", "Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
 
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.9), "min": 0.0, "max": 1.0}),
@@ -3617,7 +3636,7 @@ class KenChenLLMGeminiBananaMultimodalBananaNode:
                 "proxy": ("STRING", {"default": default_proxy, "multiline": False}),
 
                 # 🎨 分析控制组
-                "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
+                "detail_level": (["None", "Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
                 "analysis_mode": (["Auto Select", "Visual Analysis", "Audio Analysis", "Combined Analysis", "Detailed Description", "Summary Report"], {"default": "Auto Select"}),
                 "output_format": (["Natural Language", "Structured Report", "Technical Analysis", "Creative Description", "Professional Summary"], {"default": "Natural Language"}),
 
@@ -3956,6 +3975,8 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
         style_presets = image_settings.get('style_presets', [
             "vivid", "natural", "artistic", "cinematic", "photographic"  # 超越参考项目的风格选项
         ])
+        if "None" not in style_presets:
+            style_presets = ["None"] + style_presets
 
         return {
             "required": {
@@ -3999,10 +4020,10 @@ class KenChenLLMGeminiBananaMultiImageEditBananaNode:
                 "style": (style_presets, {"default": image_settings.get('default_style', "natural")}),
 
                 # 🎨 智能图像控制组（放在style下面）
-                "detail_level": (["Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
-                "camera_control": (["Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
-                "lighting_control": (["Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
-                "template_selection": (["Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
+                "detail_level": (["None", "Basic Detail", "Professional Detail", "Premium Quality", "Masterpiece Level"], {"default": "Professional Detail"}),
+                "camera_control": (["None", "Auto Select", "Wide-angle Lens", "Macro Shot", "Low-angle Perspective", "High-angle Shot", "Close-up Shot", "Medium Shot"], {"default": "Auto Select"}),
+                "lighting_control": (["None", "Auto Settings", "Natural Light", "Studio Lighting", "Dramatic Shadows", "Soft Glow", "Golden Hour", "Blue Hour"], {"default": "Auto Settings"}),
+                "template_selection": (["None", "Auto Select", "Professional Portrait", "Cinematic Landscape", "Product Photography", "Digital Concept Art", "Anime Style Art", "Photorealistic Render", "Classical Oil Painting", "Watercolor Painting", "Cyberpunk Future", "Vintage Film Photography", "Architectural Photography", "Gourmet Food Photography"], {"default": "Auto Select"}),
 
                 "temperature": ("FLOAT", {"default": default_params.get('temperature', 0.9), "min": 0.0, "max": 1.5}),
                 "top_p": ("FLOAT", {"default": default_params.get('top_p', 0.95), "min": 0.0, "max": 1.0}),
@@ -4584,7 +4605,7 @@ Execute the image editing task now and return the generated image."""
 NODE_CLASS_MAPPINGS = {
     "KenChenLLMGeminiBananaTextToImageBananaNode": KenChenLLMGeminiBananaTextToImageBananaNode,
     "KenChenLLMGeminiBananaImageToImageBananaNode": KenChenLLMGeminiBananaImageToImageBananaNode,
-    # "KenChenLLMGeminiBananaMultimodalBananaNode": KenChenLLMGeminiBananaMultimodalBananaNode,  # Disabled by request
+    # "KenChenLLMGeminiBananaMultimodalBananaNode": KenChenLLMGeminiBananaMultimodalBananaNode,  # disabled
     "KenChenLLMGeminiBananaMultiImageEditBananaNode": KenChenLLMGeminiBananaMultiImageEditBananaNode,  # ✅ 修正：使用完整类名作为注册键
 }
 
@@ -4595,7 +4616,7 @@ if TRANSLATION_MODULE_AVAILABLE:
 NODE_DISPLAY_NAME_MAPPINGS = {
     "KenChenLLMGeminiBananaTextToImageBananaNode": "🍌 Gemini Banana Text to Image",
     "KenChenLLMGeminiBananaImageToImageBananaNode": "🍌 Gemini Banana Image Edit",
-    # "KenChenLLMGeminiBananaMultimodalBananaNode": "🍌 Gemini Banana Multimodal",  # Disabled by request
+    # "KenChenLLMGeminiBananaMultimodalBananaNode": "🍌 Gemini Banana Multimodal",  # disabled
     "KenChenLLMGeminiBananaMultiImageEditBananaNode": "🍌 Gemini Banana Multi Image Edit",  # ✅ 修正：使用完整类名作为注册键
 }
 
