@@ -150,6 +150,22 @@ def load_modules():
     except Exception as e:
         pass
 
+    # Try to import Banana2 Prompt Template module
+    try:
+        # Try relative import
+        try:
+            from . import banana2_prompt_template
+        except (ImportError, ValueError):
+            # If relative import fails, try absolute import
+            banana2_prompt_template = importlib.import_module('banana2_prompt_template')
+
+        if hasattr(banana2_prompt_template, 'NODE_CLASS_MAPPINGS'):
+            NODE_CLASS_MAPPINGS.update(banana2_prompt_template.NODE_CLASS_MAPPINGS)
+        if hasattr(banana2_prompt_template, 'NODE_DISPLAY_NAME_MAPPINGS'):
+            NODE_DISPLAY_NAME_MAPPINGS.update(banana2_prompt_template.NODE_DISPLAY_NAME_MAPPINGS)
+    except Exception as e:
+        pass
+
     # Note: openrouter_banana and comfly_nano_banana modules are deprecated
     # Their functionality has been integrated into gemini_banana_mirror.py
 

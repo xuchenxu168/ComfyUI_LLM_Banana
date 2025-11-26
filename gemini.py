@@ -1166,6 +1166,9 @@ class KenChenLLMGeminiMultimodalNode:
                 "model": (labelled, {"default": default_label}),
                 "api_provider": (["google", "comet", "T8的贞贞AI工坊", "comfly", "aabao", "custom"], {"default": "google"}),
                 "api_key": ("STRING", {"default": "", "multiline": False}),
+                "base_url": ("STRING", {"default": "", "multiline": False}),
+                "version": (["Auto", "v1", "v1alpha", "v1beta"], {"default": "Auto"}),
+                "auth_mode": (["auto", "google_xgoog", "bearer"], {"default": "auto"}),
                 "max_output_tokens": ("INT", {"default": 8192, "min": 1, "max": 8192}),
                 "temperature": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0}),
                 "thinking_level": (["high", "low"], {"default": "high"}),
@@ -1193,6 +1196,9 @@ class KenChenLLMGeminiMultimodalNode:
         prompt,
         model, # model will come with label, e.g., "gemini-3-pro-preview [google/comet]"
         api_provider,
+        base_url,
+        version,
+        auth_mode,
         max_output_tokens,
         temperature,
         thinking_level,
@@ -1311,30 +1317,15 @@ class KenChenLLMGeminiMultimodalNode:
             if system_instruction and system_instruction.strip():
                 sys_inst = {"role": "system", "parts": [{"text": system_instruction.strip()}]}
 
-            # 4) 根据提供者解析 API Key 与 Base URL（参考本项目 Gemini_config.json）
-            final_api_key = (api_key or "").strip()
-            cfg_api_key = None
-            cfg_base_url = None
-            try:
-                _cfg = get_gemini_config() or {}
-                provs = _cfg.get("api_providers", {}) or {}
-                top_api_key = (_cfg.get("api_key") or "").strip()
-                top_base = (_cfg.get("base_url") or "").strip()
-                if api_provider in provs:
-                    cfg_api_key = (provs[api_provider].get("api_key") or top_api_key or "").strip()
-                    cfg_base_url = (provs[api_provider].get("base_url") or top_base or "").strip()
-                else:
-                    cfg_api_key = top_api_key
-                    cfg_base_url = top_base
-            except Exception:
-                pass
+            # 4) 根据提供者解析 API Key 与 Base URL（用户优先→供应商配置→全局配置→默认）
+            user_key = (api_key or "").strip()
+            user_base = (base_url or "").strip()
 
-            if not final_api_key:
-                final_api_key = cfg_api_key or ""
-            if not final_api_key:
-                return ("错误: 需要 API Key（在节点或 Gemini_config.json 中提供）", "", "")
+            cfg = get_gemini_config() or {}
+            provs = cfg.get("api_providers", {}) or {}
+            top_api_key = (cfg.get("api_key") or "").strip()
+            top_base = (cfg.get("base_url") or "").strip()
 
-            # 默认 base url（当用户未填且配置文件也没有时提供合理默认）
             provider_defaults = {
                 "google": "https://generativelanguage.googleapis.com",
                 "comet": "https://api.cometapi.com",
@@ -1342,30 +1333,59 @@ class KenChenLLMGeminiMultimodalNode:
                 "comfly": "https://ai.comfly.chat/v1",
                 "aabao": "https://api.aabao.top/v1",
             }
-            final_base = (cfg_base_url or provider_defaults.get(api_provider) or "").strip()
 
-            # 5) 构建端点 URL
-            def _build_url():
-                if api_provider == "google":
-                    ver = "v1alpha" if media_resolution != "Auto" else "v1beta"
-                    return f"https://generativelanguage.googleapis.com/{ver}/models/{model_id}:generateContent"
-                u = (final_base or "https://generativelanguage.googleapis.com/v1beta").rstrip('/')
-                if '/models/' in u and ':generateContent' in u:
-                    return u
-                # 非 google 默认走 v1 路径（多数镜像与代理使用 /v1）
-                if u.endswith('/v1') or u.endswith('/v1beta') or u.endswith('/v1alpha'):
-                    return f"{u}/models/{model_id}:generateContent"
-                # 无版本后缀，非 google 使用 v1，google 使用 v1beta
-                return f"{u}/v1/models/{model_id}:generateContent"
-
-            url = _build_url()
-
-            # 6) 请求头：google 用 x-goog-api-key；其他供应者常用 Authorization: Bearer
-            headers = {"Content-Type": "application/json"}
-            if api_provider == "google":
-                headers["x-goog-api-key"] = final_api_key
+            if (api_provider or "") == "custom":
+                if not user_key or not user_base:
+                    return ("错误: 选择 'custom' 时必须输入 API Key 与 Base URL", "", "")
+                final_api_key = user_key
+                final_base = user_base
             else:
-                headers["Authorization"] = f"Bearer {final_api_key}"
+                prov_cfg = provs.get(api_provider, {}) if isinstance(provs, dict) else {}
+                cfg_key = (prov_cfg.get("api_key") or top_api_key or "").strip()
+                cfg_base = (prov_cfg.get("base_url") or top_base or "").strip()
+
+                final_api_key = user_key if user_key else cfg_key
+                final_base = user_base if user_base else (cfg_base or provider_defaults.get(api_provider, ""))
+
+                if not final_api_key:
+                    return ("错误: 需要 API Key（在节点或 Gemini_config.json 中提供）", "", "")
+
+            # 5) 版本选择：Auto 下按 google/非 google 分支；也允许强制版本
+            ver_in = (version or "Auto").strip()
+            if ver_in.lower() == "auto":
+                if api_provider == "google" or "generativelanguage.googleapis.com" in (final_base or ""):
+                    final_version = "v1alpha" if media_resolution != "Auto" else "v1beta"
+                else:
+                    final_version = "v1"
+            else:
+                final_version = ver_in
+
+            # 6) 构建端点与认证头（复用 GeneralAPI 的通用逻辑）
+            try:
+                from .general_api import _build_endpoint, _auto_auth_headers
+            except Exception:
+                def _auto_auth_headers(base_url: str, api_key: str, auth_mode: str):
+                    headers = {"Content-Type": "application/json"}
+                    mode = (auth_mode or "auto").lower()
+                    if mode == "google_xgoog" or (mode == "auto" and "generativelanguage.googleapis.com" in (base_url or "")):
+                        headers["x-goog-api-key"] = api_key
+                    else:
+                        headers["Authorization"] = f"Bearer {api_key}"
+                    return headers
+
+                def _build_endpoint(base_url: str, model: str, version: str):
+                    u = (base_url or "").rstrip('/')
+                    if "/models/" in u and ":generateContent" in u:
+                        return u
+                    if u.endswith('/v1') or u.endswith('/v1beta') or u.endswith('/v1alpha'):
+                        return f"{u}/models/{model}:generateContent"
+                    ver = (version or "Auto").lower()
+                    if ver == "auto":
+                        ver = "v1beta" if "generativelanguage.googleapis.com" in u else "v1"
+                    return f"{u}/{ver}/models/{model}:generateContent"
+
+            url = _build_endpoint(final_base, model_id, final_version)
+            headers = _auto_auth_headers(final_base, final_api_key, auth_mode)
 
             payload = {"contents": contents, "generationConfig": gen_cfg}
             if sys_inst:

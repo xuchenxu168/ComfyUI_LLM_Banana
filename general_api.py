@@ -199,15 +199,72 @@ def _extract_first_image(resp_json, strict_native=False, proxies=None, timeout=1
 
     return None
 
+# 读取 Gemini Banana 配置并获取镜像站信息
+def _get_config():
+    try:
+        try:
+            from .gemini_banana import get_gemini_banana_config
+        except ImportError:
+            from gemini_banana import get_gemini_banana_config
+        return get_gemini_banana_config() or {}
+    except Exception:
+        return {}
+
+def _get_mirror_site_config(mirror_site_name: str):
+    """根据镜像站名称获取对应的 url 与 api_key（仅非 Custom 时使用）。"""
+    config = _get_config()
+    sites = config.get('mirror_sites', {}) or {}
+    if mirror_site_name and mirror_site_name.lower() != 'custom' and mirror_site_name in sites:
+        site = sites.get(mirror_site_name, {})
+        return {
+            'url': site.get('url', ''),
+            'api_key': site.get('api_key', '')
+        }, config
+    return {'url': '', 'api_key': ''}, config
+
+
 class NanoBananaGeneralAPINode:
     @classmethod
     def INPUT_TYPES(s):
+        # 从配置文件读取镜像站选项
+        config = _get_config()
+        mirror_sites = config.get('mirror_sites', {}) or {}
+        mirror_options = list(mirror_sites.keys())
+        # 统一包含自定义选项
+        mirror_options = ["Custom" if x.lower() == "custom" else x for x in mirror_options]
+        if "Custom" not in mirror_options:
+            mirror_options.append("Custom")
+
+        # 默认镜像站：优先 nano-banana官方，其次 comfly，再次第一个，最后 Custom
+        if "nano-banana官方" in mirror_options:
+            default_site = "nano-banana官方"
+        elif "comfly" in mirror_options:
+            default_site = "comfly"
+        elif mirror_options:
+            default_site = mirror_options[0]
+        else:
+            default_site = "Custom"
+
         return {
             "required": {
+                # 提示词文本框
                 "prompt": ("STRING", {"default": "生成一张清晰的香水产品图", "multiline": True}),
+                # 在提示词后、API Key 前加入镜像站选择
+                "mirror_site": (mirror_options, {"default": default_site}),
+                # API 认证参数
                 "api_key": ("STRING", {"default": "", "multiline": False}),
                 "base_url": ("STRING", {"default": "https://generativelanguage.googleapis.com"}),
-                "model": ("STRING", {"default": "gemini-3-pro-image-preview"}),
+
+                # 模型选择
+                "model": ([
+                    "gemini-3-pro-image-preview",
+                    "custom"  # 自定义选项
+                ], {"default": "gemini-3-pro-image-preview"}),
+                "custom_model": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                    "tooltip": "当model选择'custom'时，在此输入自定义模型名称"
+                }),
                 "version": (["Auto", "v1", "v1alpha", "v1beta"], {"default": "Auto"}),
                 "auth_mode": (["auto", "google_xgoog", "bearer"], {"default": "auto"}),
                 "response_mode": (["TEXT_AND_IMAGE", "IMAGE_ONLY", "TEXT_ONLY"], {"default": "TEXT_AND_IMAGE"}),
@@ -253,15 +310,46 @@ class NanoBananaGeneralAPINode:
     FUNCTION = "call_api"
     CATEGORY = "Ken-Chen/LLM-Nano-Banana"
 
-    def call_api(self, prompt, api_key, base_url, model, version, auth_mode,
+    def call_api(self, prompt, mirror_site, api_key, base_url, model, custom_model, version, auth_mode,
                  response_mode, aspect_ratio, image_size, upscale_factor, gigapixel_model,
                  temperature, top_p, top_k, max_output_tokens, seed, strict_native,
                  system_instruction, image_mime, timeout, use_system_proxy,
                  image=None, image2=None, image3=None, image4=None, extra_payload_json=""):
-        if not (api_key or "").strip():
-            return ("错误: 请提供 API Key", torch.zeros(1, 512, 512, 3))
-        endpoint = _build_endpoint(base_url, model, version)
-        headers = _auto_auth_headers(base_url, api_key.strip(), auth_mode)
+        # 解析镜像站配置与用户输入的优先级
+        site_cfg, full_cfg = _get_mirror_site_config(mirror_site)
+        global_default_base = full_cfg.get('base_url', 'https://generativelanguage.googleapis.com')
+
+        user_key = (api_key or "").strip()
+        user_base = (base_url or "").strip()
+
+        is_custom = (mirror_site or "").lower() == 'custom'
+        if is_custom:
+            # Custom 必须完全依赖用户输入
+            if not user_key or not user_base:
+                return ("错误: 选择 'Custom' 时必须输入 API Key 和 base_url", torch.zeros(1, 512, 512, 3))
+            effective_key = user_key
+            effective_base = user_base
+        else:
+            # 非 Custom：用户输入优先，否则使用配置
+            effective_key = user_key if user_key else (site_cfg.get('api_key') or full_cfg.get('api_key') or "").strip()
+            effective_base = user_base if user_base else (site_cfg.get('url') or global_default_base)
+
+            if not effective_key:
+                return ("错误: 未提供 API Key，且镜像站配置中也没有可用的Key", torch.zeros(1, 512, 512, 3))
+
+        _log(f"镜像站: {mirror_site} → 使用 base_url: {effective_base}")
+        _log(f"认证模式: {auth_mode}")
+
+        # 🎯 处理自定义模型
+        actual_model = model
+        if model == "custom":
+            if not custom_model.strip():
+                return ("错误: 选择'custom'时必须提供自定义模型名称", torch.zeros(1, 512, 512, 3))
+            actual_model = custom_model.strip()
+            _log(f"🔧 使用自定义模型: {actual_model}")
+
+        endpoint = _build_endpoint(effective_base, actual_model, version)
+        headers = _auto_auth_headers(effective_base, effective_key, auth_mode)
 
         # Build parts: prompt then up to 4 images
         parts = [{"text": prompt}]
