@@ -1,0 +1,997 @@
+{
+  "id": "22d0fba5-b3cd-4836-83ed-0fad57ad598f",
+  "revision": 0,
+  "last_node_id": 15,
+  "last_link_id": 14,
+  "nodes": [
+    {
+      "id": 4,
+      "type": "PreviewImage",
+      "pos": [
+        5640.8658743364595,
+        -2678.606698693068
+      ],
+      "size": [
+        431.6448638611182,
+        535.9081168152456
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 5,
+      "type": "easy showAnything",
+      "pos": [
+        5637.509691891496,
+        -2063.100020052903
+      ],
+      "size": [
+        296.7983139038279,
+        187.35971939921114
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "![image](https://filesystem.site/cdn/20251126/687f180bf53cbaa61f9385de3c2953.webp)"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 9,
+      "type": "LoadImage",
+      "pos": [
+        4283.842338156911,
+        -2682.445733244457
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            5,
+            7
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "微信图片_20250915105916_40162_11.jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 11,
+      "type": "easy showAnything",
+      "pos": [
+        4649.041452091077,
+        -1813.8530582457227
+      ],
+      "size": [
+        380.2150169006627,
+        200.35972506105531
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "{\n  \"promptTokenCount\": 2793,\n  \"candidatesTokenCount\": 1465,\n  \"totalTokenCount\": 4258,\n  \"thoughtsTokenCount\": 0,\n  \"promptTokensDetails\": null\n}"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 10,
+      "type": "easy showAnything",
+      "pos": [
+        4651.818648460707,
+        -2089.4242287181673
+      ],
+      "size": [
+        380.2150169006627,
+        200.35972506105531
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "A creative poster design for premium Chinese Baijiu brand promotion featuring a photorealistic, high-definition close-up of the \"Yi He Xiang\" yellow ceramic bottle, highlighting its matte texture, historical brew illustrations, and gold cap. The poster includes the headline text \"益和祥\" in bold, majestic traditional Chinese brush calligraphy with a gold foil emboss effect, and tagline \"七代嫡传 古法秘酿\" in an elegant, smaller serif font. The design style is Modern Oriental Luxury (Guochao) combining traditional aesthetics with contemporary minimalism, using a color scheme of Imperial Yellow, Warm Gold, Deep Mahogany, and Cream. The layout is centered and symmetrical with a strong vertical visual hierarchy. Additional text elements include \"Since 1770\" and \"浓香型白酒\" placed subtly at the bottom. The background features faint, misty traditional ink wash mountain patterns and floating golden wheat grains to suggest the brewing ingredients. The overall mood is dignified, historical, prestigious, and artisanal. Aspect ratio 2:3."
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        1936.6310011587304,
+        -2439.1309375485826
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "33-2.jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 15,
+      "type": "easy showAnything",
+      "pos": [
+        3247.3461837299346,
+        -2078.1834245665646
+      ],
+      "size": [
+        372.631680264587,
+        281.43870774150673
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "Node name for S&R": "easy showAnything",
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "{\n  \"promptTokenCount\": 2828,\n  \"candidatesTokenCount\": 2341,\n  \"totalTokenCount\": 5169,\n  \"thoughtsTokenCount\": 0,\n  \"promptTokensDetails\": null\n}"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 12,
+      "type": "VideoUtilitiesLoadAFVideo",
+      "pos": [
+        2752.7207972242263,
+        -2166.5010463952462
+      ],
+      "size": [
+        270,
+        390
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            11
+          ]
+        },
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_Video_Utilities",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "Node name for S&R": "VideoUtilitiesLoadAFVideo",
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "1 (3).mp4",
+        null,
+        {
+          "hidden": false,
+          "paused": false,
+          "params": {}
+        }
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [
+        2773.4815412453872,
+        -2605.5334996068004
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            10
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "33-1.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 13,
+      "type": "easy showAnything",
+      "pos": [
+        3724.8463960491044,
+        -2625.8590973349587
+      ],
+      "size": [
+        397.7359265084333,
+        357.7169944055008
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "Node name for S&R": "easy showAnything",
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "基于您提供的两个媒体文件（一张静态图片和一个视频片段），以下是详细的综合分析：\n\n### 1. 静态图片分析：AI生成的女性肖像\n\n**视觉描述与风格：**\n*   **主体特征：** 图片展示了一位年轻女性的半身肖像。她拥有光滑细腻的白皙皮肤、深邃的蓝紫色眼睛、直挺的小鼻子和涂着粉色唇釉的嘴唇。她的头发是黑长直，发际线处有中分设计，两侧有两条明显的刘海垂下（即“姬发式”或类似的变体）。\n*   **服饰与配饰：** 她穿着一件粉色的露肩针织罗纹上衣，突出了锁骨和胸部线条。最引人注目的是她佩戴的金色大蛇形/S形耳环。\n*   **艺术风格：** 图片左上角标有“AI生成”字样，明确了其创作来源。整体风格介于“写实风格”与“3D CG渲染”之间。皮肤质感虽然看起来有毛孔感，但过于完美和光滑，具有典型的AI绘画（如Stable Diffusion或Midjourney）生成的“蜡像感”或“手办感”。光影处理非常柔和，背景是简单的粉紫色渐变。\n\n**文化指涉（角色原型）：**\n*   **角色识别：** 根据人物的发型（特别是两条垂下的刘海）、黑发蓝眼特征、蛇形耳环以及高傲冷艳的气质，这个人物极有可能是基于动漫《海贼王》（One Piece）中的角色 **波雅·汉库克（Boa Hancock/女帝）** 生成的同人艺术图。\n*   **AI重构：** AI将这个动漫角色进行了“真人化”或“2.5次元化”处理，保留了角色的标志性特征，但赋予了更接近真人的面部结构。\n\n---\n\n### 2. 视频片段分析：香水光影展示\n\n**视觉叙事与运镜：**\n*   **场景设置：** 视频发生在一个黄昏或夜晚的户外/半户外环境。背景中有模糊的城市灯光（Bokeh），呈现出冷暖对比强烈的色调（背景的蓝色夜空与路灯的黄色光斑）。\n*   **人物与动作：** 一位欧美面孔的年轻女性手持一瓶设计精美的香水瓶。她的妆容自然，神情专注且带有一丝神秘感。\n*   **焦点变换（Rack Focus）：** 视频的核心技术在于焦点的转移。起初，焦点聚集在模特的脸部，随后焦点逐渐前移，模特的脸变得模糊，而手中的香水瓶变得清晰锐利。这种运镜手法在广告摄影中非常经典，用于引导观众的视线从代言人转移到产品本身。\n\n**光影与氛围：**\n*   **光线运用：** 采用了非常讲究的布光。香水瓶似乎从内部或后方被照亮，玻璃的切割面折射出璀璨的光芒，使其看起来像一块发光的宝石。这种光线设计极大地提升了产品的奢华感和诱惑力。\n*   **氛围营造：** 整体氛围浪漫、高端且具有梦幻感。冷色调的背景与暖色调的人物及产品形成了悦目的互补色对比，非常符合高端香水广告的审美标准。\n\n---\n\n### 3. 综合对比与总结\n\n这两个媒体展示了数字时代视觉内容的两种不同极端：\n\n1.  **生成方式的对比：**\n    *   **图片**是**全合成的（Synthetic）**。它代表了计算机算法对人类审美的解构与重组，追求的是一种超越现实的“完美”和“理想化”美感。\n    *   **视频**是**实拍的（Cinematic）**。它依赖于物理世界的光学原理、模特的真实表现力以及摄影师对光影的捕捉，强调的是质感、氛围和瞬间的真实流动。\n\n2.  **美学重点的差异：**\n    *   **图片**侧重于**形体与特征**。重点在于还原角色的标志性外观（如耳环、发型）和某种特定的二次元审美（大眼、小脸）。\n    *   **视频**侧重于**光影与材质**。重点在于表现玻璃的通透感、光线的折射以及皮肤在特定光线下的质感。\n\n3.  **应用场景：**\n    *   图片主要用于社交媒体分享、动漫社群讨论或作为数字艺术收藏。\n    *   视频则具有明显的商业属性，非常适合作为香水、珠宝或美妆产品的广告素材。\n\n**总结：** 您提供的媒体展示了当前视觉艺术的两个侧面——一个是AI技术带来的虚拟角色重塑，另一个是传统摄影技术对现实美感的高级呈现。两者虽然形式不同，但都不仅捕捉了女性的美，也展示了对光线和色彩的精细控制。"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 14,
+      "type": "easy showAnything",
+      "pos": [
+        3661.767419030497,
+        -2151.319419153862
+      ],
+      "size": [
+        372.631680264587,
+        281.43870774150673
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "Node name for S&R": "easy showAnything",
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 1,
+      "type": "NanoBananaGeneralAPI",
+      "pos": [
+        5166.835203345354,
+        -2722.1693950377
+      ],
+      "size": [
+        353.91425425061425,
+        784
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 7
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "NanoBananaGeneralAPI",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "将图1的女人换成图2的女人，保持图图我的画风不变，保持图2的女人的外貌特征不变",
+        "Custom",
+        "sk-wf4IJiLfz0lW3fBaIC1xO9nzRmvL3H2bCcXmGlD2SzmzPUA1",
+        "https://api.tu-zi.com/",
+        "custom",
+        "nano-banana-2-hd",
+        "Auto",
+        "auto",
+        "TEXT_AND_IMAGE",
+        "4:5",
+        "Auto",
+        "2x",
+        "High Fidelity",
+        1,
+        0.9,
+        40,
+        8192,
+        1012262650,
+        "randomize",
+        "",
+        "image/png",
+        "image/png",
+        300,
+        true,
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 7,
+      "type": "KenChenLLMBanana2PromptTemplate",
+      "pos": [
+        4703.728386077782,
+        -2706.922359992739
+      ],
+      "size": [
+        342.9254137390071,
+        520
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 5
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "banana_prompt",
+          "type": "STRING",
+          "links": [
+            6,
+            8
+          ]
+        },
+        {
+          "name": "raw_response",
+          "type": "STRING",
+          "links": [
+            9
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMBanana2PromptTemplate",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "为传入的产品生成创意广告海报词",
+        "创意-海报设计",
+        "gemini-3-pro-preview [all]",
+        "custom",
+        "sk-wf4IJiLfz0lW3fBaIC1xO9nzRmvL3H2bCcXmGlD2SzmzPUA1",
+        "https://api.tu-zi.com/",
+        "Auto",
+        "auto",
+        8192,
+        1,
+        "high",
+        "media_resolution_high",
+        "",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 8,
+      "type": "KenChenLLMPromptGeminiMultimodal",
+      "pos": [
+        3233.9355437317827,
+        -2635.726171523392
+      ],
+      "size": [
+        343.067033976125,
+        483.83654729109276
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 10
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "video",
+          "shape": 7,
+          "type": "VIDEO",
+          "link": 11
+        },
+        {
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "response",
+          "type": "STRING",
+          "links": [
+            12
+          ]
+        },
+        {
+          "name": "thought_signature",
+          "type": "STRING",
+          "links": [
+            13
+          ]
+        },
+        {
+          "name": "usage_info",
+          "type": "STRING",
+          "links": [
+            14
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMPromptGeminiMultimodal",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "请对所有提供的媒体进行详细的综合分析。",
+        "gemini-3-pro-preview [all]",
+        "custom",
+        "sk-wf4IJiLfz0lW3fBaIC1xO9nzRmvL3H2bCcXmGlD2SzmzPUA1",
+        "https://api.tu-zi.com/",
+        "Auto",
+        "auto",
+        8192,
+        1,
+        "high",
+        "media_resolution_high",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    }
+  ],
+  "links": [
+    [
+      3,
+      1,
+      1,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      1,
+      0,
+      5,
+      0,
+      "*"
+    ],
+    [
+      5,
+      9,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      7,
+      0,
+      1,
+      4,
+      "STRING"
+    ],
+    [
+      7,
+      9,
+      0,
+      1,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      7,
+      0,
+      10,
+      0,
+      "*"
+    ],
+    [
+      9,
+      7,
+      1,
+      11,
+      0,
+      "*"
+    ],
+    [
+      10,
+      3,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      11,
+      12,
+      0,
+      8,
+      4,
+      "VIDEO"
+    ],
+    [
+      12,
+      8,
+      0,
+      13,
+      0,
+      "*"
+    ],
+    [
+      13,
+      8,
+      1,
+      14,
+      0,
+      "*"
+    ],
+    [
+      14,
+      8,
+      2,
+      15,
+      0,
+      "*"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "多模态分析",
+      "bounding": [
+        2742.7207972242263,
+        -2709.326171523392,
+        1379.450265767156,
+        942.8251251281462
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "ds": {
+      "scale": 0.544500000000002,
+      "offset": [
+        -2329.1850203290564,
+        3225.2350301309602
+      ]
+    },
+    "links_added_by_ue": [],
+    "frontendVersion": "1.30.6",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}
