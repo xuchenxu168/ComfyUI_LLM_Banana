@@ -1,7 +1,7 @@
 [project]
 name = "ComfyUI_LLM_Banana"
 description = "ComfyUI banana Nodes: Seamlessly integrate banana models into ComfyUI for enhanced image generation and image edit capabilities. Features include image generation and banana image edit."
-version = "2.1.6"
+version = "2.2.0"
 license = {file = "LICENSE"}
 dependencies = ["gemini"]
 
@@ -14,4 +14,5 @@ PublisherId = "xuchenxu168"
 DisplayName = "ComfyUI_LLM_Banana"
 Icon = ""
 includes = []
+
 
