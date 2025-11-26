@@ -1,5 +1,164 @@
 # ComfyUI LLM Banana - 多模态AI助手节点集合
 
+本仓库是 ComfyUI 的多模态 AI 助手节点集合，支持 Gemini 等多个供应商与镜像站的调用，并提供丰富的提示词模板与多模态分析能力。
+
+## 新增功能速览（2025-11）
+- Banana2-提示词模板节点：新增 `base_url`、`version`、`auth_mode` 三个参数，并实现通用 API 调用与优先级回退逻辑（用户输入优先 → 供应商配置 → 全局配置 → 默认）。
+- Gemini-Multimodal 节点同步：同样新增上述三参数，端点构建与认证策略与 Banana2 节点保持一致，体验统一。
+
+> 以上更新与 `NanoBanana-GeneralAPI` 的设计保持一致：支持自动/强制认证模式、灵活版本选择、以及自定义/镜像端点覆盖。
+
+---
+
+## Banana2-提示词模板：通用 API 调用说明
+
+在 Banana2 节点中，`api_key` 与 `max_output_tokens` 之间新增了以下参数：
+
+- `base_url`：自定义或镜像站的基础地址；当选择 `custom` 供应商时必须填写。
+- `version`：接口版本，支持 `Auto`、`v1`、`v1alpha`、`v1beta`。
+- `auth_mode`：认证模式，支持 `auto`、`google_xgoog`、`bearer`。
+
+### 参数优先级与回退
+- API Key：用户输入优先 → 供应商配置（`Gemini_config.json`） → 全局配置 → 错误提示（缺失）。
+- Base URL：用户输入优先 → 供应商配置 → 全局配置 → 供应商默认值。
+- 选择 `api_provider=custom` 时必须同时输入 `api_key` 与 `base_url`，否则直接报错以避免不确定性。
+
+### 版本选择策略（`version=Auto`）
+- Google 官方域或 `generativelanguage.googleapis.com`：
+  - 当 `media_resolution=Auto` 使用 `v1beta`；
+  - 非 `Auto` 时使用 `v1alpha`（部分多模态特性在 alpha/beta 上线节奏不同）。
+- 非 Google 域：默认使用 `v1`（绝大多数代理/镜像与 OpenAI 风格遵循 `/v1`）。
+
+### 认证模式说明
+- `auto`：若 `base_url` 包含 `generativelanguage.googleapis.com`，使用 `x-goog-api-key`；否则使用 `Authorization: Bearer <key>`。
+- `google_xgoog`：强制使用 `x-goog-api-key`（用于兼容某些代理明确要求此头部）。
+- `bearer`：强制使用 `Authorization: Bearer <key>`。
+
+### 端点构建规则
+- 若用户提供的 `base_url` 已是完整端点（包含 `/models/<model>:generateContent`），则直接使用原值，不再拼接。
+- 否则按照通用格式拼接：
+  - `base_url/<version>/models/<model>:generateContent`
+  - 若 `base_url` 已以 `/v1`、`/v1alpha` 或 `/v1beta` 结尾，则拼接成：`<base_url>/models/<model>:generateContent`
+
+### 示例（快速验证）
+1) 官方 Google：
+- `api_provider=google`，只填 `api_key`，`base_url` 留空，`version=Auto`，`auth_mode=auto`。
+- 预期行为：请求 URL 使用 `v1beta`；请求头包含 `x-goog-api-key`。
+
+2) 自定义/代理服务：
+- `api_provider=custom`，填写 `base_url=https://your.proxy/v1`，`auth_mode=bearer`，填写 `api_key`。
+- 预期行为：请求 URL 为 `https://your.proxy/v1/models/<model>:generateContent`；请求头为 `Authorization: Bearer <key>`。
+
+### 配置文件（`Gemini_config.json`）示例
+```json
+{
+  "api_key": "GLOBAL_KEY_OPTIONAL",
+  "base_url": "https://generativelanguage.googleapis.com",
+  "api_providers": {
+    "google": { "api_key": "YOUR_GOOGLE_KEY" },
+    "comet":  { "base_url": "https://api.cometapi.com" },
+    "comfly": { "base_url": "https://ai.comfly.chat/v1" },
+    "aabao":  { "base_url": "https://api.aabao.top/v1" }
+  }
+}
+```
+
+---
+
+## Gemini-Multimodal：参数与行为同步
+- 新增 `base_url`、`version`、`auth_mode` 三参数，位置在 `api_key` 之后。
+- 与 Banana2 节点一致的端点构建与认证策略：
+  - 端点：遵循完整端点直通与通用拼接规则；
+  - 认证：`auto` / `google_xgoog` / `bearer`；
+  - 版本：`Auto` 下针对 Google/非 Google 的分支选择。
+
+> 若页面未显示新参数，请在 ComfyUI 左侧点击 “Reload Custom Nodes” 或重启 ComfyUI 以加载最新代码。
+
+---
+
+## 日志与验证
+- 在工作流运行时，关注日志中的 `Request URL` 与 `Request Headers`，
+  - 确认是否触发了期望的版本（如 `v1beta`）与认证头（`x-goog-api-key` 或 `Authorization: Bearer`）。
+- 异常场景：
+  - `custom` 供应商且缺失 `api_key` 或 `base_url` 会直接报错；
+  - 当既无用户输入也无配置提供 `api_key` 时会报错提示缺失凭据。
+
+---
+
+## 已知供应商默认 Base URL（参考）
+- `google`：`https://generativelanguage.googleapis.com`
+- `comet`：`https://api.cometapi.com`
+- `comfly`：`https://ai.comfly.chat/v1`
+- `aabao`：`https://api.aabao.top/v1`
+
+> 注意：部分镜像/代理可能采用 OpenAI 风格的 `/v1` 路径；如存在兼容性问题，可通过 `base_url` 与 `auth_mode` 的强制设置进行修正。
+
+---
+
+## 快速上手与示例工作流
+- 快速上手文档：`docs/banana2_quick_start.md`
+- 提示词模板指南：`docs/banana2_prompt_template_guide.md`
+- 示例工作流参考：`examples/` 与根目录诸多 `*.json` 文件（包括镜像 API 调用示例）。
+
+---
+
+## NanoBanana-GeneralAPI：节点与功能
+- 作用：提供统一的通用 REST API 调用能力，支持官方域与各类镜像/代理，并与 Banana2/Gemini-Multimodal 的端点与认证逻辑保持一致。
+- 特点：
+  - 支持镜像站下拉选择（`mirror_site`），从 `Gemini_Banana_config.json` 的 `mirror_sites` 动态加载选项；
+  - 参数优先级回退：用户输入 → 镜像站配置 → 全局配置 → 默认供应商地址；
+  - 认证模式与版本选择与上文一致，支持自动/强制模式与 `Auto/v1/v1alpha/v1beta`。
+
+### 参数说明
+- `mirror_site`：镜像站选择；默认站点由配置文件定义。选择 `custom` 时需自填端点与凭据。
+- `api_key`：API 密钥；`custom` 模式必须填写。
+- `base_url`：基础地址；`custom` 模式必须填写。可填完整端点（含 `/models/<model>:generateContent`）以直通。
+- `version`：接口版本；支持 `Auto`、`v1`、`v1alpha`、`v1beta`。
+- `auth_mode`：认证模式；支持 `auto`、`google_xgoog`、`bearer`。
+- `model` / `custom_model`：当镜像站提供模型下拉时选择 `model`；在 `custom` 模式下可使用 `custom_model` 手动填入。
+
+### 端点与认证规则
+- 端点拼接：
+  - 完整端点直通（用户已提供 `/models/<model>:generateContent`）；
+  - 否则 `base_url/<version>/models/<model>:generateContent`；当 `base_url` 已以 `/v1|/v1alpha|/v1beta` 结尾时拼接为 `.../models/<model>:generateContent`。
+- 认证模式：
+  - `auto`：Google 域走 `x-goog-api-key`，其他走 `Authorization: Bearer`；
+  - `google_xgoog`：强制 `x-goog-api-key`；
+  - `bearer`：强制 `Authorization: Bearer`。
+
+### 优先级与回退策略
+- `API Key`：用户输入 → 镜像站配置 → 全局配置 → 错误提示（缺失）。
+- `Base URL`：用户输入 → 镜像站配置 → 全局配置 → 供应商默认值（例如 Google 为 `https://generativelanguage.googleapis.com`）。
+- `custom` 镜像站：必须同时输入 `api_key` 与 `base_url`。
+
+### 配置示例（`Gemini_Banana_config.json`）
+```json
+{
+  "api_key": "GLOBAL_KEY_OPTIONAL",
+  "base_url": "https://generativelanguage.googleapis.com",
+  "mirror_sites": {
+    "nano-banana官方": {"url": "https://generativelanguage.googleapis.com", "api_key": "YOUR_GOOGLE_KEY"},
+    "comfly": {"url": "https://ai.comfly.chat/v1", "api_key": "YOUR_COMFLY_KEY"},
+    "aabao": {"url": "https://api.aabao.top/v1"},
+    "custom": {"url": "", "api_key": ""}
+  }
+}
+```
+
+### 快速验证
+- 选择 `mirror_site=nano-banana官方`，不填 `base_url` 只填 `api_key`，`version=Auto`、`auth_mode=auto`：
+  - 预期 URL 选择 `v1beta` 或 `v1alpha`（取决于任务多模态需求），头部为 `x-goog-api-key`。
+- 选择 `mirror_site=comfly`（或其它代理），留空 `base_url`：
+  - 使用镜像站配置中的 `url` 与可用的 `api_key`；非 Google 域默认版本为 `v1`，头部为 `Authorization: Bearer`。
+- 选择 `mirror_site=custom`，填写自定义 `base_url` 与 `api_key`，`auth_mode=bearer`：
+  - 端点为 `base_url/<version>/models/<model>:generateContent`（或完整端点直通）；头部为 `Authorization: Bearer <key>`。
+
+## 变更日志（节选）
+- 新增：Banana2-提示词模板与 Gemini-Multimodal 节点的 `base_url`、`version`、`auth_mode` 参数。
+- 统一：端点构建与认证策略，支持自动/强制模式与自定义端点直通。
+- 逻辑：优先级回退（用户输入 → 供应商配置 → 全局 → 默认），与 `NanoBanana-GeneralAPI` 保持一致。
+
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Compatible-green.svg)](https://github.com/comfyanonymous/ComfyUI)
@@ -122,11 +281,15 @@ ComfyUI LLM Banana的核心优势在于其强大的**Banana系列节点**，提�
   - `image`: 输入图像(支持多图)
   - `api_key`: Google API密钥
   - `model`: 模型选择 (gemini-1.5-pro, gemini-1.5-flash等)
-  - `temperature`: 创造性控制 (0.0-2.0)
-  - `max_output_tokens`: 最大输出长度
+  - `temperature` → 创造性控制 (0.0-2.0)
+  - `top_p` → 概率截断 (0.0-1.0，默认 0.9)
+  - `top_k` → 词汇截断 (1-1000，常用 40)
+  - `max_output_tokens` → 最大输出长度
   - `safety_level`: 安全级别 (default, strict, moderate, permissive, off) ⭐ NEW
   - `system_instruction_preset`: 系统指令预设 (image_generation, creative_artist等) ⭐ NEW
   - `custom_system_instruction`: 自定义系统指令 ⭐ NEW
+
+  参数显示顺序：temperature → top_p → top_k → max_output_tokens
 - **输出**: 编辑后的图像 + 描述文本
 - **特性**:
   - 🔥 **强大的图像编辑能力**: 支持局部修改、风格转换、内容替换
