@@ -1,354 +1,9 @@
 {
   "id": "22d0fba5-b3cd-4836-83ed-0fad57ad598f",
   "revision": 0,
-  "last_node_id": 15,
-  "last_link_id": 14,
+  "last_node_id": 62,
+  "last_link_id": 77,
   "nodes": [
-    {
-      "id": 4,
-      "type": "PreviewImage",
-      "pos": [
-        5640.8658743364595,
-        -2678.606698693068
-      ],
-      "size": [
-        431.6448638611182,
-        535.9081168152456
-      ],
-      "flags": {},
-      "order": 13,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "link": 3
-        }
-      ],
-      "outputs": [],
-      "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.3.71",
-        "Node name for S&R": "PreviewImage",
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.5.1"
-        },
-        "ttNbgOverride": {
-          "color": "#323",
-          "bgcolor": "#535",
-          "groupcolor": "#a1309b"
-        }
-      },
-      "widgets_values": [],
-      "color": "#323",
-      "bgcolor": "#535"
-    },
-    {
-      "id": 5,
-      "type": "easy showAnything",
-      "pos": [
-        5637.509691891496,
-        -2063.100020052903
-      ],
-      "size": [
-        296.7983139038279,
-        187.35971939921114
-      ],
-      "flags": {},
-      "order": 12,
-      "mode": 0,
-      "inputs": [
-        {
-          "label": "输入任何",
-          "name": "anything",
-          "shape": 7,
-          "type": "*",
-          "link": 4
-        }
-      ],
-      "outputs": [
-        {
-          "name": "output",
-          "type": "*",
-          "links": null
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfyui-easy-use",
-        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
-        "Node name for S&R": "easy showAnything",
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.5.1"
-        },
-        "ttNbgOverride": {
-          "color": "#323",
-          "bgcolor": "#535",
-          "groupcolor": "#a1309b"
-        }
-      },
-      "widgets_values": [
-        "![image](https://filesystem.site/cdn/20251126/687f180bf53cbaa61f9385de3c2953.webp)"
-      ],
-      "color": "#323",
-      "bgcolor": "#535"
-    },
-    {
-      "id": 9,
-      "type": "LoadImage",
-      "pos": [
-        4283.842338156911,
-        -2682.445733244457
-      ],
-      "size": [
-        270,
-        314
-      ],
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": [
-            5,
-            7
-          ]
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": null
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.3.71",
-        "Node name for S&R": "LoadImage",
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.5.1"
-        },
-        "ttNbgOverride": {
-          "color": "#323",
-          "bgcolor": "#535",
-          "groupcolor": "#a1309b"
-        }
-      },
-      "widgets_values": [
-        "微信图片_20250915105916_40162_11.jpg",
-        "image"
-      ],
-      "color": "#323",
-      "bgcolor": "#535"
-    },
-    {
-      "id": 11,
-      "type": "easy showAnything",
-      "pos": [
-        4649.041452091077,
-        -1813.8530582457227
-      ],
-      "size": [
-        380.2150169006627,
-        200.35972506105531
-      ],
-      "flags": {},
-      "order": 8,
-      "mode": 0,
-      "inputs": [
-        {
-          "label": "输入任何",
-          "name": "anything",
-          "shape": 7,
-          "type": "*",
-          "link": 9
-        }
-      ],
-      "outputs": [
-        {
-          "name": "output",
-          "type": "*",
-          "links": null
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfyui-easy-use",
-        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
-        "Node name for S&R": "easy showAnything",
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.5.1"
-        },
-        "ttNbgOverride": {
-          "color": "#323",
-          "bgcolor": "#535",
-          "groupcolor": "#a1309b"
-        }
-      },
-      "widgets_values": [
-        "{\n  \"promptTokenCount\": 2793,\n  \"candidatesTokenCount\": 1465,\n  \"totalTokenCount\": 4258,\n  \"thoughtsTokenCount\": 0,\n  \"promptTokensDetails\": null\n}"
-      ],
-      "color": "#323",
-      "bgcolor": "#535"
-    },
-    {
-      "id": 10,
-      "type": "easy showAnything",
-      "pos": [
-        4651.818648460707,
-        -2089.4242287181673
-      ],
-      "size": [
-        380.2150169006627,
-        200.35972506105531
-      ],
-      "flags": {},
-      "order": 7,
-      "mode": 0,
-      "inputs": [
-        {
-          "label": "输入任何",
-          "name": "anything",
-          "shape": 7,
-          "type": "*",
-          "link": 8
-        }
-      ],
-      "outputs": [
-        {
-          "name": "output",
-          "type": "*",
-          "links": null
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfyui-easy-use",
-        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
-        "Node name for S&R": "easy showAnything",
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.5.1"
-        },
-        "ttNbgOverride": {
-          "color": "#323",
-          "bgcolor": "#535",
-          "groupcolor": "#a1309b"
-        }
-      },
-      "widgets_values": [
-        "A creative poster design for premium Chinese Baijiu brand promotion featuring a photorealistic, high-definition close-up of the \"Yi He Xiang\" yellow ceramic bottle, highlighting its matte texture, historical brew illustrations, and gold cap. The poster includes the headline text \"益和祥\" in bold, majestic traditional Chinese brush calligraphy with a gold foil emboss effect, and tagline \"七代嫡传 古法秘酿\" in an elegant, smaller serif font. The design style is Modern Oriental Luxury (Guochao) combining traditional aesthetics with contemporary minimalism, using a color scheme of Imperial Yellow, Warm Gold, Deep Mahogany, and Cream. The layout is centered and symmetrical with a strong vertical visual hierarchy. Additional text elements include \"Since 1770\" and \"浓香型白酒\" placed subtly at the bottom. The background features faint, misty traditional ink wash mountain patterns and floating golden wheat grains to suggest the brewing ingredients. The overall mood is dignified, historical, prestigious, and artisanal. Aspect ratio 2:3."
-      ],
-      "color": "#323",
-      "bgcolor": "#535"
-    },
-    {
-      "id": 2,
-      "type": "LoadImage",
-      "pos": [
-        1936.6310011587304,
-        -2439.1309375485826
-      ],
-      "size": [
-        270,
-        314
-      ],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": []
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": null
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.3.71",
-        "Node name for S&R": "LoadImage",
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.5.1"
-        },
-        "ttNbgOverride": {
-          "color": "#323",
-          "bgcolor": "#535",
-          "groupcolor": "#a1309b"
-        }
-      },
-      "widgets_values": [
-        "33-2.jpg",
-        "image"
-      ],
-      "color": "#323",
-      "bgcolor": "#535"
-    },
-    {
-      "id": 15,
-      "type": "easy showAnything",
-      "pos": [
-        3247.3461837299346,
-        -2078.1834245665646
-      ],
-      "size": [
-        372.631680264587,
-        281.43870774150673
-      ],
-      "flags": {},
-      "order": 11,
-      "mode": 0,
-      "inputs": [
-        {
-          "label": "输入任何",
-          "name": "anything",
-          "shape": 7,
-          "type": "*",
-          "link": 14
-        }
-      ],
-      "outputs": [
-        {
-          "name": "output",
-          "type": "*",
-          "links": null
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfyui-easy-use",
-        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
-        },
-        "Node name for S&R": "easy showAnything",
-        "ttNbgOverride": {
-          "color": "#323",
-          "bgcolor": "#535",
-          "groupcolor": "#a1309b"
-        }
-      },
-      "widgets_values": [
-        "{\n  \"promptTokenCount\": 2828,\n  \"candidatesTokenCount\": 2341,\n  \"totalTokenCount\": 5169,\n  \"thoughtsTokenCount\": 0,\n  \"promptTokensDetails\": null\n}"
-      ],
-      "color": "#323",
-      "bgcolor": "#535"
-    },
     {
       "id": 12,
       "type": "VideoUtilitiesLoadAFVideo",
@@ -361,8 +16,8 @@
         390
       ],
       "flags": {},
-      "order": 2,
-      "mode": 0,
+      "order": 0,
+      "mode": 4,
       "inputs": [],
       "outputs": [
         {
@@ -381,11 +36,12 @@
       "properties": {
         "cnr_id": "ComfyUI_Video_Utilities",
         "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "VideoUtilitiesLoadAFVideo",
         "ue_properties": {
           "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
         },
-        "Node name for S&R": "VideoUtilitiesLoadAFVideo",
         "ttNbgOverride": {
           "color": "#323",
           "bgcolor": "#535",
@@ -416,8 +72,8 @@
         314
       ],
       "flags": {},
-      "order": 3,
-      "mode": 0,
+      "order": 1,
+      "mode": 4,
       "inputs": [],
       "outputs": [
         {
@@ -456,18 +112,18 @@
       "bgcolor": "#535"
     },
     {
-      "id": 13,
+      "id": 5,
       "type": "easy showAnything",
       "pos": [
-        3724.8463960491044,
-        -2625.8590973349587
+        5395.287469669269,
+        -1825.3222422751262
       ],
       "size": [
-        397.7359265084333,
-        357.7169944055008
+        296.7983139038279,
+        187.35971939921114
       ],
       "flags": {},
-      "order": 9,
+      "order": 39,
       "mode": 0,
       "inputs": [
         {
@@ -475,7 +131,7 @@
           "name": "anything",
           "shape": 7,
           "type": "*",
-          "link": 12
+          "link": 4
         }
       ],
       "outputs": [
@@ -488,11 +144,12 @@
       "properties": {
         "cnr_id": "comfyui-easy-use",
         "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
         "ue_properties": {
           "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
         },
-        "Node name for S&R": "easy showAnything",
         "ttNbgOverride": {
           "color": "#323",
           "bgcolor": "#535",
@@ -500,24 +157,65 @@
         }
       },
       "widgets_values": [
-        "基于您提供的两个媒体文件（一张静态图片和一个视频片段），以下是详细的综合分析：\n\n### 1. 静态图片分析：AI生成的女性肖像\n\n**视觉描述与风格：**\n*   **主体特征：** 图片展示了一位年轻女性的半身肖像。她拥有光滑细腻的白皙皮肤、深邃的蓝紫色眼睛、直挺的小鼻子和涂着粉色唇釉的嘴唇。她的头发是黑长直，发际线处有中分设计，两侧有两条明显的刘海垂下（即“姬发式”或类似的变体）。\n*   **服饰与配饰：** 她穿着一件粉色的露肩针织罗纹上衣，突出了锁骨和胸部线条。最引人注目的是她佩戴的金色大蛇形/S形耳环。\n*   **艺术风格：** 图片左上角标有“AI生成”字样，明确了其创作来源。整体风格介于“写实风格”与“3D CG渲染”之间。皮肤质感虽然看起来有毛孔感，但过于完美和光滑，具有典型的AI绘画（如Stable Diffusion或Midjourney）生成的“蜡像感”或“手办感”。光影处理非常柔和，背景是简单的粉紫色渐变。\n\n**文化指涉（角色原型）：**\n*   **角色识别：** 根据人物的发型（特别是两条垂下的刘海）、黑发蓝眼特征、蛇形耳环以及高傲冷艳的气质，这个人物极有可能是基于动漫《海贼王》（One Piece）中的角色 **波雅·汉库克（Boa Hancock/女帝）** 生成的同人艺术图。\n*   **AI重构：** AI将这个动漫角色进行了“真人化”或“2.5次元化”处理，保留了角色的标志性特征，但赋予了更接近真人的面部结构。\n\n---\n\n### 2. 视频片段分析：香水光影展示\n\n**视觉叙事与运镜：**\n*   **场景设置：** 视频发生在一个黄昏或夜晚的户外/半户外环境。背景中有模糊的城市灯光（Bokeh），呈现出冷暖对比强烈的色调（背景的蓝色夜空与路灯的黄色光斑）。\n*   **人物与动作：** 一位欧美面孔的年轻女性手持一瓶设计精美的香水瓶。她的妆容自然，神情专注且带有一丝神秘感。\n*   **焦点变换（Rack Focus）：** 视频的核心技术在于焦点的转移。起初，焦点聚集在模特的脸部，随后焦点逐渐前移，模特的脸变得模糊，而手中的香水瓶变得清晰锐利。这种运镜手法在广告摄影中非常经典，用于引导观众的视线从代言人转移到产品本身。\n\n**光影与氛围：**\n*   **光线运用：** 采用了非常讲究的布光。香水瓶似乎从内部或后方被照亮，玻璃的切割面折射出璀璨的光芒，使其看起来像一块发光的宝石。这种光线设计极大地提升了产品的奢华感和诱惑力。\n*   **氛围营造：** 整体氛围浪漫、高端且具有梦幻感。冷色调的背景与暖色调的人物及产品形成了悦目的互补色对比，非常符合高端香水广告的审美标准。\n\n---\n\n### 3. 综合对比与总结\n\n这两个媒体展示了数字时代视觉内容的两种不同极端：\n\n1.  **生成方式的对比：**\n    *   **图片**是**全合成的（Synthetic）**。它代表了计算机算法对人类审美的解构与重组，追求的是一种超越现实的“完美”和“理想化”美感。\n    *   **视频**是**实拍的（Cinematic）**。它依赖于物理世界的光学原理、模特的真实表现力以及摄影师对光影的捕捉，强调的是质感、氛围和瞬间的真实流动。\n\n2.  **美学重点的差异：**\n    *   **图片**侧重于**形体与特征**。重点在于还原角色的标志性外观（如耳环、发型）和某种特定的二次元审美（大眼、小脸）。\n    *   **视频**侧重于**光影与材质**。重点在于表现玻璃的通透感、光线的折射以及皮肤在特定光线下的质感。\n\n3.  **应用场景：**\n    *   图片主要用于社交媒体分享、动漫社群讨论或作为数字艺术收藏。\n    *   视频则具有明显的商业属性，非常适合作为香水、珠宝或美妆产品的广告素材。\n\n**总结：** 您提供的媒体展示了当前视觉艺术的两个侧面——一个是AI技术带来的虚拟角色重塑，另一个是传统摄影技术对现实美感的高级呈现。两者虽然形式不同，但都不仅捕捉了女性的美，也展示了对光线和色彩的精细控制。"
+        "**Framing the Narrative**\n\nI'm currently crafting a 9-panel storyboard from the provided script, aiming for a cinematic feel. The layout will be a 3x3 grid, and I'm focusing on consistent, realistic visuals with movie-quality lighting.\n\n\n**Defining the Structure**\n\nMy current plan involves a 3x3 grid for the storyboard, working from left to right, top to bottom, with movie-quality lighting in mind. I need to make sure the \"Yi He Xiang\" bottle appears correctly in relevant scenes and I will add the provided slogan at the end.\n\n\n**Examining Visual Compliance**\n\nI'm assessing whether the generated images adhere precisely to the specifications. The storyboards, specifically the 3x3 layout, are currently under evaluation to ensure all nine panels meet the requirements of the prompt. I'm focusing on the successful integration of different elements across all the given instructions.\n\n\n**Assessing Image Fidelity**\n\nThe recent focus has been on verifying the conformity of the generated images to the given prompt. I'm checking that the 3x3 storyboard accurately reflects the nine specified shots. Particular attention is being paid to the execution of elements like the Chinese-style setting, the lighting, and the representation of the product and slogan.\n\n\n"
       ],
       "color": "#323",
       "bgcolor": "#535"
     },
     {
-      "id": 14,
-      "type": "easy showAnything",
+      "id": 4,
+      "type": "PreviewImage",
       "pos": [
-        3661.767419030497,
-        -2151.319419153862
+        5823.05274558493,
+        -2783.7156670788795
       ],
       "size": [
-        372.631680264587,
-        281.43870774150673
+        935.5649932439474,
+        1215.9429131167922
       ],
       "flags": {},
-      "order": 10,
+      "order": 40,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 10,
+      "type": "easy showAnything",
+      "pos": [
+        4682.270394796904,
+        -2184.7038871775876
+      ],
+      "size": [
+        565.5201023243626,
+        638.4361636725239
+      ],
+      "flags": {},
+      "order": 23,
       "mode": 0,
       "inputs": [
         {
@@ -525,7 +223,7 @@
           "name": "anything",
           "shape": 7,
           "type": "*",
-          "link": 13
+          "link": 8
         }
       ],
       "outputs": [
@@ -538,11 +236,12 @@
       "properties": {
         "cnr_id": "comfyui-easy-use",
         "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
         "ue_properties": {
           "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
         },
-        "Node name for S&R": "easy showAnything",
         "ttNbgOverride": {
           "color": "#323",
           "bgcolor": "#535",
@@ -550,7 +249,7 @@
         }
       },
       "widgets_values": [
-        ""
+        "**提示词**：\n\n(3x3 grid storyboard), 9 distinct panels, storyboard layout, cinematic lighting, photorealistic, 8k --ar 16:9\n\n### 镜头1（全景）：\n- 场景：新中式风格的雅致客厅或茶室，原木色调，透过纱帘的柔和自然光，桌面上摆放着“益和祥”酒瓶与精致酒具。\n- 角色：画面空镜为主，或主角背影若隐若现，营造静谧氛围。\n- 镜头语言：平视广角，建立空间感，强调环境的高级与宁静。\n- 光影风格：暖色调晨光，空气中带有细微尘埃颗粒感，通透洁净。\n\n### 镜头2（中景）：\n- 场景：一位年轻温柔的中国姑娘（主角）走向桌边，穿着改良式现代淡雅旗袍或丝质家居服，气质温婉。\n- 角色动作：姑娘目光温柔地注视着酒瓶，指尖轻轻触碰瓶身。\n- 镜头语言：侧面跟拍，焦点跟随人物移动，展现优雅体态。\n- 光影风格：侧逆光勾勒人物轮廓，发丝发光，肤色细腻白皙。\n\n### 镜头3（近景）：\n- 场景：手部特写，展示手指抚摸“益和祥”淡黄色陶瓷瓶身的细腻质感。\n- 镜头语言：微距镜头，捕捉瓶身表面的颗粒纹理与手指的互动。\n- 光影风格：柔和漫反射光，突出陶瓷的温润光泽与手部皮肤质感。\n\n### 镜头4（全景）：\n- 场景：姑娘优雅落座，背景是模糊的室内陈设，绿植点缀。\n- 角色动作：单手握住瓶颈，姿态从容自信，准备斟酒。\n- 镜头语言：45度角侧拍，构图平衡，人物与产品处于黄金分割点。\n- 光影风格：主光照亮面部与产品，背景适度压暗，层次分明。\n\n### 镜头5（中景）：\n- 场景：酒液倾倒而出的瞬间，酒线拉长，落入透明的小酒杯中。\n- 角色动作：神情专注且愉悦，嘴角微微上扬，表现出对品质的期待。\n- 镜头语言：中景定格，快门速度高，捕捉酒液流动的动态美。\n- 光影风格：晶莹剔透的光效，强调酒液的清澈与粘稠度（挂杯感）。\n\n### 镜头6（特写）：\n- 场景：聚焦瓶身标签细节，清晰展示“益和祥”书法字体及“七代嫡传·古法秘酿”字样。\n- 镜头语言：极其清晰的定格特写，背景极度虚化。\n- 光影风格：硬朗的主光打在金色瓶盖和烫金字体上，呈现金属反光质感。\n\n### 镜头7（全景）：\n- 场景：氛围转为温馨的晚宴或独酌时刻，背景灯光微暖，营造家与传承的感觉。\n- 角色动作：姑娘举杯轻嗅，闭眼享受酒香，动作舒缓。\n- 镜头语言：缓慢推镜头，将观众带入享受的情绪中。\n- 光影风格：暖黄色的环境光，营造温馨、治愈的色彩基调。\n\n### 镜头8（近景）：\n- 场景：姑娘品酒后的满足表情，眼神清澈温柔，看向镜头仿佛在对话。\n- 镜头语言：大光圈人像镜头，聚焦眼部与面部微表情。\n- 光影风格：蝴蝶光或伦勃朗光，立体且柔美，色彩还原度高。\n\n### 镜头9（定格）：\n- 场景：纯净背景下的“益和祥”产品标准照，淡黄色瓶身居中，红金配色醒目。\n- 文字元素：画面留白处浮现品牌Slogan（虚拟示例：“岁月的温柔”），字体飘逸。\n- 镜头语言：正视固定镜头，对称构图，庄重而大气。\n- 光影风格：商业产品摄影布光，双侧轮廓光加顶部柔光，展现皇家贡酒般的尊贵感。"
       ],
       "color": "#323",
       "bgcolor": "#535"
@@ -559,22 +258,22 @@
       "id": 1,
       "type": "NanoBananaGeneralAPI",
       "pos": [
-        5166.835203345354,
-        -2722.1693950377
+        5389.117676550752,
+        -2758.102903510655
       ],
       "size": [
         353.91425425061425,
         784
       ],
       "flags": {},
-      "order": 6,
+      "order": 33,
       "mode": 0,
       "inputs": [
         {
           "name": "image",
           "shape": 7,
           "type": "IMAGE",
-          "link": 7
+          "link": 16
         },
         {
           "name": "image2",
@@ -600,7 +299,7 @@
           "widget": {
             "name": "prompt"
           },
-          "link": 6
+          "link": 18
         }
       ],
       "outputs": [
@@ -615,7 +314,8 @@
           "name": "image",
           "type": "IMAGE",
           "links": [
-            3
+            3,
+            22
           ]
         }
       ],
@@ -636,26 +336,26 @@
       },
       "widgets_values": [
         "将图1的女人换成图2的女人，保持图图我的画风不变，保持图2的女人的外貌特征不变",
-        "Custom",
-        "sk-wf4IJiLfz0lW3fBaIC1xO9nzRmvL3H2bCcXmGlD2SzmzPUA1",
-        "https://api.tu-zi.com/",
-        "custom",
+        "api.aabao",
+        "",
+        "",
+        "gemini-3-pro-image-preview",
         "nano-banana-2-hd",
         "Auto",
         "auto",
         "TEXT_AND_IMAGE",
-        "4:5",
-        "Auto",
+        "16:9",
+        "2K",
         "2x",
         "High Fidelity",
         1,
         0.9,
         40,
         8192,
-        1012262650,
+        960917305,
         "randomize",
         "",
-        "image/png",
+        "",
         "image/png",
         300,
         true,
@@ -665,25 +365,2080 @@
       "bgcolor": "#535"
     },
     {
-      "id": 7,
-      "type": "KenChenLLMBanana2PromptTemplate",
+      "id": 11,
+      "type": "easy showAnything",
       "pos": [
-        4703.728386077782,
-        -2706.922359992739
+        4266.909178162417,
+        -2159.105979884384
       ],
       "size": [
-        342.9254137390071,
-        520
+        380.2150169006627,
+        200.35972506105531
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "{\n  \"candidatesTokenCount\": 976,\n  \"promptTokenCount\": 3310,\n  \"thoughtsTokenCount\": 1583,\n  \"totalTokenCount\": 5869\n}"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 22,
+      "type": "easy showAnything",
+      "pos": [
+        5638.237677592218,
+        -342.0369853565965
+      ],
+      "size": [
+        296.7983139038279,
+        187.35971939921114
+      ],
+      "flags": {},
+      "order": 43,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 23
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "(图像已生成)"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 25,
+      "type": "easy showAnything",
+      "pos": [
+        5007.331713830962,
+        -647.4186302590585
+      ],
+      "size": [
+        565.5201023243626,
+        638.4361636725239
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 26
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "# TVC分镜模板：编辑-9宫格TVC广告分镜头\n\n**提示词**：\n\n### 镜头1（全景）：\n- 场景：阳光斑驳的城市林荫大道，背景是柔和虚化的绿树与透射的晨光。\n- 角色：参考图中的年轻中国长发姑娘，身穿白色紧身背心和牛仔短裤，脚踩彩色几何拼贴图案的Nike跑鞋，全身站立，姿态轻盈。\n- 镜头语言：平视全景，展现人物与环境的和谐，强调清新活力的早晨氛围。\n- 光影风格：明亮的自然逆光，发丝边缘带有金色轮廓光，色调温暖清新。\n\n### 镜头2（中景）：\n- 场景：林荫道跑道，背景保持统一。\n- 角色动作：姑娘正在做跑前拉伸，双手高举，眼神温柔而坚定，展现身体曲线与活力。\n- 镜头语言：侧面中景，聚焦上半身姿态与腿部线条的延伸。\n- 光影风格：柔和的主光照亮面部，皮肤质感通透，充满胶原蛋白感。\n\n### 镜头3（近景）：\n- 场景：沥青路面，阳光投下树影。\n- 镜头语言：低角度微距特写，捕捉脚部动作。\n- 关键细节：特写那双黑色底、彩色几何色块拼接的Nike跑鞋，鞋舌上的蓝色NIKE标志清晰可见，鞋带系紧的瞬间。\n- 光影风格：高对比度光影，突出鞋面鲜艳的色彩与编织材质的纹理。\n\n### 镜头4（全景）：\n- 场景：开阔的城市江边或公园步道，空间感延伸。\n- 角色动作：姑娘开始慢跑，长发随风向后飘扬，步伐轻快自信，彩色跑鞋在运动中形成视觉流线。\n- 镜头语言：侧面移动跟拍（Tracking Shot），背景产生动态模糊（Motion Blur）。\n- 光影风格：通透的日光，色彩饱和度适中，画面充满动态美。\n\n### 镜头5（中景）：\n- 场景：城市街道转角，微风拂过。\n- 角色动作：姑娘停下脚步回眸一笑，神情温柔自信，呼吸平稳，额头微带晶莹汗珠。\n- 镜头语言：大光圈中景定格，背景虚化突出人物主体。\n- 光影风格：侧逆光，强调面部立体感与温柔的气质，眼神中有光。\n\n### 镜头6（特写）：\n- 场景：纯净背景或虚化的地面。\n- 镜头语言：上帝视角俯拍（Top Down）或极端特写。\n- 关键细节：聚焦跑鞋侧面的Swoosh标志与多彩拼贴设计，展示透气网孔与精致做工。\n- 光影风格：影棚级布光，锐利清晰，色彩鲜艳跳跃，质感高级。\n\n### 镜头7（全景）：\n- 场景：傍晚的城市街头，远处有模糊的霓虹灯光。\n- 角色动作：姑娘在夜色中轻松跳跃或跨步，跑鞋的色彩与背景灯光形成冷暖对比。\n- 镜头语言：广角镜头仰拍，增强视觉冲击力。\n- 光影风格：城市夜景环境光，霓虹色彩反射在鞋面上，增添时尚潮流感。\n\n### 镜头8（近景）：\n- 场景：休息区的长椅或台阶。\n- 镜头语言：近景侧拍，画面温馨。\n- 角色动作：姑娘坐着休息，手自然搭在膝盖上，视线温柔地注视前方，彩色跑鞋在画面前景。\n- 光影风格：暖色调路灯或夕阳余晖，营造舒适、放松的氛围。\n\n### 镜头9（定格）：\n- 场景：极简风格的高级灰或白色背景。\n- 文字元素：画面中央悬浮动态字体的品牌Slogan（如“RUN COLORFUL”），无干扰UI。\n- 镜头语言：正面的产品肖像照，一双彩色Nike跑鞋并排摆放，构图居中平衡。\n- 光影风格：硬朗的商业摄影布光，投影利落，色彩还原度高，作为视觉记忆点收尾。"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 31,
+      "type": "easy showAnything",
+      "pos": [
+        5185.970497196472,
+        -981.8207229658514
+      ],
+      "size": [
+        380.2150169006627,
+        200.35972506105531
+      ],
+      "flags": {},
+      "order": 32,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 33
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "{\n  \"promptTokenCount\": 5470,\n  \"candidatesTokenCount\": 2392,\n  \"totalTokenCount\": 7862,\n  \"thoughtsTokenCount\": 0,\n  \"promptTokensDetails\": null\n}"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 27,
+      "type": "LoadImage",
+      "pos": [
+        4295.275037784139,
+        -1245.7757709444327
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            37
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "运动鞋.jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 35,
+      "type": "MultiImagesInput",
+      "pos": [
+        4595.324163394957,
+        -451.9967544682986
+      ],
+      "size": [
+        210,
+        102
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 44
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 45
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            46
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_pixtral_large",
+        "ver": "700f7ee6b3705da4f27ef57df1117a9b5b1c8509",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        2,
+        null
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 30,
+      "type": "ImageConcatMulti",
+      "pos": [
+        6923.693577921968,
+        -1262.20581591175
+      ],
+      "size": [
+        270,
+        170
+      ],
+      "flags": {},
+      "order": 50,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像_1",
+          "name": "image_1",
+          "type": "IMAGE",
+          "link": 46
+        },
+        {
+          "label": "图像_2",
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 32
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            34
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "c661baadd9683c0033cd2a6ad90157c6d099a6c2",
+        "Node name for S&R": "ImageConcatMulti",
+        "ue_properties": {
+          "version": "7.5.1",
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        2,
+        "right",
+        true,
+        null
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 34,
+      "type": "easy imageRemBg",
+      "pos": [
+        4597.9268833167525,
+        -645.9341544090162
+      ],
+      "size": [
+        270,
+        150
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 39
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            40,
+            42,
+            45
+          ]
+        },
+        {
+          "label": "遮罩",
+          "name": "mask",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy imageRemBg",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "BEN2",
+        "Preview",
+        "ComfyUI",
+        false,
+        "none",
+        false
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 21,
+      "type": "easy imageRemBg",
+      "pos": [
+        4284.711573642283,
+        -862.5177991908379
+      ],
+      "size": [
+        270,
+        150
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 37
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            38,
+            41,
+            44
+          ]
+        },
+        {
+          "label": "遮罩",
+          "name": "mask",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy imageRemBg",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "BEN2",
+        "Preview",
+        "ComfyUI",
+        false,
+        "none",
+        false
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 33,
+      "type": "LoadImage",
+      "pos": [
+        4278.021997856827,
+        -435.93209685638476
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            39
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "f51b416f0ec1c9fb0f44e01eeb4db23d30fb16dc9dc0836590b0d3283ca4b0fe.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 24,
+      "type": "Prompt_Edit",
+      "pos": [
+        5180.887252896949,
+        -1244.3224846362352
+      ],
+      "size": [
+        367.53470455488787,
+        193.0656650505589
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 25
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_text",
+          "type": "STRING",
+          "links": [
+            29
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Prompt_Edit",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        }
+      },
+      "widgets_values": [
+        "# TVC分镜模板：编辑-9宫格TVC广告分镜头\n\n**提示词**：\n\n### 镜头1（全景）：\n- 场景：阳光斑驳的城市林荫大道，背景是柔和虚化的绿树与透射的晨光。\n- 角色：参考图中的年轻中国长发姑娘，身穿白色紧身背心和牛仔短裤，脚踩彩色几何拼贴图案的Nike跑鞋，全身站立，姿态轻盈。\n- 镜头语言：平视全景，展现人物与环境的和谐，强调清新活力的早晨氛围。\n- 光影风格：明亮的自然逆光，发丝边缘带有金色轮廓光，色调温暖清新。\n\n### 镜头2（中景）：\n- 场景：林荫道跑道，背景保持统一。\n- 角色动作：姑娘正在做跑前拉伸，双手高举，眼神温柔而坚定，展现身体曲线与活力。\n- 镜头语言：侧面中景，聚焦上半身姿态与腿部线条的延伸。\n- 光影风格：柔和的主光照亮面部，皮肤质感通透，充满胶原蛋白感。\n\n### 镜头3（近景）：\n- 场景：沥青路面，阳光投下树影。\n- 镜头语言：低角度微距特写，捕捉脚部动作。\n- 关键细节：特写那双黑色底、彩色几何色块拼接的Nike跑鞋，鞋舌上的蓝色NIKE标志清晰可见，鞋带系紧的瞬间。\n- 光影风格：高对比度光影，突出鞋面鲜艳的色彩与编织材质的纹理。\n\n### 镜头4（全景）：\n- 场景：开阔的城市江边或公园步道，空间感延伸。\n- 角色动作：姑娘开始慢跑，长发随风向后飘扬，步伐轻快自信，彩色跑鞋在运动中形成视觉流线。\n- 镜头语言：侧面移动跟拍（Tracking Shot），背景产生动态模糊（Motion Blur）。\n- 光影风格：通透的日光，色彩饱和度适中，画面充满动态美。\n\n### 镜头5（中景）：\n- 场景：城市街道转角，微风拂过。\n- 角色动作：姑娘停下脚步回眸一笑，神情温柔自信，呼吸平稳，额头微带晶莹汗珠。\n- 镜头语言：大光圈中景定格，背景虚化突出人物主体。\n- 光影风格：侧逆光，强调面部立体感与温柔的气质，眼神中有光。\n\n### 镜头6（特写）：\n- 场景：纯净背景或虚化的地面。\n- 镜头语言：上帝视角俯拍（Top Down）或极端特写。\n- 关键细节：聚焦跑鞋侧面的Swoosh标志与多彩拼贴设计，展示透气网孔与精致做工。\n- 光影风格：影棚级布光，锐利清晰，色彩鲜艳跳跃，质感高级。\n\n### 镜头7（全景）：\n- 场景：傍晚的城市街头，远处有模糊的霓虹灯光。\n- 角色动作：姑娘在夜色中轻松跳跃或跨步，跑鞋的色彩与背景灯光形成冷暖对比。\n- 镜头语言：广角镜头仰拍，增强视觉冲击力。\n- 光影风格：城市夜景环境光，霓虹色彩反射在鞋面上，增添时尚潮流感。\n\n### 镜头8（近景）：\n- 场景：休息区的长椅或台阶。\n- 镜头语言：近景侧拍，画面温馨。\n- 角色动作：姑娘坐着休息，手自然搭在膝盖上，视线温柔地注视前方，彩色跑鞋在画面前景。\n- 光影风格：暖色调路灯或夕阳余晖，营造舒适、放松的氛围。\n\n### 镜头9（定格）：\n- 场景：极简风格的高级灰或白色背景。\n- 文字元素：画面中央悬浮动态字体的品牌Slogan（如“RUN COLORFUL”），无干扰UI。\n- 镜头语言：正面的产品肖像照，一双彩色Nike跑鞋并排摆放，构图居中平衡。\n- 光影风格：硬朗的商业摄影布光，投影利落，色彩还原度高，作为视觉记忆点收尾。"
+      ],
+      "color": "#2a5a2a",
+      "bgcolor": "#1a3a1a"
+    },
+    {
+      "id": 23,
+      "type": "PreviewImage",
+      "pos": [
+        6020.589219832072,
+        -1277.7515858541774
+      ],
+      "size": [
+        851.4761043550598,
+        1130.9984686723485
+      ],
+      "flags": {},
+      "order": 44,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 24
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 32,
+      "type": "PreviewImage",
+      "pos": [
+        7262.558509063419,
+        -1281.2637434936835
+      ],
+      "size": [
+        925.78721546617,
+        1154.831802005682
+      ],
+      "flags": {},
+      "order": 53,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 34
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 36,
+      "type": "PreviewImage",
+      "pos": [
+        7251.2907312856405,
+        -2688.3068546047743
+      ],
+      "size": [
+        925.78721546617,
+        1154.831802005682
+      ],
+      "flags": {},
+      "order": 51,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 48
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 9,
+      "type": "LoadImage",
+      "pos": [
+        4291.991496527857,
+        -2721.2875151247617
+      ],
+      "size": [
+        270,
+        314
       ],
       "flags": {},
       "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            15,
+            16,
+            47
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "微信图片_20250915105916_40162_11.jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 17,
+      "type": "ImageConcatMulti",
+      "pos": [
+        6859.112938044581,
+        -2768.419724324469
+      ],
+      "size": [
+        270,
+        170
+      ],
+      "flags": {},
+      "order": 46,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像_1",
+          "name": "image_1",
+          "type": "IMAGE",
+          "link": 47
+        },
+        {
+          "label": "图像_2",
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 19
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            48
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "c661baadd9683c0033cd2a6ad90157c6d099a6c2",
+        "Node name for S&R": "ImageConcatMulti",
+        "ue_properties": {
+          "version": "7.5.1",
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        2,
+        "right",
+        true,
+        null
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 16,
+      "type": "Prompt_Edit",
+      "pos": [
+        4998.270378307334,
+        -2652.8299637769887
+      ],
+      "size": [
+        367.53470455488787,
+        193.0656650505589
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 17
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_text",
+          "type": "STRING",
+          "links": [
+            18
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Prompt_Edit",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        }
+      },
+      "widgets_values": [
+        "**提示词**：\n\n(3x3 grid storyboard), 9 distinct panels, storyboard layout, cinematic lighting, photorealistic, 8k --ar 16:9\n\n### 镜头1（全景）：\n- 场景：新中式风格的雅致客厅或茶室，原木色调，透过纱帘的柔和自然光，桌面上摆放着“益和祥”酒瓶与精致酒具。\n- 角色：画面空镜为主，或主角背影若隐若现，营造静谧氛围。\n- 镜头语言：平视广角，建立空间感，强调环境的高级与宁静。\n- 光影风格：暖色调晨光，空气中带有细微尘埃颗粒感，通透洁净。\n\n### 镜头2（中景）：\n- 场景：一位年轻温柔的中国姑娘（主角）走向桌边，穿着改良式现代淡雅旗袍或丝质家居服，气质温婉。\n- 角色动作：姑娘目光温柔地注视着酒瓶，指尖轻轻触碰瓶身。\n- 镜头语言：侧面跟拍，焦点跟随人物移动，展现优雅体态。\n- 光影风格：侧逆光勾勒人物轮廓，发丝发光，肤色细腻白皙。\n\n### 镜头3（近景）：\n- 场景：手部特写，展示手指抚摸“益和祥”淡黄色陶瓷瓶身的细腻质感。\n- 镜头语言：微距镜头，捕捉瓶身表面的颗粒纹理与手指的互动。\n- 光影风格：柔和漫反射光，突出陶瓷的温润光泽与手部皮肤质感。\n\n### 镜头4（全景）：\n- 场景：姑娘优雅落座，背景是模糊的室内陈设，绿植点缀。\n- 角色动作：单手握住瓶颈，姿态从容自信，准备斟酒。\n- 镜头语言：45度角侧拍，构图平衡，人物与产品处于黄金分割点。\n- 光影风格：主光照亮面部与产品，背景适度压暗，层次分明。\n\n### 镜头5（中景）：\n- 场景：酒液倾倒而出的瞬间，酒线拉长，落入透明的小酒杯中。\n- 角色动作：神情专注且愉悦，嘴角微微上扬，表现出对品质的期待。\n- 镜头语言：中景定格，快门速度高，捕捉酒液流动的动态美。\n- 光影风格：晶莹剔透的光效，强调酒液的清澈与粘稠度（挂杯感）。\n\n### 镜头6（特写）：\n- 场景：聚焦瓶身标签细节，清晰展示“益和祥”书法字体及“七代嫡传·古法秘酿”字样。\n- 镜头语言：极其清晰的定格特写，背景极度虚化。\n- 光影风格：硬朗的主光打在金色瓶盖和烫金字体上，呈现金属反光质感。\n\n### 镜头7（全景）：\n- 场景：氛围转为温馨的晚宴或独酌时刻，背景灯光微暖，营造家与传承的感觉。\n- 角色动作：姑娘举杯轻嗅，闭眼享受酒香，动作舒缓。\n- 镜头语言：缓慢推镜头，将观众带入享受的情绪中。\n- 光影风格：暖黄色的环境光，营造温馨、治愈的色彩基调。\n\n### 镜头8（近景）：\n- 场景：姑娘品酒后的满足表情，眼神清澈温柔，看向镜头仿佛在对话。\n- 镜头语言：大光圈人像镜头，聚焦眼部与面部微表情。\n- 光影风格：蝴蝶光或伦勃朗光，立体且柔美，色彩还原度高。\n\n### 镜头9（定格）：\n- 场景：纯净背景下的“益和祥”产品标准照，淡黄色瓶身居中，红金配色醒目。\n- 文字元素：画面留白处浮现品牌Slogan（虚拟示例：“岁月的温柔”），字体飘逸。\n- 镜头语言：正视固定镜头，对称构图，庄重而大气。\n- 光影风格：商业产品摄影布光，双侧轮廓光加顶部柔光，展现皇家贡酒般的尊贵感。"
+      ],
+      "color": "#2a5a2a",
+      "bgcolor": "#1a3a1a"
+    },
+    {
+      "id": 29,
+      "type": "workflow>线稿",
+      "pos": [
+        6911.523798727255,
+        -1033.796784577827
+      ],
+      "size": [
+        314.28778076171875,
+        608.4557495117188
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 45,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 30
+        }
+      ],
+      "outputs": [
+        {
+          "label": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            32
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "workflow>线稿",
+        "ue_properties": {
+          "version": "7.5.1",
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "clip_l.safetensors",
+        "t5xxl_fp8_e4m3fn.safetensors",
+        "flux",
+        "default",
+        "ae.sft",
+        "kontext\\flux1-kontext-dev.safetensors",
+        "fp8_e4m3fn",
+        "Convert to a pencil sketch with natural graphite lines, hatching, and visible paper texture.",
+        "turbo加速.safetensors",
+        1,
+        2.5,
+        319539208034051,
+        "randomize",
+        20,
+        1,
+        "euler",
+        "beta",
+        1
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 38,
+      "type": "LoadImage",
+      "pos": [
+        8956.77615923142,
+        -2227.693355578781
+      ],
+      "size": [
+        270,
+        314.00006103515625
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            54
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "output (1) (1).jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 39,
+      "type": "LoadImage",
+      "pos": [
+        8605.224012342958,
+        -2759.661588770053
+      ],
+      "size": [
+        270,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            52
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "4849861.jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 40,
+      "type": "LoadImage",
+      "pos": [
+        8303.266653245068,
+        -2754.032740446885
+      ],
+      "size": [
+        270,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            51
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "pasted/image (36).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 41,
+      "type": "PreviewImage",
+      "pos": [
+        9321.027567378056,
+        -2761.6077865209677
+      ],
+      "size": [
+        584.1869506835938,
+        762.8710327148438
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 49
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 42,
+      "type": "easy showAnything",
+      "pos": [
+        9362.627357252835,
+        -1928.4590629333802
+      ],
+      "size": [
+        402.1667808471984,
+        216.03955645143787
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 50
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "图片拼接布局: 2列 x 2行\n总共 4 张图片\n\n图片位置说明:\n  图片 1: 第 1 行，第 1 列\n  图片 2: 第 1 行，第 2 列\n  图片 3: 第 2 行，第 1 列\n  图片 4: 第 2 行，第 2 列\n\n使用说明:\n- 在提示词中使用 '图1'、'图2' 等来引用对应的图片\n- 例如: '将图1的人物和图2的背景结合'\n- 模型会根据序号识别每张图片\n- 布局: 2列 x 2行，从左到右、从上到下编号"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 44,
+      "type": "LoadImage",
+      "pos": [
+        8503.073011007029,
+        -2282.3689193501928
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            53
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "output (5).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 43,
+      "type": "KenChenLLMGeminiBananaImageCollageNode",
+      "pos": [
+        8920.485341157975,
+        -2759.610160239192
+      ],
+      "size": [
+        350.191015625,
+        758
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image1",
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 51
+        },
+        {
+          "label": "image2",
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 52
+        },
+        {
+          "label": "image3",
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 53
+        },
+        {
+          "label": "image4",
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 54
+        },
+        {
+          "label": "image5",
+          "name": "image5",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "collage_image",
+          "type": "IMAGE",
+          "links": [
+            49,
+            55
+          ]
+        },
+        {
+          "name": "position_guide",
+          "type": "STRING",
+          "links": [
+            50
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaImageCollageNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        512,
+        "original_size",
+        true,
+        48,
+        "top-left",
+        "white"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 45,
+      "type": "PreviewImage",
+      "pos": [
+        10391.799406388329,
+        -2771.8035650838688
+      ],
+      "size": [
+        584.1869506835938,
+        762.8710327148438
+      ],
+      "flags": {},
+      "order": 34,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 56
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 28,
+      "type": "NanoBananaGeneralAPI",
+      "pos": [
+        5610.429582182985,
+        -1266.0682331902965
+      ],
+      "size": [
+        251.11727965526734,
+        784
+      ],
+      "flags": {},
+      "order": 38,
       "mode": 0,
       "inputs": [
         {
           "name": "image",
           "shape": 7,
           "type": "IMAGE",
-          "link": 5
+          "link": 41
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 42
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 29
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            23
+          ]
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            24,
+            30
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "NanoBananaGeneralAPI",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "将图1的女人换成图2的女人，保持图图我的画风不变，保持图2的女人的外貌特征不变",
+        "nano-banana官方",
+        "AIzaSyBEMDiQy8zq4zQfrfKCni5gjVF36HA9Wkw",
+        "",
+        "gemini-3-pro-image-preview",
+        "nano-banana-2-hd",
+        "Auto",
+        "auto",
+        "TEXT_AND_IMAGE",
+        "16:9",
+        "2K",
+        "2x",
+        "High Fidelity",
+        1,
+        0.9,
+        40,
+        8192,
+        1850286309,
+        "randomize",
+        "",
+        "",
+        "image/png",
+        300,
+        true,
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 37,
+      "type": "NanoBananaGeneralAPI",
+      "pos": [
+        9968.879150543442,
+        -2763.392935510077
+      ],
+      "size": [
+        353.91425425061425,
+        784
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 55
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            56
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "NanoBananaGeneralAPI",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "图1的女人穿着图2的衣服，走在大街上，戴着图3的手表，喝着图4的咖啡，",
+        "Comfly-HK",
+        "",
+        "",
+        "gemini-3-pro-image-preview",
+        "nano-banana-2-hd",
+        "Auto",
+        "auto",
+        "TEXT_AND_IMAGE",
+        "4:5",
+        "2K",
+        "2x",
+        "High Fidelity",
+        1,
+        0.9,
+        40,
+        8192,
+        2001742713,
+        "randomize",
+        "",
+        "",
+        "image/png",
+        300,
+        true,
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 47,
+      "type": "PreviewImage",
+      "pos": [
+        11647.680865608623,
+        -2733.08430638114
+      ],
+      "size": [
+        584.1869506835938,
+        762.8710327148438
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 57
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 46,
+      "type": "NanoBananaGeneralAPI",
+      "pos": [
+        11162.57061059853,
+        -2744.229232362904
+      ],
+      "size": [
+        353.91425425061425,
+        784
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            57
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "NanoBananaGeneralAPI",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "生成一张动漫风格的巴黎街头的图像，",
+        "Comfly-US",
+        "",
+        "",
+        "gemini-3-pro-image-preview",
+        "nano-banana-2-hd",
+        "Auto",
+        "auto",
+        "TEXT_AND_IMAGE",
+        "4:5",
+        "2K",
+        "2x",
+        "High Fidelity",
+        1,
+        0.9,
+        40,
+        8192,
+        1818087145,
+        "randomize",
+        "",
+        "",
+        "image/png",
+        300,
+        true,
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 26,
+      "type": "KenChenLLMBanana2PromptTemplate",
+      "pos": [
+        4736.7200145918205,
+        -1275.895007843631
+      ],
+      "size": [
+        342.9254137390071,
+        520
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 38
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 40
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "banana_prompt",
+          "type": "STRING",
+          "links": [
+            25,
+            26
+          ]
+        },
+        {
+          "name": "raw_response",
+          "type": "STRING",
+          "links": [
+            33
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMBanana2PromptTemplate",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "温柔的中国年轻姑娘的声音。",
+        "编辑-9宫格TVC广告分镜头",
+        "gemini-3-pro-preview [all]",
+        "custom",
+        "sk-wf4IJiLfz0lW3fBaIC1xO9nzRmvL3H2bCcXmGlD2SzmzPUA1",
+        "https://api.tu-zi.com/",
+        "Auto",
+        "auto",
+        8192,
+        1,
+        "high",
+        "media_resolution_high",
+        "",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 13,
+      "type": "easy showAnything",
+      "pos": [
+        3695.8192701693874,
+        -2627.414121935658
+      ],
+      "size": [
+        397.7359265084333,
+        357.7169944055008
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "基于您提供的媒体内容，其中包括一张静态的AI生成图像和一个视频片段（通过一系列关键帧展示），我为您进行了详细的综合分析。这两部分内容在风格、技术手段和视觉意图上有着明显的区别。\n\n以下是详细分析：\n\n### 第一部分：静态图像分析（AI生成人像）\n\n**1. 视觉内容与风格：**\n*   **主体特征：** 图像展示了一位年轻女性的半身像。她拥有黑色长直发（带有明显的“姬发式”侧刘海），皮肤白皙光滑，呈现出一种近乎完美的、如瓷娃娃般的质感。\n*   **AI生成标识：** 左上角的“AI生成”标签明确表明这是一张通过人工智能（如Midjourney或Stable Diffusion等）生成的数字艺术作品。\n*   **艺术风格：** 采用了“2.5D”或“半写实”风格。虽然五官比例接近真人，但皮肤的光泽、头发的渲染以及光影的完美度都带有明显的CG（计算机图形）插画特征，追求的是一种超越现实的理想化美感。\n\n**2. 角色原型与细节：**\n*   **角色致敬：** 从人物的发型（特别是侧边的切发）、蓝色的眼睛，以及最显著的**金色蛇形耳环**来看，这个人物形象极有可能是基于动漫《海贼王》（One Piece）中的角色**波雅·汉库克（Boa Hancock，女帝）**生成的同人艺术图。\n*   **服饰：** 她身穿一件粉色的一字肩针织上衣，突出了锁骨和颈部线条，这种现代休闲装束与角色的经典形象（通常是旗袍）形成了混搭风格。\n*   **光影与背景：** 背景是柔和的粉紫色渐变，不仅呼应了人物的服装，也营造了一种浪漫、梦幻的氛围。光线均匀柔和，消除了面部的大部分阴影，这是典型的美颜或时尚插画布光。\n\n---\n\n### 第二部分：视频/动态序列分析（香水广告风格）\n\n**1. 叙事与动作流程：**\n*   这组图像构成了一个连贯的视频镜头，通常用于高端香水或奢侈品的商业广告。\n*   **起始（前几帧）：** 镜头聚焦在模特的脸上。她手持一个晶莹剔透的香水瓶，眼神与其互动，神情迷离、陶醉。\n*   **中间（中间帧）：** 模特闭上眼睛或视线向下，光线透过香水瓶折射，在她的脸庞和颈部投下斑驳的光影。\n*   **结尾（后几帧）：** 发生了一个明显的**变焦（Rack Focus）**。焦点从模特的脸部平滑地转移到了前景手中的香水瓶上。模特的脸变得模糊（虚化），而香水瓶的切割工艺和光泽变得清晰锐利。\n\n**2. 摄影与光影技术：**\n*   **光线设计：**\n    *   **环境光：** 背景是典型的“蓝调时刻”（Blue Hour），即日落后天空呈现深蓝色，但城市灯光（背景中的黄色光斑/散景）已经亮起的时刻。这种冷暖色调的对比（蓝天vs暖黄灯光）极具电影感。\n    *   **重点光：** 香水瓶似乎在发光，或者强力折射了某种光源。瓶身发出的暖金色光芒照亮了模特的手和下半张脸，创造出一种神圣、奢华的视觉中心。\n*   **景深（Depth of Field）：** 视频运用了极浅的景深。背景的城市灯光化作美丽的圆形光斑（Bokeh），突出了主体。最后的变焦技术不仅引导了观众的注意力，也强化了产品的质感。\n\n**3. 氛围与情感：**\n*   整体氛围是**浪漫、神秘且奢华**的。通过光影的流动和模特细腻的微表情，传达出一种关于气味、记忆和诱惑的感官体验。\n\n---\n\n### 综合对比与总结\n\n这两组媒体展示了两种截然不同的视觉创作方向：\n\n1.  **人工构建的完美（图像1）：**\n    *   **本质：** 数字合成。\n    *   **重点：** 追求无瑕疵的几何美感、对称性和特定角色的还原。它是一种静态的、被冻结的理想化形象，缺乏现实世界的物理质感（如皮肤毛孔、真实的重力感）。\n    *   **用途：** 常见于社交媒体头像、同人创作、概念艺术设计。\n\n2.  **电影感的现实捕捉（视频序列）：**\n    *   **本质：** 摄影/摄像（或极高写实度的渲染）。\n    *   **重点：** 强调氛围、光线的物理特性（折射、散景）以及情感的流动。它利用焦点的变化来讲述故事，引导观众视线从“人”转移到“物”（产品）。\n    *   **用途：** 典型的高端商业广告、电影摄影。\n\n**总结：** 您提供的媒体从“二次元/2.5D的理想化静态美”跨越到了“极具电影质感的动态光影美”，分别代表了现代视觉艺术中**AI生成技术**与**传统影视摄影美学**的两个典型范例。"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 14,
+      "type": "easy showAnything",
+      "pos": [
+        3680.5312338512176,
+        -2205.4866581646215
+      ],
+      "size": [
+        372.631680264587,
+        281.43870774150673
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "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"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 15,
+      "type": "easy showAnything",
+      "pos": [
+        3202.737869250485,
+        -2085.972177888373
+      ],
+      "size": [
+        372.631680264587,
+        281.43870774150673
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "{\n  \"candidatesTokenCount\": 1206,\n  \"promptTokenCount\": 2828,\n  \"thoughtsTokenCount\": 1377,\n  \"totalTokenCount\": 5411\n}"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 18,
+      "type": "workflow>线稿",
+      "pos": [
+        6811.359220345461,
+        -2526.00178513864
+      ],
+      "size": [
+        314.28778076171875,
+        704
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 41,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 22
+        }
+      ],
+      "outputs": [
+        {
+          "label": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            19
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "workflow>线稿",
+        "ue_properties": {
+          "version": "7.5.1",
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "clip_l.safetensors",
+        "t5xxl_fp8_e4m3fn.safetensors",
+        "flux",
+        "default",
+        "ae.sft",
+        "kontext\\flux1-kontext-dev.safetensors",
+        "fp8_e4m3fn",
+        "Convert to a pencil sketch with natural graphite lines, hatching, and visible paper texture.",
+        "Fast_model\\FLUX.1-Turbo-Alpha.safetensors",
+        1,
+        2.5,
+        474014785922261,
+        "randomize",
+        20,
+        1,
+        "euler",
+        "beta",
+        1
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 7,
+      "type": "KenChenLLMBanana2PromptTemplate",
+      "pos": [
+        4623.3253622244265,
+        -2751.6247092066055
+      ],
+      "size": [
+        342.9254137390071,
+        520
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 15
         },
         {
           "name": "image_2",
@@ -709,8 +2464,8 @@
           "name": "banana_prompt",
           "type": "STRING",
           "links": [
-            6,
-            8
+            8,
+            17
           ]
         },
         {
@@ -737,12 +2492,12 @@
         }
       },
       "widgets_values": [
-        "为传入的产品生成创意广告海报词",
-        "创意-海报设计",
+        "温柔的中国年轻姑娘的声音。",
+        "编辑-9宫格TVC广告分镜头",
         "gemini-3-pro-preview [all]",
-        "custom",
-        "sk-wf4IJiLfz0lW3fBaIC1xO9nzRmvL3H2bCcXmGlD2SzmzPUA1",
-        "https://api.tu-zi.com/",
+        "T8-HK",
+        "",
+        "",
         "Auto",
         "auto",
         8192,
@@ -750,6 +2505,666 @@
         "high",
         "media_resolution_high",
         "",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 48,
+      "type": "easy showAnything",
+      "pos": [
+        9781.359485839643,
+        -356.9607190369084
+      ],
+      "size": [
+        296.7983139038279,
+        187.35971939921114
+      ],
+      "flags": {},
+      "order": 47,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 58
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "(图像已生成)"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 50,
+      "type": "easy showAnything",
+      "pos": [
+        9329.092305443897,
+        -996.7444566461634
+      ],
+      "size": [
+        380.2150169006627,
+        200.35972506105531
+      ],
+      "flags": {},
+      "order": 37,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 60
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "{\n  \"candidatesTokenCount\": 389,\n  \"promptTokenCount\": 3142,\n  \"thoughtsTokenCount\": 1592,\n  \"totalTokenCount\": 5123\n}"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 58,
+      "type": "PreviewImage",
+      "pos": [
+        10163.711028079497,
+        -1292.675319534489
+      ],
+      "size": [
+        851.4761043550598,
+        1130.9984686723485
+      ],
+      "flags": {},
+      "order": 48,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 68
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 59,
+      "type": "PreviewImage",
+      "pos": [
+        11405.680317310844,
+        -1296.1874771739951
+      ],
+      "size": [
+        925.78721546617,
+        1154.831802005682
+      ],
+      "flags": {},
+      "order": 52,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 69
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 53,
+      "type": "ImageConcatMulti",
+      "pos": [
+        11097.70277242868,
+        -1125.1970009653003
+      ],
+      "size": [
+        270,
+        170
+      ],
+      "flags": {},
+      "order": 49,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像_1",
+          "name": "image_1",
+          "type": "IMAGE",
+          "link": 77
+        },
+        {
+          "label": "图像_2",
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 76
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            69
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "c661baadd9683c0033cd2a6ad90157c6d099a6c2",
+        "ue_properties": {
+          "version": "7.5.1",
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "Node name for S&R": "ImageConcatMulti",
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        2,
+        "right",
+        true,
+        null
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 57,
+      "type": "Prompt_Edit",
+      "pos": [
+        9324.009061144374,
+        -1259.246218316547
+      ],
+      "size": [
+        367.53470455488787,
+        193.0656650505589
+      ],
+      "flags": {},
+      "order": 36,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 67
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_text",
+          "type": "STRING",
+          "links": [
+            73
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Prompt_Edit",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        }
+      },
+      "widgets_values": [
+        "A 2x2 grid composition showing 4 artistic studio portraits of a beautiful young Asian woman. In all 4 panels, strictly preserve the original facial features and identity of the subject provided.\n\nTop-left: High-key 'Ethereal Fantasy' style. The subject poses in a white haute couture bodice adorned with delicate white feathers and cascading pearl chains. Soft, diffused natural lighting creates a glowing, angelic halo effect. The background is a dreamy, high-exposure white minimalist studio setting. The atmosphere is pure, romantic, and airy with soft focus edges.\n\nTop-right: Cinematic 'Midnight Siren' style. The subject is captured in a moody, low-key setting featuring the 'wet look' hairstyle. She wears a shimmering silver sequined dress. Dramatic rim lighting highlights her silhouette against a deep black background, simulating a moonlit water reflection. The texture is sharp with subtle film grain, evoking a mysterious and glamorous movie poster aesthetic.\n\nBottom-left: Classic 'Fine Art Black & White' style. A timeless portrait focusing on emotional expression. The subject wears a structured velvet dark gown. Lighting is dramatic chiaroscuro, creating deep shadows and bright highlights on the face. The background is a textured hand-painted grey canvas. High contrast, sharp details, and a vintage Vogue photography feel.\n\nBottom-right: Avant-garde 'Creative Color' style. A fashion-forward shot using bold gel lighting in teal and magenta. The subject wears a modern, translucent artistic outfit with crystal embellishments. The lighting is hard and directional, creating interesting shadows. The background is a dark studio void with neon bokeh accents. The vibe is trendy, energetic, and ultra-modern.\n\nAll images are 8k resolution, photorealistic, ultra-detailed, shot on Phase One XF IQ4, 85mm portrait lens, professional color grading, flawless skin texture, award-winning studio photography."
+      ],
+      "color": "#2a5a2a",
+      "bgcolor": "#1a3a1a"
+    },
+    {
+      "id": 49,
+      "type": "easy showAnything",
+      "pos": [
+        9150.453522078387,
+        -662.3423639393704
+      ],
+      "size": [
+        565.5201023243626,
+        638.4361636725239
+      ],
+      "flags": {},
+      "order": 35,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 59
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "A 2x2 grid composition showing 4 artistic studio portraits of a beautiful young Asian woman. In all 4 panels, strictly preserve the original facial features and identity of the subject provided.\n\nTop-left: High-key 'Ethereal Fantasy' style. The subject poses in a white haute couture bodice adorned with delicate white feathers and cascading pearl chains. Soft, diffused natural lighting creates a glowing, angelic halo effect. The background is a dreamy, high-exposure white minimalist studio setting. The atmosphere is pure, romantic, and airy with soft focus edges.\n\nTop-right: Cinematic 'Midnight Siren' style. The subject is captured in a moody, low-key setting featuring the 'wet look' hairstyle. She wears a shimmering silver sequined dress. Dramatic rim lighting highlights her silhouette against a deep black background, simulating a moonlit water reflection. The texture is sharp with subtle film grain, evoking a mysterious and glamorous movie poster aesthetic.\n\nBottom-left: Classic 'Fine Art Black & White' style. A timeless portrait focusing on emotional expression. The subject wears a structured velvet dark gown. Lighting is dramatic chiaroscuro, creating deep shadows and bright highlights on the face. The background is a textured hand-painted grey canvas. High contrast, sharp details, and a vintage Vogue photography feel.\n\nBottom-right: Avant-garde 'Creative Color' style. A fashion-forward shot using bold gel lighting in teal and magenta. The subject wears a modern, translucent artistic outfit with crystal embellishments. The lighting is hard and directional, creating interesting shadows. The background is a dark studio void with neon bokeh accents. The vibe is trendy, energetic, and ultra-modern.\n\nAll images are 8k resolution, photorealistic, ultra-detailed, shot on Phase One XF IQ4, 85mm portrait lens, professional color grading, flawless skin texture, award-winning studio photography."
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 51,
+      "type": "LoadImage",
+      "pos": [
+        8529.80978477081,
+        -1254.458603477634
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            66
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "微信图片_20250501002027.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 55,
+      "type": "easy imageRemBg",
+      "pos": [
+        8495.006420443573,
+        -839.8631359625047
+      ],
+      "size": [
+        270,
+        150
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 66
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            71,
+            74,
+            77
+          ]
+        },
+        {
+          "label": "遮罩",
+          "name": "mask",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy imageRemBg",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "BEN2",
+        "Preview",
+        "ComfyUI",
+        false,
+        "none",
+        false
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 62,
+      "type": "KenChenLLMBanana2PromptTemplate",
+      "pos": [
+        8879.841822839246,
+        -1290.8187415239427
+      ],
+      "size": [
+        342.9254137390071,
+        520
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 74
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "banana_prompt",
+          "type": "STRING",
+          "links": [
+            59,
+            67
+          ]
+        },
+        {
+          "name": "raw_response",
+          "type": "STRING",
+          "links": [
+            60
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMBanana2PromptTemplate",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "美女影楼高档艺术写真，保持面部特征。",
+        "编辑-影楼艺术写真",
+        "gemini-3-pro-preview [all]",
+        "T8-HK",
+        "",
+        "",
+        "Auto",
+        "auto",
+        8192,
+        1,
+        "high",
+        "media_resolution_high",
+        "",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 61,
+      "type": "NanoBananaGeneralAPI",
+      "pos": [
+        9753.55139043041,
+        -1280.9919668706082
+      ],
+      "size": [
+        251.11727965526734,
+        784
+      ],
+      "flags": {},
+      "order": 42,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 71
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 73
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            58
+          ]
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            68,
+            76
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "NanoBananaGeneralAPI",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "将图1的女人换成图2的女人，保持图图我的画风不变，保持图2的女人的外貌特征不变",
+        "Comfly-HK",
+        "",
+        "",
+        "gemini-3-pro-image-preview",
+        "nano-banana-2-hd",
+        "Auto",
+        "auto",
+        "TEXT_AND_IMAGE",
+        "16:9",
+        "4K",
+        "2x",
+        "High Fidelity",
+        1,
+        0.9,
+        40,
+        8192,
+        1153846842,
+        "randomize",
+        "",
+        "",
+        "image/png",
+        300,
+        true,
         ""
       ],
       "color": "#323",
@@ -767,8 +3182,8 @@
         483.83654729109276
       ],
       "flags": {},
-      "order": 5,
-      "mode": 0,
+      "order": 11,
+      "mode": 4,
       "inputs": [
         {
           "name": "image_1",
@@ -848,9 +3263,9 @@
       "widgets_values": [
         "请对所有提供的媒体进行详细的综合分析。",
         "gemini-3-pro-preview [all]",
-        "custom",
-        "sk-wf4IJiLfz0lW3fBaIC1xO9nzRmvL3H2bCcXmGlD2SzmzPUA1",
-        "https://api.tu-zi.com/",
+        "Comfly-US",
+        "",
+        "",
         "Auto",
         "auto",
         8192,
@@ -879,30 +3294,6 @@
       5,
       0,
       "*"
-    ],
-    [
-      5,
-      9,
-      0,
-      7,
-      0,
-      "IMAGE"
-    ],
-    [
-      6,
-      7,
-      0,
-      1,
-      4,
-      "STRING"
-    ],
-    [
-      7,
-      9,
-      0,
-      1,
-      0,
-      "IMAGE"
     ],
     [
       8,
@@ -959,6 +3350,382 @@
       15,
       0,
       "*"
+    ],
+    [
+      15,
+      9,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      16,
+      9,
+      0,
+      1,
+      0,
+      "IMAGE"
+    ],
+    [
+      17,
+      7,
+      0,
+      16,
+      0,
+      "STRING"
+    ],
+    [
+      18,
+      16,
+      0,
+      1,
+      4,
+      "STRING"
+    ],
+    [
+      19,
+      18,
+      0,
+      17,
+      1,
+      "IMAGE"
+    ],
+    [
+      22,
+      1,
+      1,
+      18,
+      0,
+      "IMAGE"
+    ],
+    [
+      23,
+      28,
+      0,
+      22,
+      0,
+      "*"
+    ],
+    [
+      24,
+      28,
+      1,
+      23,
+      0,
+      "IMAGE"
+    ],
+    [
+      25,
+      26,
+      0,
+      24,
+      0,
+      "STRING"
+    ],
+    [
+      26,
+      26,
+      0,
+      25,
+      0,
+      "*"
+    ],
+    [
+      29,
+      24,
+      0,
+      28,
+      4,
+      "STRING"
+    ],
+    [
+      30,
+      28,
+      1,
+      29,
+      0,
+      "IMAGE"
+    ],
+    [
+      32,
+      29,
+      0,
+      30,
+      1,
+      "IMAGE"
+    ],
+    [
+      33,
+      26,
+      1,
+      31,
+      0,
+      "*"
+    ],
+    [
+      34,
+      30,
+      0,
+      32,
+      0,
+      "IMAGE"
+    ],
+    [
+      37,
+      27,
+      0,
+      21,
+      0,
+      "IMAGE"
+    ],
+    [
+      38,
+      21,
+      0,
+      26,
+      0,
+      "IMAGE"
+    ],
+    [
+      39,
+      33,
+      0,
+      34,
+      0,
+      "IMAGE"
+    ],
+    [
+      40,
+      34,
+      0,
+      26,
+      1,
+      "IMAGE"
+    ],
+    [
+      41,
+      21,
+      0,
+      28,
+      0,
+      "IMAGE"
+    ],
+    [
+      42,
+      34,
+      0,
+      28,
+      1,
+      "IMAGE"
+    ],
+    [
+      44,
+      21,
+      0,
+      35,
+      0,
+      "IMAGE"
+    ],
+    [
+      45,
+      34,
+      0,
+      35,
+      1,
+      "IMAGE"
+    ],
+    [
+      46,
+      35,
+      0,
+      30,
+      0,
+      "IMAGE"
+    ],
+    [
+      47,
+      9,
+      0,
+      17,
+      0,
+      "IMAGE"
+    ],
+    [
+      48,
+      17,
+      0,
+      36,
+      0,
+      "IMAGE"
+    ],
+    [
+      49,
+      43,
+      0,
+      41,
+      0,
+      "IMAGE"
+    ],
+    [
+      50,
+      43,
+      1,
+      42,
+      0,
+      "*"
+    ],
+    [
+      51,
+      40,
+      0,
+      43,
+      0,
+      "IMAGE"
+    ],
+    [
+      52,
+      39,
+      0,
+      43,
+      1,
+      "IMAGE"
+    ],
+    [
+      53,
+      44,
+      0,
+      43,
+      2,
+      "IMAGE"
+    ],
+    [
+      54,
+      38,
+      0,
+      43,
+      3,
+      "IMAGE"
+    ],
+    [
+      55,
+      43,
+      0,
+      37,
+      0,
+      "IMAGE"
+    ],
+    [
+      56,
+      37,
+      1,
+      45,
+      0,
+      "IMAGE"
+    ],
+    [
+      57,
+      46,
+      1,
+      47,
+      0,
+      "IMAGE"
+    ],
+    [
+      58,
+      61,
+      0,
+      48,
+      0,
+      "*"
+    ],
+    [
+      59,
+      62,
+      0,
+      49,
+      0,
+      "*"
+    ],
+    [
+      60,
+      62,
+      1,
+      50,
+      0,
+      "*"
+    ],
+    [
+      66,
+      51,
+      0,
+      55,
+      0,
+      "IMAGE"
+    ],
+    [
+      67,
+      62,
+      0,
+      57,
+      0,
+      "STRING"
+    ],
+    [
+      68,
+      61,
+      1,
+      58,
+      0,
+      "IMAGE"
+    ],
+    [
+      69,
+      53,
+      0,
+      59,
+      0,
+      "IMAGE"
+    ],
+    [
+      71,
+      55,
+      0,
+      61,
+      0,
+      "IMAGE"
+    ],
+    [
+      73,
+      57,
+      0,
+      61,
+      4,
+      "STRING"
+    ],
+    [
+      74,
+      55,
+      0,
+      62,
+      0,
+      "IMAGE"
+    ],
+    [
+      76,
+      61,
+      1,
+      53,
+      1,
+      "IMAGE"
+    ],
+    [
+      77,
+      55,
+      0,
+      53,
+      0,
+      "IMAGE"
     ]
   ],
   "groups": [
@@ -974,24 +3741,865 @@
       "color": "#3f789e",
       "font_size": 24,
       "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "单图模板生成",
+      "bounding": [
+        4256.909178162417,
+        -2857.3156670788794,
+        3960.1514754274376,
+        1459.324054684925
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "双图模板生成",
+      "bounding": [
+        4260.1927194187,
+        -1372.6970768270162,
+        3987.314630982999,
+        1533.8736213515926
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "Group33",
+      "bounding": [
+        8293.266653245068,
+        -2845.4035650838687,
+        2692.719703826855,
+        1142.9840586019247
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 5,
+      "title": "文生图",
+      "bounding": [
+        11106.656928321214,
+        -2847.881824398967,
+        1186.1333355876686,
+        991.9843392603718
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 6,
+      "title": "影楼写真模板生成",
+      "bounding": [
+        8403.314527666125,
+        -1387.6208105073279,
+        3987.314630982999,
+        1533.8736213515926
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
     }
   ],
   "config": {},
   "extra": {
     "ue_links": [],
     "ds": {
-      "scale": 0.544500000000002,
+      "scale": 0.17349448024328967,
       "offset": [
-        -2329.1850203290564,
-        3225.2350301309602
+        -3057.13451396279,
+        3969.7372238113016
       ]
     },
     "links_added_by_ue": [],
-    "frontendVersion": "1.30.6",
+    "frontendVersion": "1.32.9",
     "VHS_latentpreview": false,
     "VHS_latentpreviewrate": 0,
     "VHS_MetadataImage": true,
-    "VHS_KeepIntermediate": true
+    "VHS_KeepIntermediate": true,
+    "groupNodes": {
+      "线稿": {
+        "external": [],
+        "nodes": [
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "CLIP",
+                "links": [],
+                "label": "CLIP",
+                "type": "CLIP",
+                "localized_name": "CLIP"
+              }
+            ],
+            "size": [
+              315,
+              130
+            ],
+            "pos": [
+              465.02239990234375,
+              -367.7652893066406
+            ],
+            "widgets_values": [
+              "clip_l.safetensors",
+              "t5xxl_fp8_e4m3fn.safetensors",
+              "flux",
+              "default"
+            ],
+            "inputs": [
+              {
+                "widget": {
+                  "name": "clip_name1"
+                },
+                "name": "clip_name1",
+                "label": "clip_name1",
+                "type": "COMBO",
+                "localized_name": "CLIP名称1"
+              },
+              {
+                "widget": {
+                  "name": "clip_name2"
+                },
+                "name": "clip_name2",
+                "label": "clip_name2",
+                "type": "COMBO",
+                "localized_name": "CLIP名称2"
+              },
+              {
+                "widget": {
+                  "name": "type"
+                },
+                "name": "type",
+                "label": "type",
+                "type": "COMBO",
+                "localized_name": "类型"
+              },
+              {
+                "widget": {
+                  "name": "device"
+                },
+                "shape": 7,
+                "name": "device",
+                "label": "device",
+                "type": "COMBO",
+                "localized_name": "设备"
+              }
+            ],
+            "flags": {},
+            "index": 0,
+            "id": -1,
+            "type": "DualCLIPLoader",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "DualCLIPLoader"
+            },
+            "order": 2
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "VAE",
+                "links": [],
+                "label": "VAE",
+                "type": "VAE",
+                "localized_name": "VAE"
+              }
+            ],
+            "size": [
+              313.2864685058594,
+              58
+            ],
+            "pos": [
+              468.38836669921875,
+              -187.49769592285156
+            ],
+            "widgets_values": [
+              "ae.sft"
+            ],
+            "inputs": [
+              {
+                "widget": {
+                  "name": "vae_name"
+                },
+                "name": "vae_name",
+                "label": "vae_name",
+                "type": "COMBO",
+                "localized_name": "vae名称"
+              }
+            ],
+            "flags": {},
+            "index": 1,
+            "id": -1,
+            "type": "VAELoader",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "VAELoader"
+            },
+            "order": 3
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "IMAGE",
+                "links": [],
+                "label": "IMAGE",
+                "type": "IMAGE",
+                "localized_name": "图像"
+              }
+            ],
+            "size": [
+              264.5999755859375,
+              26
+            ],
+            "pos": [
+              483.45684814453125,
+              -53.463478088378906
+            ],
+            "widgets_values": [],
+            "inputs": [
+              {
+                "name": "image",
+                "label": "image",
+                "type": "IMAGE",
+                "localized_name": "image"
+              }
+            ],
+            "flags": {},
+            "index": 2,
+            "id": -1,
+            "type": "FluxKontextImageScale",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "FluxKontextImageScale"
+            },
+            "order": 4
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "MODEL",
+                "links": [],
+                "label": "MODEL",
+                "type": "MODEL",
+                "localized_name": "模型"
+              }
+            ],
+            "size": [
+              315,
+              82
+            ],
+            "pos": [
+              462.11053466796875,
+              -536.5576782226562
+            ],
+            "widgets_values": [
+              "flux1-kontext-dev.safetensors",
+              "fp8_e4m3fn"
+            ],
+            "inputs": [
+              {
+                "widget": {
+                  "name": "unet_name"
+                },
+                "name": "unet_name",
+                "label": "unet_name",
+                "type": "COMBO",
+                "localized_name": "UNet名称"
+              },
+              {
+                "widget": {
+                  "name": "weight_dtype"
+                },
+                "name": "weight_dtype",
+                "label": "weight_dtype",
+                "type": "COMBO",
+                "localized_name": "数据类型"
+              }
+            ],
+            "flags": {},
+            "index": 3,
+            "id": -1,
+            "type": "UNETLoader",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "UNETLoader"
+            },
+            "order": 5
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "CONDITIONING",
+                "links": [],
+                "label": "CONDITIONING",
+                "type": "CONDITIONING",
+                "localized_name": "条件"
+              }
+            ],
+            "size": [
+              400,
+              200
+            ],
+            "pos": [
+              822.844482421875,
+              -374.8636779785156
+            ],
+            "widgets_values": [
+              "Convert to a pencil sketch with natural graphite lines, hatching, and visible paper texture"
+            ],
+            "inputs": [
+              {
+                "name": "clip",
+                "label": "clip",
+                "type": "CLIP",
+                "localized_name": "clip"
+              },
+              {
+                "widget": {
+                  "name": "text"
+                },
+                "name": "text",
+                "label": "text",
+                "type": "STRING",
+                "localized_name": "文本"
+              }
+            ],
+            "flags": {},
+            "index": 4,
+            "id": -1,
+            "type": "CLIPTextEncode",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "CLIPTextEncode"
+            },
+            "order": 7
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "LATENT",
+                "links": [],
+                "label": "LATENT",
+                "type": "LATENT",
+                "localized_name": "Latent"
+              }
+            ],
+            "size": [
+              255.23707580566406,
+              46
+            ],
+            "pos": [
+              1282.4373779296875,
+              -216.93148803710938
+            ],
+            "widgets_values": [],
+            "inputs": [
+              {
+                "name": "pixels",
+                "label": "pixels",
+                "type": "IMAGE",
+                "localized_name": "像素"
+              },
+              {
+                "name": "vae",
+                "label": "vae",
+                "type": "VAE",
+                "localized_name": "vae"
+              }
+            ],
+            "flags": {},
+            "index": 5,
+            "id": -1,
+            "type": "VAEEncode",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "VAEEncode"
+            },
+            "order": 8
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "MODEL",
+                "links": [],
+                "label": "MODEL",
+                "type": "MODEL",
+                "localized_name": "模型"
+              }
+            ],
+            "size": [
+              315,
+              82
+            ],
+            "pos": [
+              843.2771606445312,
+              -538.4518432617188
+            ],
+            "widgets_values": [
+              "turbo加速.safetensors",
+              1
+            ],
+            "inputs": [
+              {
+                "name": "model",
+                "label": "model",
+                "type": "MODEL",
+                "localized_name": "模型"
+              },
+              {
+                "widget": {
+                  "name": "lora_name"
+                },
+                "name": "lora_name",
+                "label": "lora_name",
+                "type": "COMBO",
+                "localized_name": "LoRA名称"
+              },
+              {
+                "widget": {
+                  "name": "strength_model"
+                },
+                "name": "strength_model",
+                "label": "strength_model",
+                "type": "FLOAT",
+                "localized_name": "模型强度"
+              }
+            ],
+            "flags": {},
+            "index": 6,
+            "id": -1,
+            "type": "LoraLoaderModelOnly",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "LoraLoaderModelOnly"
+            },
+            "order": 9
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "CONDITIONING",
+                "links": [],
+                "label": "CONDITIONING",
+                "type": "CONDITIONING",
+                "localized_name": "条件"
+              }
+            ],
+            "size": [
+              259.0068359375,
+              26
+            ],
+            "pos": [
+              1274.1141357421875,
+              -297.4158020019531
+            ],
+            "widgets_values": [],
+            "inputs": [
+              {
+                "name": "conditioning",
+                "label": "conditioning",
+                "type": "CONDITIONING",
+                "localized_name": "条件"
+              }
+            ],
+            "flags": {},
+            "index": 7,
+            "id": -1,
+            "type": "ConditioningZeroOut",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "ConditioningZeroOut"
+            },
+            "order": 11
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "CONDITIONING",
+                "links": [],
+                "label": "CONDITIONING",
+                "type": "CONDITIONING",
+                "localized_name": "条件"
+              }
+            ],
+            "size": [
+              276.6282958984375,
+              46
+            ],
+            "pos": [
+              1232.805908203125,
+              -535.1276245117188
+            ],
+            "widgets_values": [],
+            "inputs": [
+              {
+                "name": "conditioning",
+                "label": "conditioning",
+                "type": "CONDITIONING",
+                "localized_name": "conditioning"
+              },
+              {
+                "shape": 7,
+                "name": "latent",
+                "label": "latent",
+                "type": "LATENT",
+                "localized_name": "latent"
+              }
+            ],
+            "flags": {},
+            "index": 8,
+            "id": -1,
+            "type": "ReferenceLatent",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "ReferenceLatent"
+            },
+            "order": 12
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "CONDITIONING",
+                "links": [],
+                "label": "CONDITIONING",
+                "type": "CONDITIONING",
+                "localized_name": "条件"
+              }
+            ],
+            "size": [
+              270.7053527832031,
+              58
+            ],
+            "pos": [
+              1270.4163818359375,
+              -410.3924865722656
+            ],
+            "widgets_values": [
+              2.5
+            ],
+            "inputs": [
+              {
+                "name": "conditioning",
+                "label": "conditioning",
+                "type": "CONDITIONING",
+                "localized_name": "条件"
+              },
+              {
+                "widget": {
+                  "name": "guidance"
+                },
+                "name": "guidance",
+                "label": "guidance",
+                "type": "FLOAT",
+                "localized_name": "引导"
+              }
+            ],
+            "flags": {},
+            "index": 9,
+            "id": -1,
+            "type": "FluxGuidance",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "FluxGuidance"
+            },
+            "order": 14
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "LATENT",
+                "links": [],
+                "label": "LATENT",
+                "type": "LATENT",
+                "localized_name": "Latent"
+              }
+            ],
+            "size": [
+              291.432373046875,
+              266.2838134765625
+            ],
+            "pos": [
+              1592.9691162109375,
+              -543.4503784179688
+            ],
+            "widgets_values": [
+              673491088955728,
+              "randomize",
+              20,
+              1,
+              "euler",
+              "beta",
+              1
+            ],
+            "inputs": [
+              {
+                "name": "model",
+                "label": "model",
+                "type": "MODEL",
+                "localized_name": "模型"
+              },
+              {
+                "name": "positive",
+                "label": "positive",
+                "type": "CONDITIONING",
+                "localized_name": "正面条件"
+              },
+              {
+                "name": "negative",
+                "label": "negative",
+                "type": "CONDITIONING",
+                "localized_name": "负面条件"
+              },
+              {
+                "name": "latent_image",
+                "label": "latent_image",
+                "type": "LATENT",
+                "localized_name": "Latent图像"
+              },
+              {
+                "widget": {
+                  "name": "seed"
+                },
+                "name": "seed",
+                "label": "seed",
+                "type": "INT",
+                "localized_name": "种子"
+              },
+              {
+                "widget": {
+                  "name": "steps"
+                },
+                "name": "steps",
+                "label": "steps",
+                "type": "INT",
+                "localized_name": "步数"
+              },
+              {
+                "widget": {
+                  "name": "cfg"
+                },
+                "name": "cfg",
+                "label": "cfg",
+                "type": "FLOAT",
+                "localized_name": "cfg"
+              },
+              {
+                "widget": {
+                  "name": "sampler_name"
+                },
+                "name": "sampler_name",
+                "label": "sampler_name",
+                "type": "COMBO",
+                "localized_name": "采样器名称"
+              },
+              {
+                "widget": {
+                  "name": "scheduler"
+                },
+                "name": "scheduler",
+                "label": "scheduler",
+                "type": "COMBO",
+                "localized_name": "调度器"
+              },
+              {
+                "widget": {
+                  "name": "denoise"
+                },
+                "name": "denoise",
+                "label": "denoise",
+                "type": "FLOAT",
+                "localized_name": "降噪"
+              }
+            ],
+            "flags": {},
+            "index": 10,
+            "id": -1,
+            "type": "KSampler",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "KSampler"
+            },
+            "order": 17
+          },
+          {
+            "mode": 0,
+            "outputs": [
+              {
+                "name": "IMAGE",
+                "links": [],
+                "label": "IMAGE",
+                "type": "IMAGE",
+                "localized_name": "图像"
+              }
+            ],
+            "size": [
+              245.66189575195312,
+              46
+            ],
+            "pos": [
+              1603.9871826171875,
+              -201.3184814453125
+            ],
+            "widgets_values": [],
+            "inputs": [
+              {
+                "name": "samples",
+                "label": "samples",
+                "type": "LATENT",
+                "localized_name": "Latent"
+              },
+              {
+                "name": "vae",
+                "label": "vae",
+                "type": "VAE",
+                "localized_name": "vae"
+              }
+            ],
+            "flags": {},
+            "index": 11,
+            "id": -1,
+            "type": "VAEDecode",
+            "properties": {
+              "widget_ue_connectable": {},
+              "Node name for S&R": "VAEDecode"
+            },
+            "order": 21
+          }
+        ],
+        "links": [
+          [
+            0,
+            0,
+            4,
+            0,
+            16,
+            "CLIP"
+          ],
+          [
+            2,
+            0,
+            5,
+            0,
+            20,
+            "IMAGE"
+          ],
+          [
+            1,
+            0,
+            5,
+            1,
+            17,
+            "VAE"
+          ],
+          [
+            3,
+            0,
+            6,
+            0,
+            18,
+            "MODEL"
+          ],
+          [
+            4,
+            0,
+            7,
+            0,
+            19,
+            "CONDITIONING"
+          ],
+          [
+            4,
+            0,
+            8,
+            0,
+            19,
+            "CONDITIONING"
+          ],
+          [
+            5,
+            0,
+            8,
+            1,
+            23,
+            "LATENT"
+          ],
+          [
+            8,
+            0,
+            9,
+            0,
+            24,
+            "CONDITIONING"
+          ],
+          [
+            6,
+            0,
+            10,
+            0,
+            21,
+            "MODEL"
+          ],
+          [
+            9,
+            0,
+            10,
+            1,
+            25,
+            "CONDITIONING"
+          ],
+          [
+            7,
+            0,
+            10,
+            2,
+            22,
+            "CONDITIONING"
+          ],
+          [
+            5,
+            0,
+            10,
+            3,
+            23,
+            "LATENT"
+          ],
+          [
+            10,
+            0,
+            11,
+            0,
+            26,
+            "LATENT"
+          ],
+          [
+            1,
+            0,
+            11,
+            1,
+            17,
+            "VAE"
+          ]
+        ]
+      }
+    },
+    "workflowRendererVersion": "LG"
   },
   "version": 0.4
 }

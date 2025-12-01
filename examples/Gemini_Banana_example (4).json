@@ -1,0 +1,6470 @@
+{
+  "id": "371c7eea-7eac-4a7d-ad09-844656a3ab0d",
+  "revision": 0,
+  "last_node_id": 230,
+  "last_link_id": 264,
+  "nodes": [
+    {
+      "id": 118,
+      "type": "ShowText|pysssss",
+      "pos": [
+        -3329.744384765625,
+        41.18516159057617
+      ],
+      "size": [
+        465.01617431640625,
+        253.4031219482422
+      ],
+      "flags": {},
+      "order": 82,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 118
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "f2838ed5e59de4d73cde5c98354b87a8d3200190",
+        "Node name for S&R": "ShowText|pysssss",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 119,
+      "type": "PreviewImage",
+      "pos": [
+        -3330.997314453125,
+        -821.1102294921875
+      ],
+      "size": [
+        525.3892822265625,
+        705.6387329101562
+      ],
+      "flags": {},
+      "order": 81,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 119
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 120,
+      "type": "easy showAnything",
+      "pos": [
+        -4277.41845703125,
+        -238.20396423339844
+      ],
+      "size": [
+        409.3641357421875,
+        316.7236022949219
+      ],
+      "flags": {},
+      "order": 69,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 120
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "Comfly API 调用失败: HTTPSConnectionPool(host='ai.comfly.chat', port=443): Read timed out. (read timeout=60)\nComfly API call failed: HTTPSConnectionPool(host='ai.comfly.chat', port=443): Read timed out. (read timeout=60)"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 121,
+      "type": "easy imageToBase64",
+      "pos": [
+        -4508.2119140625,
+        -838.6463012695312
+      ],
+      "size": [
+        140,
+        26
+      ],
+      "flags": {},
+      "order": 33,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 121
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            122
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy imageToBase64",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 124,
+      "type": "LoadImage",
+      "pos": [
+        -4571.2548828125,
+        -602.5015869140625
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            121
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.54",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "282743066-90cd60fce18d5bc36937961fd95107ec1383f5f9ab3e281001fb082bbe339af5.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 141,
+      "type": "easy showAnything",
+      "pos": [
+        1439.9707920553446,
+        -805.5339876256008
+      ],
+      "size": [
+        210,
+        281.41961669921875
+      ],
+      "flags": {},
+      "order": 59,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 197
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "多图像编辑完成！这是根据您的指令和参考图像生成的编辑结果。"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 161,
+      "type": "easy showAnything",
+      "pos": [
+        -3489.1259765625,
+        -3525.18115234375
+      ],
+      "size": [
+        280.8206481933594,
+        245.33132934570312
+      ],
+      "flags": {},
+      "order": 39,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 166
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "1148fbe5fe0276780c56f0adfa22b96d5200d832",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "The woman on the left wears all the clothes on the right and walks on the street, keeping the consistency of the character unchanged."
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 61,
+      "type": "ImageConcanate",
+      "pos": [
+        -3483.723876953125,
+        -4188.60546875
+      ],
+      "size": [
+        283.3724365234375,
+        102
+      ],
+      "flags": {},
+      "order": 35,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像_1",
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 73
+        },
+        {
+          "label": "图像_2",
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 74
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            104
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "ba9153cb06fc77bfd86c36835f1817482e8328a0",
+        "Node name for S&R": "ImageConcanate",
+        "ue_properties": {
+          "version": "7.0.1",
+          "widget_ue_connectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "left",
+        true
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 155,
+      "type": "easy showAnything",
+      "pos": [
+        -3705.584893663196,
+        -1988.0789215494788
+      ],
+      "size": [
+        282.4229431152344,
+        143.05392456054688
+      ],
+      "flags": {},
+      "order": 36,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 156
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "1148fbe5fe0276780c56f0adfa22b96d5200d832",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "The woman in Figure 1 is wearing all the clothes in Figure 2, walking on a luxurious street, wearing the bracelet in Figure 3 on her left hand, drinking coffee in Figure 4, keeping all the subjects consistent."
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 132,
+      "type": "LoadImage",
+      "pos": [
+        360.515591860032,
+        -679.1065584263821
+      ],
+      "size": [
+        270,
+        314.00006103515625
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            195
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "output (1) (1).jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 164,
+      "type": "ShowText|pysssss",
+      "pos": [
+        5054.69873046875,
+        -4512.0859375
+      ],
+      "size": [
+        465.01617431640625,
+        253.4031219482422
+      ],
+      "flags": {},
+      "order": 50,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 175
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "f2838ed5e59de4d73cde5c98354b87a8d3200190",
+        "Node name for S&R": "ShowText|pysssss",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 166,
+      "type": "easy showAnything",
+      "pos": [
+        411.6809760199592,
+        -5379.879286024306
+      ],
+      "size": [
+        280.8206481933594,
+        245.33132934570312
+      ],
+      "flags": {},
+      "order": 34,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 170
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "1148fbe5fe0276780c56f0adfa22b96d5200d832",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "The woman on the left puts on the dress on the right and walks down the street."
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 165,
+      "type": "GeminiBananaTextTranslation",
+      "pos": [
+        -4.370415581603128,
+        -5386.061414930556
+      ],
+      "size": [
+        372.1278076171875,
+        452
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "translated_text",
+          "type": "STRING",
+          "links": [
+            170
+          ]
+        },
+        {
+          "name": "detected_language",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "translation_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "GeminiBananaTextTranslation",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "text": true,
+            "translation_engine": true,
+            "source_language": true,
+            "target_language": true,
+            "quality_mode": true,
+            "preserve_formatting": true,
+            "context_aware": true,
+            "temperature": true,
+            "max_output_tokens": true,
+            "context_info": true,
+            "custom_instructions": true
+          },
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "",
+        "左边的女人穿上右边的衣服，走在大街上，",
+        "mymemory-translate",
+        "zh-CN",
+        "en",
+        "high",
+        true,
+        true,
+        0.3,
+        4096,
+        "",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 103,
+      "type": "easy showAnything",
+      "pos": [
+        -3158.748300428159,
+        -6096.090175858909
+      ],
+      "size": [
+        328.9773864746094,
+        498.44354248046875
+      ],
+      "flags": {},
+      "order": 40,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 171
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "遵命！这是你所要求的图片："
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 106,
+      "type": "easy showAnything",
+      "pos": [
+        -2671.64501953125,
+        -4116.869140625
+      ],
+      "size": [
+        328.9773864746094,
+        498.44354248046875
+      ],
+      "flags": {},
+      "order": 71,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 105
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "Response received but no text content"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 107,
+      "type": "PreviewImage",
+      "pos": [
+        -2292.670654296875,
+        -4170.16943359375
+      ],
+      "size": [
+        708.8531494140625,
+        1039.2498779296875
+      ],
+      "flags": {},
+      "order": 72,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 106
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 59,
+      "type": "LoadImage",
+      "pos": [
+        -3976.28369140625,
+        -4179.59912109375
+      ],
+      "size": [
+        420.5924987792969,
+        772.603759765625
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            73
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "c6f3d4a36ad55892095d684fcf851c104633b50c919efbf4eb82502d572881fc.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 60,
+      "type": "LoadImage",
+      "pos": [
+        -4458.71240234375,
+        -4176.4912109375
+      ],
+      "size": [
+        438.6556701660156,
+        793.6774291992188
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            74
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "pasted/image (36).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 101,
+      "type": "KenChenLLMGeminiBananaTextToImageBananaNode",
+      "pos": [
+        -5708.26806640625,
+        -5502.00390625
+      ],
+      "size": [
+        400,
+        1090
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "generation_text",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "name": "generated_image",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "grounding_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaTextToImageBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "proxy": true,
+            "size": true,
+            "quality": true,
+            "style": true,
+            "detail_level": true,
+            "camera_control": true,
+            "lighting_control": true,
+            "template_selection": true,
+            "quality_enhancement": true,
+            "enhance_quality": true,
+            "smart_resize": true,
+            "fill_color": true,
+            "temperature": true,
+            "top_p": true,
+            "top_k": true,
+            "max_output_tokens": true,
+            "seed": true,
+            "custom_size": true,
+            "custom_instructions": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "",
+        "A beautiful landscape with mountains and lake",
+        "gemini-2.5-flash-image",
+        "http://127.0.0.1:None",
+        "2:3",
+        "TEXT_AND_IMAGE",
+        "1024x1792",
+        "Premium Quality",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        true,
+        true,
+        true,
+        "crop",
+        "255,255,255",
+        "High Fidelity",
+        1,
+        1,
+        40,
+        1,
+        "default",
+        "none",
+        "",
+        "",
+        "",
+        false,
+        false,
+        3,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 36,
+      "type": "LoadImage",
+      "pos": [
+        -92.44567128444015,
+        -2899.2108718762456
+      ],
+      "size": [
+        438.6556701660156,
+        793.6774291992188
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            221
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "926513f4cc97c78f5efbbcad14614510e76a867dfeeef-Ubf42O_fw1200.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 135,
+      "type": "LoadImage",
+      "pos": [
+        -4466.995776473619,
+        -2613.3456230991137
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            176
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "pasted/image (36).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 136,
+      "type": "LoadImage",
+      "pos": [
+        -4150.737237413196,
+        -2515.8274331914326
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            177
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "pasted/image (34).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 137,
+      "type": "LoadImage",
+      "pos": [
+        -4500.553490717526,
+        -2190.4054375522396
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            178
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "output (5).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 138,
+      "type": "LoadImage",
+      "pos": [
+        -4097.246673564068,
+        -2139.5296713242797
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            179
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "output (1) (1).jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 153,
+      "type": "PreviewImage",
+      "pos": [
+        -2608.634085826956,
+        -2712.137300213212
+      ],
+      "size": [
+        1164.621337890625,
+        1335.496826171875
+      ],
+      "flags": {},
+      "order": 53,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 181
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 154,
+      "type": "GeminiBananaTextTranslation",
+      "pos": [
+        -3782.596282790797,
+        -2631.1987871042984
+      ],
+      "size": [
+        433.6377258300781,
+        571.5641479492189
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "translated_text",
+          "type": "STRING",
+          "links": [
+            156,
+            182
+          ]
+        },
+        {
+          "name": "detected_language",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "translation_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "GeminiBananaTextTranslation",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "text": true,
+            "translation_engine": true,
+            "source_language": true,
+            "target_language": true,
+            "quality_mode": true,
+            "preserve_formatting": true,
+            "context_aware": true,
+            "temperature": true,
+            "max_output_tokens": true,
+            "context_info": true,
+            "custom_instructions": true
+          },
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "",
+        "图1的女人穿着图2的全部服装，走在豪华的大街上，左手戴着图3的手肯，喝着图4的咖啡，保持所有主体一致性不变",
+        "google-translate",
+        "zh-CN",
+        "en",
+        "high",
+        true,
+        true,
+        0.3,
+        4096,
+        "",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 44,
+      "type": "easy imageToBase64",
+      "pos": [
+        -228.2515254433258,
+        -4647.47227849836
+      ],
+      "size": [
+        140,
+        26
+      ],
+      "flags": {},
+      "order": 38,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 53
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            188
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy imageToBase64",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 41,
+      "type": "LoadImage",
+      "pos": [
+        -293.29703617491515,
+        -4511.317867528181
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            53
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.54",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "282743066-90cd60fce18d5bc36937961fd95107ec1383f5f9ab3e281001fb082bbe339af5.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 45,
+      "type": "easy showAnything",
+      "pos": [
+        32.2559484986911,
+        -4126.041718818999
+      ],
+      "size": [
+        409.3641357421875,
+        316.7236022949219
+      ],
+      "flags": {},
+      "order": 74,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 189
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "A serene mountain stream at sunset, with clear flowing water over smooth rocks and lush green grass on either side. The sun is low in the sky, casting a warm golden light across the scene, highlighting the vibrant greenery and delicate white flowers scattered throughout. Tall pine trees frame the background, leading to rolling hills that fade into the distance under the soft glow of the setting sun. The image captures the tranquility and natural beauty of the landscape, with a harmonious balance of colors and textures, creating a peaceful and idyllic atmosphere., best quality, high resolution, 4k, high quality"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 127,
+      "type": "PreviewImage",
+      "pos": [
+        1739.5971404334796,
+        -1159.2459793437329
+      ],
+      "size": [
+        584.1869506835938,
+        762.8710327148438
+      ],
+      "flags": {},
+      "order": 58,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 196
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 158,
+      "type": "GeminiBananaTextTranslation",
+      "pos": [
+        -3518.802978515625,
+        -4042.403564453125
+      ],
+      "size": [
+        372.1278076171875,
+        452
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "translated_text",
+          "type": "STRING",
+          "links": [
+            158,
+            166
+          ]
+        },
+        {
+          "name": "detected_language",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "translation_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "GeminiBananaTextTranslation",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "text": true,
+            "translation_engine": true,
+            "source_language": true,
+            "target_language": true,
+            "quality_mode": true,
+            "preserve_formatting": true,
+            "context_aware": true,
+            "temperature": true,
+            "max_output_tokens": true,
+            "context_info": true,
+            "custom_instructions": true
+          },
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "",
+        "左边的女人穿上右边的全部服装，走在大街上，保持人物一致性不变",
+        "google-translate",
+        "zh-CN",
+        "en",
+        "high",
+        true,
+        true,
+        0.3,
+        4096,
+        "",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 2,
+      "type": "PreviewImage",
+      "pos": [
+        1169.3089885820486,
+        -4661.0158601170715
+      ],
+      "size": [
+        525.3892822265625,
+        705.6387329101562
+      ],
+      "flags": {},
+      "order": 88,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 190
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 181,
+      "type": "GLM_Prompt_Expand_From_Image",
+      "pos": [
+        5.071031200562253,
+        -4672.807523857757
+      ],
+      "size": [
+        400,
+        418
+      ],
+      "flags": {},
+      "order": 54,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_base64",
+          "type": "STRING",
+          "widget": {
+            "name": "image_base64"
+          },
+          "link": 188
+        }
+      ],
+      "outputs": [
+        {
+          "name": "expanded_prompt",
+          "type": "STRING",
+          "links": [
+            186,
+            189
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "GLM_Prompt_Expand_From_Image",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.3"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "通用高质量英文描述",
+        "",
+        "glm-4v-flash",
+        "",
+        "## 角色设定 (System Role):\n你是一名专业的图像描述专家。你的任务是将图片内容转化为高质量的英文提示词，用于文本到图像的生成模型。\n## 任务说明 (User Instruction):\n请仔细观察提供的图片，并生成一段详细、具体、富有创造性的英文短语，描述图片中的主体对象、场景、动作、光线、材质、色彩、构图和艺术风格。\n## 输出要求 (Output Requirements):\n**   **语言**： 严格使用英文。\n**   **细节**： 尽可能多地描绘图片细节，包括但不限于物体、人物、背景、前景、纹理、表情、动作、服装、道具等。\n**   **角度**： 尽可能从多个角度丰富描述，例如特写、广角、俯视、仰视等，但不要直接写“角度”。\n**   **连接**： 使用逗号（,）连接不同的短语，形成一个连贯的提示词。\n**   **人物**： 描绘人物时，使用第三人称（如 'a woman', 'the man'）。\n**   **质量词**： 在生成的提示词末尾，务必添加以下质量增强词：`, best quality, high resolution, 4k, high quality`。\n## 只生成提示词，不需要描述过程及其他，并且一定要在质量词",
+        "",
+        "",
+        0.7,
+        329113759727305,
+        "randomize",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 3,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1235.1908715179873,
+        -3791.9935853614998
+      ],
+      "size": [
+        355.22201311553044,
+        146.90749777915244
+      ],
+      "flags": {},
+      "order": 90,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 49
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "f2838ed5e59de4d73cde5c98354b87a8d3200190",
+        "Node name for S&R": "ShowText|pysssss",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "**Analyzing the Request's Core**\n\nI'm focusing on the user's intent to capture a landscape photo. It seems a portrait orientation is implied by \"landscape photo.\" My current thought is to break down the scene into core components: stream, mountains, and sunset, paying close attention to the requested \"professional\" style.\n\n\n\n**Composing the Visual Narrative**\n\nI'm now detailing the scene. I am concentrating on the stream and the surrounding greenery, envisioning its gentle flow over smooth rocks, flanked by the lush grass and delicate flowers. The warm sunset light is critical. I'm considering the precise composition, lens choice, and lighting to enhance the idyllic mood I aim to achieve.\n\n\n\n**Verifying the Image's Fidelity**\n\nI've reviewed the image's adherence to the provided specifications. The sunset's light, the mountain stream, and the surrounding flora are precisely as requested. The photographic techniques – composition, framing, and lens choice – are all expertly applied, resulting in a visually compelling outcome that meets all the criteria.\n\n\n\n**Matching the Prompt Precisely**\n\nThe image generation is progressing according to plan. I've confirmed that the generated visual perfectly captures the scene detailed in the prompt. The golden hour's effect, the stream, the trees – everything aligns. I can confidently say it fulfills the instructions perfectly.\n\n\n"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 40,
+      "type": "Comfly_Prompt_Expand_From_Image",
+      "pos": [
+        -166.19430526812042,
+        -3763.1491321754297
+      ],
+      "size": [
+        379.167724609375,
+        545
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "expanded_prompt",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "Comfly_Prompt_Expand_From_Image",
+        "ue_properties": {
+          "version": "7.0.1",
+          "widget_ue_connectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "Comfly",
+        "通用高质量英文描述",
+        "",
+        "",
+        "claude-opus-4-1-20250805-thinking",
+        "## 角色设定 (System Role):\n你是一名专业的图像描述专家。你的任务是将图片内容转化为高质量的中文提示词，用于文本到图像的生成模型。\n## 任务说明 (User Instruction):\n请仔细观察提供的图片，并生成一段详细、具体、富有创造性的中文短语，描述图片中的主体对象、场景、动作、光线、材质、色彩、构图和艺术风格。\n## 输出要求 (Output Requirements):\n**   **语言**： 严格使用英文。\n**   **细节**： 尽可能多地描绘图片细节，包括但不限于物体、人物、背景、前景、纹理、表情、动作、服装、道具等。\n**   **角度**： 尽可能从多个角度丰富描述，例如特写、广角、俯视、仰视等，但不要直接写“角度”。\n**   **连接**： 使用逗号（,）连接不同的短语，形成一个连贯的提示词。\n**   **人物**： 描绘人物时，使用第三人称（如 'a woman', 'the man'）。\n**   **质量词**： 在生成的提示词末尾，务必添加以下质量增强词：`, best quality, high resolution, 4k, high quality`。\n## 只生成提示词，不需要描述过程及其他，并且一定要在质量词",
+        "",
+        "壮阔，宏大，神秘，气势非宏，未来神秘感，",
+        0.9,
+        500763220547436,
+        "randomize",
+        "",
+        0.8,
+        400,
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 130,
+      "type": "LoadImage",
+      "pos": [
+        209.81775102492313,
+        -1121.1844929227127
+      ],
+      "size": [
+        270,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            193
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "4849861.jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 129,
+      "type": "LoadImage",
+      "pos": [
+        -100.41146496308195,
+        -1196.5377718052887
+      ],
+      "size": [
+        270,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            192
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "pasted/image (36).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 131,
+      "type": "LoadImage",
+      "pos": [
+        -95.30616272438643,
+        -790.1742386564168
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            194
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "output (5).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 194,
+      "type": "easy showAnything",
+      "pos": [
+        5663.336677992599,
+        -1925.0670958098303
+      ],
+      "size": [
+        210,
+        281.41961669921875
+      ],
+      "flags": {},
+      "order": 80,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 205
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "图片编辑完成！这是根据您的编辑指令修改后的图像。"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 196,
+      "type": "PreviewImage",
+      "pos": [
+        5617.911083830723,
+        -2728.5807251203787
+      ],
+      "size": [
+        584.1869506835938,
+        762.8710327148438
+      ],
+      "flags": {},
+      "order": 79,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 207
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 197,
+      "type": "easy showAnything",
+      "pos": [
+        4312.317306688746,
+        -1927.4013115242522
+      ],
+      "size": [
+        402.1667808471984,
+        216.03955645143787
+      ],
+      "flags": {},
+      "order": 68,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 259
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "图片拼接布局: 2列 x 2行\n总共 4 张图片\n\n图片位置说明:\n  图片 1: 第 1 行，第 1 列\n  图片 2: 第 1 行，第 2 列\n  图片 3: 第 2 行，第 1 列\n  图片 4: 第 2 行，第 2 列\n\n使用说明:\n- 在提示词中使用 '图1'、'图2' 等来引用对应的图片\n- 例如: '将图1的人物和图2的背景结合'\n- 模型会根据序号识别每张图片\n- 布局: 2列 x 2行，从左到右、从上到下编号"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 105,
+      "type": "KenChenLLMGeminiBananaImageToImageBananaNode",
+      "pos": [
+        -3108.383544921875,
+        -4180.09130859375
+      ],
+      "size": [
+        405.7734375,
+        1190
+      ],
+      "flags": {},
+      "order": 52,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 104
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 158
+        }
+      ],
+      "outputs": [
+        {
+          "name": "generation_text",
+          "type": "STRING",
+          "links": [
+            105
+          ]
+        },
+        {
+          "name": "generated_image",
+          "type": "IMAGE",
+          "links": [
+            106
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaImageToImageBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "proxy": true,
+            "size": true,
+            "quality": true,
+            "style": true,
+            "detail_level": true,
+            "camera_control": true,
+            "lighting_control": true,
+            "template_selection": true,
+            "quality_enhancement": true,
+            "enhance_quality": true,
+            "smart_resize": true,
+            "fill_color": true,
+            "temperature": true,
+            "top_p": true,
+            "top_k": true,
+            "max_output_tokens": true,
+            "seed": true,
+            "custom_size": true,
+            "custom_additions": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "",
+        "左边的女人穿上右边的衣服",
+        "",
+        "gemini-3-pro-image-preview",
+        "",
+        "4:5",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "2x",
+        "High Fidelity",
+        "ultra_hd",
+        "professional_portrait",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        1,
+        0.9,
+        40,
+        8192,
+        120491560,
+        "randomize",
+        "professional_photographer",
+        "default",
+        "none",
+        "",
+        false,
+        3,
+        false,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 178,
+      "type": "KenChenLLMGeminiBananaMultiImageEditBananaNode",
+      "pos": [
+        -3148.127473933267,
+        -2703.1572061822894
+      ],
+      "size": [
+        400,
+        1230
+      ],
+      "flags": {},
+      "order": 37,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 176
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 177
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 178
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 179
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 182
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            181
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMultiImageEditBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.2.2"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "",
+        "请根据这些图片进行专业的图像编辑",
+        "",
+        "gemini-3-pro-image-preview",
+        "4:5",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "2x",
+        "High Fidelity",
+        "ultra_hd",
+        "photographic",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        1,
+        0.9,
+        40,
+        8192,
+        825179,
+        "randomize",
+        "maintain_consistency",
+        "none",
+        "default",
+        "none",
+        "",
+        false,
+        "System Instruction",
+        600,
+        "",
+        "default",
+        "none",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 171,
+      "type": "KenChenLLMGeminiBananaTextToImageBananaNode",
+      "pos": [
+        -4529.571298475035,
+        -6077.041347733909
+      ],
+      "size": [
+        430.1763000488281,
+        1402
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "generation_text",
+          "type": "STRING",
+          "links": [
+            171
+          ]
+        },
+        {
+          "name": "generated_image",
+          "type": "IMAGE",
+          "links": [
+            172
+          ]
+        },
+        {
+          "name": "grounding_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaTextToImageBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "proxy": true,
+            "aspect_ratio": true,
+            "response_modality": true,
+            "upscale_factor": true,
+            "gigapixel_model": true,
+            "quality": true,
+            "style": true,
+            "detail_level": true,
+            "camera_control": true,
+            "lighting_control": true,
+            "template_selection": true,
+            "temperature": true,
+            "top_p": true,
+            "top_k": true,
+            "max_output_tokens": true,
+            "seed": true,
+            "custom_instructions": true
+          },
+          "version": "7.1",
+          "input_ue_unconnectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "",
+        "可视化旧金山未来5天的天气预报，制作一个清晰现代的天气图表。添加每天应该穿什么的视觉建议\n",
+        "",
+        "gemini-3-pro-image-preview",
+        "",
+        "5:4",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "2x",
+        "High Fidelity",
+        "ultra_hd",
+        "photographic",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        1,
+        0.9,
+        40,
+        8192,
+        265432138,
+        "randomize",
+        "professional_photographer",
+        "default",
+        "none",
+        "",
+        true,
+        false,
+        3,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 102,
+      "type": "PreviewImage",
+      "pos": [
+        -4033.897226209409,
+        -6093.115566483909
+      ],
+      "size": [
+        810.42919921875,
+        899.4644775390625
+      ],
+      "flags": {},
+      "order": 41,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 172
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 202,
+      "type": "PreviewImage",
+      "pos": [
+        -1441.7516705227815,
+        -6134.44027797971
+      ],
+      "size": [
+        810.42919921875,
+        899.4644775390625
+      ],
+      "flags": {},
+      "order": 55,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 218
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 201,
+      "type": "LoadImage",
+      "pos": [
+        -2463.829957899312,
+        -6121.100099826379
+      ],
+      "size": [
+        438.6556701660156,
+        793.6774291992188
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            217
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "111 (1).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 200,
+      "type": "KenChenLLMGeminiBananaImageToImageBananaNode",
+      "pos": [
+        -1936.0448795301722,
+        -6146.4459026181285
+      ],
+      "size": [
+        405.7734375,
+        1382
+      ],
+      "flags": {},
+      "order": 42,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 217
+        }
+      ],
+      "outputs": [
+        {
+          "name": "generation_text",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "name": "generated_image",
+          "type": "IMAGE",
+          "links": [
+            218
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaImageToImageBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "proxy": true,
+            "size": true,
+            "quality": true,
+            "style": true,
+            "detail_level": true,
+            "camera_control": true,
+            "lighting_control": true,
+            "template_selection": true,
+            "quality_enhancement": true,
+            "enhance_quality": true,
+            "smart_resize": true,
+            "fill_color": true,
+            "temperature": true,
+            "top_p": true,
+            "top_k": true,
+            "max_output_tokens": true,
+            "seed": true,
+            "custom_size": true,
+            "custom_additions": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "",
+        "Create a fashion product collage on a brown corkboard based on this outfit. Each product and the central model image should be presented as individual photos with distinct white borders, pinned organically and aesthetically to the board with small descriptive labels. Format 16:9.",
+        "",
+        "gemini-3-pro-image-preview",
+        "",
+        "16:9",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "2x",
+        "High Fidelity",
+        "ultra_hd",
+        "professional_portrait",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        1,
+        0.9,
+        40,
+        8192,
+        56974626,
+        "randomize",
+        "professional_photographer",
+        "default",
+        "none",
+        "",
+        false,
+        3,
+        false,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 179,
+      "type": "Prompt_Edit",
+      "pos": [
+        425.66854920914267,
+        -4648.369506173048
+      ],
+      "size": [
+        238.70473616732886,
+        300.02107519133824
+      ],
+      "flags": {},
+      "order": 73,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 186
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_text",
+          "type": "STRING",
+          "links": [
+            219
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Prompt_Edit",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.3"
+        }
+      },
+      "widgets_values": [
+        "A serene mountain stream at sunset, with clear flowing water over smooth rocks and lush green grass on either side. The sun is low in the sky, casting a warm golden light across the scene, highlighting the vibrant greenery and delicate white flowers scattered throughout. Tall pine trees frame the background, leading to rolling hills that fade into the distance under the soft glow of the setting sun. The image captures the tranquility and natural beauty of the landscape, with a harmonious balance of colors and textures, creating a peaceful and idyllic atmosphere., best quality, high resolution, 4k, high quality"
+      ],
+      "color": "#2a5a2a",
+      "bgcolor": "#1a3a1a"
+    },
+    {
+      "id": 122,
+      "type": "Comfly_Prompt_Expand_From_Image",
+      "pos": [
+        -4262.639120056153,
+        -870.4025707896855
+      ],
+      "size": [
+        379.167724609375,
+        545
+      ],
+      "flags": {},
+      "order": 51,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "ref_image",
+          "shape": 7,
+          "type": "STRING",
+          "widget": {
+            "name": "ref_image"
+          },
+          "link": 122
+        }
+      ],
+      "outputs": [
+        {
+          "name": "expanded_prompt",
+          "type": "STRING",
+          "links": [
+            120,
+            220
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "Comfly_Prompt_Expand_From_Image",
+        "ue_properties": {
+          "version": "7.0.1",
+          "widget_ue_connectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "Flux描述",
+        "",
+        "",
+        "",
+        "claude-sonnet-4-20250514-thinking",
+        "## 角色设定 (System Role):\n你是一个AI提示词专家，我需要你帮我根据参考图生成让精妙无比的提示词，要求：\n\n提示词=主体(主体描述)+场景(场景描述)+运动(运动描述)+镜头语言+氛围词+风格化主体描述:主体描述是对主体外观特征细节的描述，可通过形容词或短句列举，例如“一位身着少数民族服饰的黑发苗族少女”、\"一位来自异世界的飞天仙子，身着破旧却华丽的服饰，背后展开一对由废墟碎片构成的奇异翅膀”。场景描述:场景描述是对主体所处环境特征细节的描述，可通过形容词或短句列举运动描述:运动描述是对运动特征细节的描述，包含运动的幅度、速率和运动作用的效果，例如“猛烈地摇摆”、\"缓慢地移动\"、\"打碎了玻璃\"。镜头语言:镜头语言包含景别、视角、镜头、运镜等，常见镜头语言详见下方提示词词典。\n氛围词:氛围词是对预期画面氛围的描述，例如“梦幻\"、“孤独”、“宏伟\"，常见氛围词详见下方提示词词典。\n风格化:风格化是对画面风格语言的描述，例如“赛博朋克”、\"勾线插画”、\"废土风格\"，常见风格化详见下方提示词词典。\n\n参考案例如下：\n```\n一位身穿轻盈白色连衣裙的长发美女，肤色白皙，眼神温柔，微笑着，神情宁静。在金色的沙滩上，阳光明媚，海浪轻拍岸边，远处是碧蓝的大海与无边的天空交接，海风轻拂。她轻轻地在沙滩上步行，步伐优雅而缓慢，时而低头踩踏着海水，留下清晰的脚印，时而抬起头看向远方，微风吹动她的长发。镜头采用中景，稍微偏低的视角，以侧面跟随镜头运作，画面随她的步伐缓缓推进。镜头会偶尔拉近，捕捉她面部的柔和表情和细微的动作变化。宁静、柔和、浪漫、梦幻。清新自然的摄影风格，带有暖色调，画面略带柔焦效果，给人一种温暖的海边度假感。\n```\n\n请为我按照要求为图像生成高质量，十足创意，吸暴眼球，文字要求200字以内，除了提示词，不要有任何其他的内容，只有提示词，\n",
+        "壮阔，宏大，神秘，气势非宏，未来神秘感，",
+        "",
+        "0.7",
+        492742826087968,
+        0,
+        "0.8000000000000002",
+        400,
+        "",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 48,
+      "type": "ImageConcanate",
+      "pos": [
+        492.2018835536534,
+        -2937.1952938288327
+      ],
+      "size": [
+        283.3724365234375,
+        102
+      ],
+      "flags": {},
+      "order": 43,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像_1",
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 221
+        },
+        {
+          "label": "图像_2",
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 222
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            97,
+            142
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "ba9153cb06fc77bfd86c36835f1817482e8328a0",
+        "Node name for S&R": "ImageConcanate",
+        "ue_properties": {
+          "version": "7.0.1",
+          "widget_ue_connectable": {}
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "left",
+        true
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 37,
+      "type": "LoadImage",
+      "pos": [
+        367.6811457060207,
+        -2732.9525429527866
+      ],
+      "size": [
+        420.5924987792969,
+        772.603759765625
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            222
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "output (1) (1).jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 140,
+      "type": "easy showAnything",
+      "pos": [
+        1263.1298181686664,
+        -2882.1699640515412
+      ],
+      "size": [
+        332.79632568359375,
+        486.2960510253906
+      ],
+      "flags": {},
+      "order": 76,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 143
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "![image](https://googlecdn2.datas.systems/storage/response_images/287/2025/11/24/1763962890899666234_1511.png)"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 47,
+      "type": "PreviewImage",
+      "pos": [
+        1702.5840736875714,
+        -2842.6269393538482
+      ],
+      "size": [
+        582.6949462890625,
+        849.1848754882812
+      ],
+      "flags": {},
+      "order": 75,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 98
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 123,
+      "type": "KenChenLLMGeminiBananaMirrorImageGenNode",
+      "pos": [
+        -3818.46728515625,
+        -879.7059326171875
+      ],
+      "size": [
+        425.2370433921451,
+        1168.8001438096314
+      ],
+      "flags": {},
+      "order": 70,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 220
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            119
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            118
+          ]
+        },
+        {
+          "name": "grounding_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMirrorImageGenNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_url": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "temperature": true,
+            "top_p": true,
+            "max_output_tokens": true
+          },
+          "version": "7.0.1"
+        },
+        "xiser_content_color": "#8f5c1e"
+      },
+      "widgets_values": [
+        "T8的贞贞的AI工坊",
+        "",
+        "",
+        "",
+        "Auto (Latest Gemini 3 Pro) 🤖",
+        "",
+        "4:5",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "2x",
+        "High Fidelity",
+        "ultra_hd",
+        "professional_portrait",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        1,
+        0.9,
+        40,
+        8192,
+        62809885,
+        "randomize",
+        "",
+        "",
+        "default",
+        "",
+        false,
+        false,
+        3,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#D2691E",
+      "bgcolor": "#8B4513"
+    },
+    {
+      "id": 20,
+      "type": "KenChenLLMGeminiBananaMirrorImageGenNode",
+      "pos": [
+        697.606418846607,
+        -4657.771624873282
+      ],
+      "size": [
+        414.97467041015625,
+        1214
+      ],
+      "flags": {},
+      "order": 83,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 219
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            190,
+            191
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            49
+          ]
+        },
+        {
+          "name": "grounding_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMirrorImageGenNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_url": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "temperature": true,
+            "top_p": true,
+            "max_output_tokens": true
+          },
+          "version": "7.0.1"
+        },
+        "xiser_content_color": "#8f5c1e"
+      },
+      "widgets_values": [
+        "Comet",
+        "",
+        "",
+        "Auto (Latest Gemini 3 Pro) 🤖",
+        "Auto (Latest Gemini 3 Pro) 🤖",
+        "http://127.0.0.1:None",
+        "4:5",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "2x",
+        "High Fidelity",
+        "ultra_hd",
+        "professional_portrait",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        1,
+        0.9,
+        40,
+        8192,
+        34154213,
+        "randomize",
+        "",
+        "default",
+        "none",
+        "none",
+        false,
+        false,
+        3,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#D2691E",
+      "bgcolor": "#8B4513"
+    },
+    {
+      "id": 5,
+      "type": "PreviewImage",
+      "pos": [
+        2262.186327789689,
+        -4567.648370517753
+      ],
+      "size": [
+        417.8271484375,
+        791.5245361328125
+      ],
+      "flags": {},
+      "order": 91,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 21
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 25,
+      "type": "KenChenLLMGeminiBananaMirrorImageEditNode",
+      "pos": [
+        1742.3405025439415,
+        -4647.148041840459
+      ],
+      "size": [
+        464.47003173828125,
+        1214
+      ],
+      "flags": {},
+      "order": 89,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 191
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            21
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMirrorImageEditNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_url": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "temperature": true,
+            "top_p": true,
+            "max_output_tokens": true
+          },
+          "version": "7.0.1"
+        },
+        "xiser_content_color": "#8f5c1e"
+      },
+      "widgets_values": [
+        "Comet",
+        "",
+        "",
+        "",
+        "Auto (Latest Gemini 3 Pro) 🤖",
+        "http://127.0.0.1:None",
+        "4:5",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "ultra_hd",
+        "professional_portrait",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        "2x",
+        "High Fidelity",
+        1,
+        0.9,
+        40,
+        8192,
+        19533121,
+        "randomize",
+        "randomize",
+        "default",
+        "none",
+        "none",
+        false,
+        3,
+        false,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#D2691E",
+      "bgcolor": "#8B4513"
+    },
+    {
+      "id": 91,
+      "type": "KenChenLLMGeminiBananaMirrorImageEditNode",
+      "pos": [
+        857.5004957077474,
+        -2944.9286453137456
+      ],
+      "size": [
+        342.64292371824376,
+        1430
+      ],
+      "flags": {},
+      "order": 56,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 97
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            98
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            143
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMirrorImageEditNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_url": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "temperature": true,
+            "top_p": true,
+            "max_output_tokens": true
+          },
+          "version": "7.0.1"
+        },
+        "xiser_content_color": "#8f5c1e"
+      },
+      "widgets_values": [
+        "tuzi-api",
+        "",
+        "图1的女人喝着图2的咖啡，走在北京天安门广场上，",
+        "",
+        "Auto (Latest Gemini 3 Pro) 🤖",
+        "http://127.0.0.1:None",
+        "4:5",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "ultra_hd",
+        "professional_portrait",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        "2x",
+        "High Fidelity",
+        1,
+        0.9,
+        40,
+        8192,
+        260501016,
+        "randomize",
+        "",
+        "default",
+        "none",
+        "",
+        false,
+        3,
+        false,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#D2691E",
+      "bgcolor": "#8B4513"
+    },
+    {
+      "id": 142,
+      "type": "GoogleTranslateTextNode",
+      "pos": [
+        555.3035826075353,
+        -1137.1446361930753
+      ],
+      "size": [
+        252.7609100341797,
+        309.6268615722656
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            198
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui_custom_nodes_alekpet",
+        "ver": "e11d490f7edbe52816fca2f416166af2a0be5064",
+        "Node name for S&R": "GoogleTranslateTextNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "from_translate": true,
+            "to_translate": true,
+            "manual_translate": true,
+            "text": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "auto",
+        "en",
+        false,
+        "Manual Trasnlate",
+        "图1的女人穿着图2的衣服，走在大街上，戴着图3的手表，喝着图4的咖啡，"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 139,
+      "type": "PreviewImage",
+      "pos": [
+        -249.28696783514448,
+        -1960.2022743632524
+      ],
+      "size": [
+        556.7953491210938,
+        536.9500732421875
+      ],
+      "flags": {},
+      "order": 57,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 142
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 210,
+      "type": "easy showAnything",
+      "pos": [
+        7823.055113689222,
+        -4370.045221869862
+      ],
+      "size": [
+        300.21936802536493,
+        333.894870938424
+      ],
+      "flags": {},
+      "order": 60,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 224
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 209,
+      "type": "LoadImage",
+      "pos": [
+        7029.940733179318,
+        -4371.185573243708
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            223
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "00001-2854972115.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 208,
+      "type": "KenChenLLMPromptGeminiMultimodal",
+      "pos": [
+        7364.345748375219,
+        -4383.778578959987
+      ],
+      "size": [
+        400,
+        482
+      ],
+      "flags": {},
+      "order": 45,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 223
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "video",
+          "shape": 7,
+          "type": "VIDEO",
+          "link": null
+        },
+        {
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "response",
+          "type": "STRING",
+          "links": [
+            224
+          ]
+        },
+        {
+          "name": "thought_signature",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "usage_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMPromptGeminiMultimodal",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "请对所有提供的媒体进行详细的综合分析。",
+        "gemini-3-pro-preview [all]",
+        "T8的贞贞AI工坊",
+        "",
+        8192,
+        1,
+        "high",
+        "media_resolution_high",
+        "Auto",
+        "high",
+        "Auto",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 216,
+      "type": "PreviewImage",
+      "pos": [
+        8647.756288089688,
+        -2494.5455589280286
+      ],
+      "size": [
+        584.1869506835938,
+        762.8710327148438
+      ],
+      "flags": {},
+      "order": 84,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 229
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 217,
+      "type": "easy showAnything",
+      "pos": [
+        8730.888541420076,
+        -1662.507900640523
+      ],
+      "size": [
+        477.18432689212204,
+        288.9459357666026
+      ],
+      "flags": {},
+      "order": 85,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 230
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "**Examining the Sketch**\n\n\\n\\n\n\nI'm currently breaking down the pencil sketch, focusing on its defining characteristics. My primary goal is to translate the sketch's abstract qualities, such as the aerodynamic form and glass canopy, into realistic, manufactured components. I'm concentrating on how to convert the implied lines into solid forms.\n\n\n**Decoding the Design**\n\n\\n\\n\n\nI've moved on to concretizing the initial ideas. The next step involves solidifying the car's design elements – the canopy, spoilers, and overall form. The focus is shifting to material application and setting up the environment. I'm aiming for a high-end showroom to emphasize the car's futuristic nature.\n\n\n**Considering Image Accuracy**\n\nI am now focusing on aligning the generated image with the specifics of the user's prompt. The model translated the sketch into a realistic automotive photograph, including the specified features. My current goal is to ensure all requested details are accurately represented.\n\n\n**Evaluating Prompt Compliance**\n\nI'm assessing how well the model followed the user's instructions. The image reflects the requested details, such as the color, wheel design, and setting. I'm confirming that all elements match the prompt's specifics.\n\n\n"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 214,
+      "type": "easy showAnything",
+      "pos": [
+        7478.045778975189,
+        -1964.5269681673478
+      ],
+      "size": [
+        322.5948054926548,
+        254.01599027405132
+      ],
+      "flags": {},
+      "order": 62,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 227
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "{\n  \"promptTokenCount\": 2536,\n  \"candidatesTokenCount\": 104,\n  \"totalTokenCount\": 3574,\n  \"promptTokensDetails\": [\n    {\n      \"modality\": \"IMAGE\",\n      \"tokenCount\": 2209\n    },\n    {\n      \"modality\": \"TEXT\",\n      \"tokenCount\": 327\n    }\n  ],\n  \"thoughtsTokenCount\": 934\n}"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 213,
+      "type": "easy showAnything",
+      "pos": [
+        7838.551402100323,
+        -1767.3607483345331
+      ],
+      "size": [
+        388.18192627157714,
+        305.4534709916368
+      ],
+      "flags": {},
+      "order": 61,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 226
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": [
+            231
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "Turn this rough pencil sketch of a futuristic concept vehicle into a hyper-realistic, 8k automotive photography masterpiece. Keep the sketch's distinct aerodynamic silhouette, elongated glass canopy, and aggressive shark-fin rear spoilers, but transform the rough lines into tangible manufacturing reality. Add a glossy metallic electric blue paint finish, glowing neon cyan rim lighting on futuristic hubless wheels, and place the vehicle in a sleek, high-end showroom with a reflective polished concrete floor and professional overhead softbox studio lighting to accentuate the curvature."
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 211,
+      "type": "LoadImage",
+      "pos": [
+        7527.40675137793,
+        -2435.6205900710997
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            225,
+            228
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "car-sketch1.jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 222,
+      "type": "LoadImage",
+      "pos": [
+        9653.035428241741,
+        -2437.9878718360346
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            235,
+            240
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "cf9dee4e314c1f69b6ed01762ce7a9ae004e8aef9fc4001fb6548286c10675b1.jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 223,
+      "type": "LoadImage",
+      "pos": [
+        9653.4463250746,
+        -2029.6889328273805
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            236,
+            241
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "23ad81957915c488c5d29a952d13b024501d2a35fb12e11921c234ab759ca968.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 163,
+      "type": "PreviewImage",
+      "pos": [
+        4552.92919921875,
+        -4528.75146484375
+      ],
+      "size": [
+        417.8271484375,
+        791.5245361328125
+      ],
+      "flags": {},
+      "order": 49,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 174
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.52",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 224,
+      "type": "LoadImage",
+      "pos": [
+        9665.358806584603,
+        -1630.1801448331546
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            237,
+            242
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.71",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "pasted/image (65).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 226,
+      "type": "easy showAnything",
+      "pos": [
+        10245.986731299383,
+        -1496.9579190075995
+      ],
+      "size": [
+        477.18432689212204,
+        288.9459357666026
+      ],
+      "flags": {},
+      "order": 87,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 239
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "a72a4dc40f7fec4df125c3850647fb09851bd04f",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "多图像编辑完成！这是根据您的指令和参考图像生成的编辑结果。"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 225,
+      "type": "PreviewImage",
+      "pos": [
+        11250.074374675665,
+        -2416.7204757633904
+      ],
+      "size": [
+        1074.874431154094,
+        1313.8112078049292
+      ],
+      "flags": {},
+      "order": 86,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 238
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 219,
+      "type": "easy showAnything",
+      "pos": [
+        10506.009330468127,
+        -1811.0179827515547
+      ],
+      "size": [
+        322.5948054926548,
+        254.01599027405132
+      ],
+      "flags": {},
+      "order": 65,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 233
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "=== T8与贞贞：巴黎黄昏的邂逅 ===\n\n[Shot 1 - 街角的守候]\nDuration: 4.5 sec\nScene (简述): 巴黎黄昏，T8站在复古咖啡馆外，神情专注地等待，背景是埃菲尔铁塔的剪影。\nSora Prompt (详细): High-quality anime style, cinematic 8k resolution. The male protagonist, T8, stands on a cobblestone street corner in Paris. He has black hair tied in a distinctive traditional topknot bun (reference image 1) and sharp, determined eyes with thick eyebrows. He wears a stylish, long dark coat that blends modern fashion with traditional structural elements. He is holding a vintage pocket watch. The background features a retro cafe with warm yellow lights turning on, and the silhouette of the Eiffel Tower visible in the distance against a breathtaking golden sunset. The lighting is warm and volumetric, casting long dramatic shadows.\nCamera: Medium Shot (中景)\nMovement: Slow Dolly In (缓慢推镜头)\nDepth of Field: Shallow Depth of Field (背景虚化，聚焦人物)\n旁白: 时间在这一刻慢了下来，在落日余晖的巴黎街头，我在等风，也在等你。\n\n[Shot 2 - 那个粉色眼眸的女孩]\nDuration: 5.5 sec\nScene (简述): 贞贞出现在街景中，裹着围巾，粉色的眼睛映着夕阳，发现了等待的T8。\nSora Prompt (详细): High-quality anime style, photorealistic textures. The female protagonist, Zhenzhen, walks into the frame. She has long black hair and striking, bright pink eyes (reference image 2) that sparkle in the sunlight. She is dressed exactly as in the reference: wearing a thick cream-colored knitted scarf wrapped around her neck and a warm brown winter coat. She pauses, looking towards the camera with a shy, blushing smile and an expression of pleasant surprise. The wind gently blows her hair and scarf. The setting sun creates a rim-light halo effect around her silhouette, emphasizing a dreamy, romantic atmosphere.\nCamera: Medium Close-up (中近景)\nMovement: Tracking Shot (跟拍，随人物停顿)\nDepth of Field: Medium Depth of Field (中等景深，保留环境氛围)\n旁白: 当那抹熟悉的温暖出现在视线里，整个城市的喧嚣仿佛都化作了温柔的背景音。\n\n[Shot 3 - 黄昏下的对视]\nDuration: 5.0 sec\nScene (简述): 两人在咖啡馆前相对而立，目光交汇，氛围浪漫至极。\nSora Prompt (详细): High-quality anime style, emotional climax. A two-shot composition showing both T8 and Zhenzhen standing near the vintage cafe entrance. They are facing each other. T8 (left) looks down with a softened, gentle expression, and Zhenzhen (right) looks up with her pink eyes glowing with happiness. The warm orange light of the sunset fills the space between them, with floating dust particles dancing in the light rays. The scene captures the precise moment of emotional connection. The architectural details of the Paris street (stone textures, cafe windows) are visible but softened by the romantic lighting.\nCamera: Over-the-shoulder Shot (过肩镜头) or Two Shot (双人镜头)\nMovement: Subtle Arc Shot (轻微的弧形环绕)\nDepth of Field: Cinematic Bokeh (电影级背景虚化)\n旁白: 原来，所有的等待，都是为了这一刻的重逢。"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 220,
+      "type": "easy showAnything",
+      "pos": [
+        9976.23755098424,
+        -1630.2202517249314
+      ],
+      "size": [
+        406.19997168827194,
+        407.1387519045652
+      ],
+      "flags": {},
+      "order": 63,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 232
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "9947b8be70e17ceabafa4fa7f476b54626de4704",
+        "Node name for S&R": "easy showAnything",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "=== T8与贞贞：巴黎黄昏的邂逅 ===\n\n[Shot 1 - 街角的守候]\nDuration: 4.5 sec\nScene (简述): 巴黎黄昏，T8站在复古咖啡馆外，神情专注地等待，背景是埃菲尔铁塔的剪影。\nSora Prompt (详细): High-quality anime style, cinematic 8k resolution. The male protagonist, T8, stands on a cobblestone street corner in Paris. He has black hair tied in a distinctive traditional topknot bun (reference image 1) and sharp, determined eyes with thick eyebrows. He wears a stylish, long dark coat that blends modern fashion with traditional structural elements. He is holding a vintage pocket watch. The background features a retro cafe with warm yellow lights turning on, and the silhouette of the Eiffel Tower visible in the distance against a breathtaking golden sunset. The lighting is warm and volumetric, casting long dramatic shadows.\nCamera: Medium Shot (中景)\nMovement: Slow Dolly In (缓慢推镜头)\nDepth of Field: Shallow Depth of Field (背景虚化，聚焦人物)\n旁白: 时间在这一刻慢了下来，在落日余晖的巴黎街头，我在等风，也在等你。\n\n[Shot 2 - 那个粉色眼眸的女孩]\nDuration: 5.5 sec\nScene (简述): 贞贞出现在街景中，裹着围巾，粉色的眼睛映着夕阳，发现了等待的T8。\nSora Prompt (详细): High-quality anime style, photorealistic textures. The female protagonist, Zhenzhen, walks into the frame. She has long black hair and striking, bright pink eyes (reference image 2) that sparkle in the sunlight. She is dressed exactly as in the reference: wearing a thick cream-colored knitted scarf wrapped around her neck and a warm brown winter coat. She pauses, looking towards the camera with a shy, blushing smile and an expression of pleasant surprise. The wind gently blows her hair and scarf. The setting sun creates a rim-light halo effect around her silhouette, emphasizing a dreamy, romantic atmosphere.\nCamera: Medium Close-up (中近景)\nMovement: Tracking Shot (跟拍，随人物停顿)\nDepth of Field: Medium Depth of Field (中等景深，保留环境氛围)\n旁白: 当那抹熟悉的温暖出现在视线里，整个城市的喧嚣仿佛都化作了温柔的背景音。\n\n[Shot 3 - 黄昏下的对视]\nDuration: 5.0 sec\nScene (简述): 两人在咖啡馆前相对而立，目光交汇，氛围浪漫至极。\nSora Prompt (详细): High-quality anime style, emotional climax. A two-shot composition showing both T8 and Zhenzhen standing near the vintage cafe entrance. They are facing each other. T8 (left) looks down with a softened, gentle expression, and Zhenzhen (right) looks up with her pink eyes glowing with happiness. The warm orange light of the sunset fills the space between them, with floating dust particles dancing in the light rays. The scene captures the precise moment of emotional connection. The architectural details of the Paris street (stone textures, cafe windows) are visible but softened by the romantic lighting.\nCamera: Over-the-shoulder Shot (过肩镜头) or Two Shot (双人镜头)\nMovement: Subtle Arc Shot (轻微的弧形环绕)\nDepth of Field: Cinematic Bokeh (电影级背景虚化)\n旁白: 原来，所有的等待，都是为了这一刻的重逢。"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 227,
+      "type": "Prompt_Edit",
+      "pos": [
+        10436.754141183688,
+        -2392.087086569099
+      ],
+      "size": [
+        367.53470455488787,
+        193.0656650505589
+      ],
+      "flags": {},
+      "order": 64,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 243
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_text",
+          "type": "STRING",
+          "links": [
+            244
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Prompt_Edit",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        }
+      },
+      "widgets_values": [
+        "=== T8与贞贞：巴黎黄昏的邂逅 ===\n\n参考图1是男主角T8和参考图2是女主角贞贞以及下面的镜头脚本生成三宫格漫画，保持角色的外貌特征\n\n[Shot 1 - 街角的守候]\nDuration: 4.5 sec\nScene (简述): 巴黎黄昏，T8站在复古咖啡馆外，神情专注地等待，背景是埃菲尔铁塔的剪影。\nSora Prompt (详细): High-quality anime style, cinematic 8k resolution. The male protagonist, T8, stands on a cobblestone street corner in Paris. He has black hair tied in a distinctive traditional topknot bun (reference image 1) and sharp, determined eyes with thick eyebrows. He wears a stylish, long dark coat that blends modern fashion with traditional structural elements. He is holding a vintage pocket watch. The background features a retro cafe with warm yellow lights turning on, and the silhouette of the Eiffel Tower visible in the distance against a breathtaking golden sunset. The lighting is warm and volumetric, casting long dramatic shadows.\nCamera: Medium Shot (中景)\nMovement: Slow Dolly In (缓慢推镜头)\nDepth of Field: Shallow Depth of Field (背景虚化，聚焦人物)\n旁白: 时间在这一刻慢了下来，在落日余晖的巴黎街头，我在等风，也在等你。\n\n[Shot 2 - 那个粉色眼眸的女孩]\nDuration: 5.5 sec\nScene (简述): 贞贞出现在街景中，裹着围巾，粉色的眼睛映着夕阳，发现了等待的T8。\nSora Prompt (详细): High-quality anime style, photorealistic textures. The female protagonist, Zhenzhen, walks into the frame. She has long black hair and striking, bright pink eyes (reference image 2) that sparkle in the sunlight. She is dressed exactly as in the reference: wearing a thick cream-colored knitted scarf wrapped around her neck and a warm brown winter coat. She pauses, looking towards the camera with a shy, blushing smile and an expression of pleasant surprise. The wind gently blows her hair and scarf. The setting sun creates a rim-light halo effect around her silhouette, emphasizing a dreamy, romantic atmosphere.\nCamera: Medium Close-up (中近景)\nMovement: Tracking Shot (跟拍，随人物停顿)\nDepth of Field: Medium Depth of Field (中等景深，保留环境氛围)\n旁白: 当那抹熟悉的温暖出现在视线里，整个城市的喧嚣仿佛都化作了温柔的背景音。\n\n[Shot 3 - 黄昏下的对视]\nDuration: 5.0 sec\nScene (简述): 两人在咖啡馆前相对而立，目光交汇，氛围浪漫至极。\nSora Prompt (详细): High-quality anime style, emotional climax. A two-shot composition showing both T8 and Zhenzhen standing near the vintage cafe entrance. They are facing each other. T8 (left) looks down with a softened, gentle expression, and Zhenzhen (right) looks up with her pink eyes glowing with happiness. The warm orange light of the sunset fills the space between them, with floating dust particles dancing in the light rays. The scene captures the precise moment of emotional connection. The architectural details of the Paris street (stone textures, cafe windows) are visible but softened by the romantic lighting.\nCamera: Over-the-shoulder Shot (过肩镜头) or Two Shot (双人镜头)\nMovement: Subtle Arc Shot (轻微的弧形环绕)\nDepth of Field: Cinematic Bokeh (电影级背景虚化)\n旁白: 原来，所有的等待，都是为了这一刻的重逢。"
+      ],
+      "color": "#2a5a2a",
+      "bgcolor": "#1a3a1a"
+    },
+    {
+      "id": 221,
+      "type": "KenChenLLMGeminiBananaMultiImageEditBananaNode",
+      "pos": [
+        10897.605441788352,
+        -2485.7603075162538
+      ],
+      "size": [
+        270.7578125,
+        1398
+      ],
+      "flags": {},
+      "order": 78,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 240
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 241
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 242
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 244
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            238
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            239
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMultiImageEditBananaNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.2.2"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "AIzaSyBEMDiQy8zq4zQfrfKCni5gjVF36HA9Wkw",
+        "请根据这些图片进行专业的图像编辑",
+        "",
+        "gemini-3-pro-image-preview",
+        "9:16",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "2x",
+        "High Fidelity",
+        "hd",
+        "None",
+        "None",
+        "None",
+        "None",
+        "None",
+        1,
+        0.9,
+        40,
+        8192,
+        206728,
+        "randomize",
+        "enhance_creativity",
+        false,
+        3,
+        false,
+        "",
+        true,
+        "System Instruction",
+        600,
+        "保持角色的外貌特征，",
+        "default",
+        "none",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 218,
+      "type": "KenChenLLMBanana2PromptTemplate",
+      "pos": [
+        10031.373028741868,
+        -2408.107033221782
+      ],
+      "size": [
+        369.8987761229637,
+        697.2946117580743
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 47,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 235
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 236
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 237
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "banana_prompt",
+          "type": "STRING",
+          "links": [
+            232,
+            243
+          ]
+        },
+        {
+          "name": "raw_response",
+          "type": "STRING",
+          "links": [
+            233
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMBanana2PromptTemplate",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "- **男主角**: T8（参考图1）\n- **女主角**: 贞贞（参考图2）\n- **风格参考**: 巴黎风格，落日余晖，法式浪漫（参考图3）\n- **时间设定**: 城市黄昏\n- **场景设定**: 复古咖啡馆街角",
+        "编辑-Sora动漫3宫格绘图提示词模板",
+        "gemini-3-pro-preview [all]",
+        "T8的贞贞AI工坊",
+        "",
+        "",
+        "Auto",
+        "auto",
+        8192,
+        1,
+        "high",
+        "media_resolution_high",
+        "",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 212,
+      "type": "KenChenLLMBanana2PromptTemplate",
+      "pos": [
+        7841.325352429483,
+        -2459.5278808457438
+      ],
+      "size": [
+        398.44497539930126,
+        599.8740693349453
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 46,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 225
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "banana_prompt",
+          "type": "STRING",
+          "links": [
+            226
+          ]
+        },
+        {
+          "name": "raw_response",
+          "type": "STRING",
+          "links": [
+            227
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMBanana2PromptTemplate",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "Turn this rough pencil sketch of a futuristic car into a polished photo of the finished concept car in a showroom. Keep the sleek lines and low profile from the sketch but add metallic blue paint and neon rim lighting.",
+        "编辑-让事物焕发活力",
+        "gemini-3-pro-preview [all]",
+        "google",
+        "AIzaSyBEMDiQy8zq4zQfrfKCni5gjVF36HA9Wkw",
+        "",
+        "Auto",
+        "auto",
+        8192,
+        1,
+        "high",
+        "media_resolution_high",
+        "",
+        ""
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 190,
+      "type": "LoadImage",
+      "pos": [
+        3252.956602680978,
+        -2752.974989037755
+      ],
+      "size": [
+        270,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            248
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "pasted/image (36).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 189,
+      "type": "LoadImage",
+      "pos": [
+        3559.3043145681763,
+        -2742.296812714925
+      ],
+      "size": [
+        270,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            254
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "4849861.jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 215,
+      "type": "KenChenLLMGeminiBananaMirrorImageEditNode",
+      "pos": [
+        8283.166272939106,
+        -2494.3420381727396
+      ],
+      "size": [
+        270.7578125,
+        1434
+      ],
+      "flags": {},
+      "order": 77,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 228
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 231
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            229
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            230
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMirrorImageEditNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_url": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "temperature": true,
+            "top_p": true,
+            "max_output_tokens": true
+          },
+          "version": "7.0.1"
+        },
+        "xiser_content_color": "#8f5c1e"
+      },
+      "widgets_values": [
+        "T8的贞贞AI工坊",
+        "",
+        "图1的女人穿着图2的衣服，走在大街上，戴着图3的手表，喝着图4的咖啡，",
+        "",
+        "Auto (Latest Gemini 3 Pro) 🤖",
+        "http://127.0.0.1:None",
+        "4:5",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "ultra_hd",
+        "None",
+        "None",
+        "None",
+        "None",
+        "None",
+        "2x",
+        "High Fidelity",
+        1,
+        0.9,
+        40,
+        8192,
+        73406865,
+        "randomize",
+        "",
+        "default",
+        "none",
+        "",
+        "",
+        3,
+        false,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#D2691E",
+      "bgcolor": "#8B4513"
+    },
+    {
+      "id": 193,
+      "type": "PreviewImage",
+      "pos": [
+        4306.483082630045,
+        -2747.5914967726803
+      ],
+      "size": [
+        584.1869506835938,
+        762.8710327148438
+      ],
+      "flags": {},
+      "order": 66,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 257
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.55",
+        "Node name for S&R": "PreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 191,
+      "type": "LoadImage",
+      "pos": [
+        3250,
+        -2330
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            262
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "output (5).png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 192,
+      "type": "LoadImage",
+      "pos": [
+        3560,
+        -2350
+      ],
+      "size": [
+        270,
+        314.00006103515625
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "output (1) (1).jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 230,
+      "type": "LoadImage",
+      "pos": [
+        3441.8420516246297,
+        -1933.333154041589
+      ],
+      "size": [
+        270,
+        314.00006103515625
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            264
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.56",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "image": true,
+            "upload": true
+          },
+          "version": "7.0.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        "output (1) (1).jpg",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 228,
+      "type": "KenChenLLMGeminiBananaImageCollageNode",
+      "pos": [
+        3903.735853488044,
+        -2684.0765352774574
+      ],
+      "size": [
+        319.9234966247144,
+        758
+      ],
+      "flags": {},
+      "order": 48,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image1",
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 248
+        },
+        {
+          "label": "image2",
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 254
+        },
+        {
+          "label": "image3",
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 262
+        },
+        {
+          "label": "image4",
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 264
+        },
+        {
+          "label": "image5",
+          "name": "image5",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "collage_image",
+          "type": "IMAGE",
+          "links": [
+            257,
+            258
+          ]
+        },
+        {
+          "name": "position_guide",
+          "type": "STRING",
+          "links": [
+            259
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaImageCollageNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.1"
+        },
+        "ttNbgOverride": {
+          "color": "#323",
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b"
+        }
+      },
+      "widgets_values": [
+        1024,
+        "original_size",
+        true,
+        48,
+        "top-left",
+        "white"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 175,
+      "type": "KenChenLLMGeminiBananaMirrorImageGenNode",
+      "pos": [
+        3986.539306640625,
+        -4546.53271484375
+      ],
+      "size": [
+        417.6318664550781,
+        1426
+      ],
+      "flags": {},
+      "order": 32,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            174
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            175
+          ]
+        },
+        {
+          "name": "grounding_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMirrorImageGenNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_url": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "temperature": true,
+            "top_p": true,
+            "max_output_tokens": true
+          },
+          "version": "7.0.1"
+        },
+        "xiser_content_color": "#8f5c1e"
+      },
+      "widgets_values": [
+        "Comfly-US",
+        "",
+        "生成一张动漫风格的巴黎街头的图像，",
+        "",
+        "Auto (Latest Gemini 3 Pro) 🤖",
+        "http://127.0.0.1:None",
+        "4:5",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "2x",
+        "High Fidelity",
+        "ultra_hd",
+        "professional_portrait",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        1,
+        0.9,
+        40,
+        8192,
+        215897367,
+        "randomize",
+        "",
+        "default",
+        "none",
+        "",
+        "",
+        false,
+        3,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#D2691E",
+      "bgcolor": "#8B4513"
+    },
+    {
+      "id": 188,
+      "type": "KenChenLLMGeminiBananaMirrorImageEditNode",
+      "pos": [
+        4916.366456593836,
+        -2772.0693109000113
+      ],
+      "size": [
+        496.9324645996094,
+        1214
+      ],
+      "flags": {},
+      "order": 67,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 258
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            207
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            205
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMirrorImageEditNode",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "api_url": true,
+            "api_key": true,
+            "prompt": true,
+            "model": true,
+            "temperature": true,
+            "top_p": true,
+            "max_output_tokens": true
+          },
+          "version": "7.0.1"
+        },
+        "xiser_content_color": "#8f5c1e"
+      },
+      "widgets_values": [
+        "Comfly-US",
+        "",
+        "图1的女人穿着图2的衣服，走在大街上，戴着图3的手表，喝着图4的咖啡，",
+        "",
+        "Auto (Latest Gemini 3 Pro) 🤖",
+        "http://127.0.0.1:None",
+        "4:5",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "ultra_hd",
+        "professional_portrait",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        "2x",
+        "High Fidelity",
+        1,
+        0.9,
+        40,
+        8192,
+        248359467,
+        "randomize",
+        "",
+        "default",
+        "none",
+        "",
+        "",
+        3,
+        false,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#D2691E",
+      "bgcolor": "#8B4513"
+    },
+    {
+      "id": 182,
+      "type": "KenChenLLMGeminiBananaMultiImageEditNode",
+      "pos": [
+        951.9029932899281,
+        -1181.2117168323148
+      ],
+      "size": [
+        400,
+        1254
+      ],
+      "flags": {},
+      "order": 44,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 192
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 193
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 194
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 195
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 198
+        }
+      ],
+      "outputs": [
+        {
+          "name": "edited_image",
+          "type": "IMAGE",
+          "links": [
+            196
+          ]
+        },
+        {
+          "name": "response_text",
+          "type": "STRING",
+          "links": [
+            197
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GLM4",
+        "ver": "616343c5e45a4735d129d02dd0e891e2e6f9252e",
+        "Node name for S&R": "KenChenLLMGeminiBananaMultiImageEditNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.4.1"
+        }
+      },
+      "widgets_values": [
+        "Comfly-US",
+        "",
+        "",
+        "",
+        "Auto (Latest Gemini 3 Pro) 🤖",
+        "",
+        "4:5",
+        "TEXT_AND_IMAGE",
+        "2K",
+        "ultra_hd",
+        "professional_portrait",
+        "Professional Detail",
+        "Auto Select",
+        "Auto Settings",
+        "Auto Select",
+        "2x",
+        "High Fidelity",
+        1,
+        0.9,
+        40,
+        8192,
+        972487,
+        "randomize",
+        "",
+        "default",
+        "none",
+        "",
+        "",
+        3,
+        false,
+        false,
+        false,
+        "System Instruction",
+        600
+      ],
+      "color": "#D2691E",
+      "bgcolor": "#8B4513"
+    }
+  ],
+  "links": [
+    [
+      21,
+      25,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      49,
+      20,
+      1,
+      3,
+      0,
+      "STRING"
+    ],
+    [
+      53,
+      41,
+      0,
+      44,
+      0,
+      "IMAGE"
+    ],
+    [
+      73,
+      59,
+      0,
+      61,
+      0,
+      "IMAGE"
+    ],
+    [
+      74,
+      60,
+      0,
+      61,
+      1,
+      "IMAGE"
+    ],
+    [
+      97,
+      48,
+      0,
+      91,
+      0,
+      "IMAGE"
+    ],
+    [
+      98,
+      91,
+      0,
+      47,
+      0,
+      "IMAGE"
+    ],
+    [
+      104,
+      61,
+      0,
+      105,
+      0,
+      "IMAGE"
+    ],
+    [
+      105,
+      105,
+      0,
+      106,
+      0,
+      "*"
+    ],
+    [
+      106,
+      105,
+      1,
+      107,
+      0,
+      "IMAGE"
+    ],
+    [
+      118,
+      123,
+      1,
+      118,
+      0,
+      "STRING"
+    ],
+    [
+      119,
+      123,
+      0,
+      119,
+      0,
+      "IMAGE"
+    ],
+    [
+      120,
+      122,
+      0,
+      120,
+      0,
+      "*"
+    ],
+    [
+      121,
+      124,
+      0,
+      121,
+      0,
+      "IMAGE"
+    ],
+    [
+      122,
+      121,
+      0,
+      122,
+      1,
+      "STRING"
+    ],
+    [
+      142,
+      48,
+      0,
+      139,
+      0,
+      "IMAGE"
+    ],
+    [
+      143,
+      91,
+      1,
+      140,
+      0,
+      "*"
+    ],
+    [
+      156,
+      154,
+      0,
+      155,
+      0,
+      "*"
+    ],
+    [
+      158,
+      158,
+      0,
+      105,
+      1,
+      "STRING"
+    ],
+    [
+      166,
+      158,
+      0,
+      161,
+      0,
+      "*"
+    ],
+    [
+      170,
+      165,
+      0,
+      166,
+      0,
+      "*"
+    ],
+    [
+      171,
+      171,
+      0,
+      103,
+      0,
+      "*"
+    ],
+    [
+      172,
+      171,
+      1,
+      102,
+      0,
+      "IMAGE"
+    ],
+    [
+      174,
+      175,
+      0,
+      163,
+      0,
+      "IMAGE"
+    ],
+    [
+      175,
+      175,
+      1,
+      164,
+      0,
+      "STRING"
+    ],
+    [
+      176,
+      135,
+      0,
+      178,
+      0,
+      "IMAGE"
+    ],
+    [
+      177,
+      136,
+      0,
+      178,
+      1,
+      "IMAGE"
+    ],
+    [
+      178,
+      137,
+      0,
+      178,
+      2,
+      "IMAGE"
+    ],
+    [
+      179,
+      138,
+      0,
+      178,
+      3,
+      "IMAGE"
+    ],
+    [
+      181,
+      178,
+      0,
+      153,
+      0,
+      "IMAGE"
+    ],
+    [
+      182,
+      154,
+      0,
+      178,
+      4,
+      "STRING"
+    ],
+    [
+      186,
+      181,
+      0,
+      179,
+      0,
+      "STRING"
+    ],
+    [
+      188,
+      44,
+      0,
+      181,
+      0,
+      "STRING"
+    ],
+    [
+      189,
+      181,
+      0,
+      45,
+      0,
+      "*"
+    ],
+    [
+      190,
+      20,
+      0,
+      2,
+      0,
+      "IMAGE"
+    ],
+    [
+      191,
+      20,
+      0,
+      25,
+      0,
+      "IMAGE"
+    ],
+    [
+      192,
+      129,
+      0,
+      182,
+      0,
+      "IMAGE"
+    ],
+    [
+      193,
+      130,
+      0,
+      182,
+      1,
+      "IMAGE"
+    ],
+    [
+      194,
+      131,
+      0,
+      182,
+      2,
+      "IMAGE"
+    ],
+    [
+      195,
+      132,
+      0,
+      182,
+      3,
+      "IMAGE"
+    ],
+    [
+      196,
+      182,
+      0,
+      127,
+      0,
+      "IMAGE"
+    ],
+    [
+      197,
+      182,
+      1,
+      141,
+      0,
+      "*"
+    ],
+    [
+      198,
+      142,
+      0,
+      182,
+      4,
+      "STRING"
+    ],
+    [
+      205,
+      188,
+      1,
+      194,
+      0,
+      "*"
+    ],
+    [
+      207,
+      188,
+      0,
+      196,
+      0,
+      "IMAGE"
+    ],
+    [
+      217,
+      201,
+      0,
+      200,
+      0,
+      "IMAGE"
+    ],
+    [
+      218,
+      200,
+      1,
+      202,
+      0,
+      "IMAGE"
+    ],
+    [
+      219,
+      179,
+      0,
+      20,
+      0,
+      "STRING"
+    ],
+    [
+      220,
+      122,
+      0,
+      123,
+      0,
+      "STRING"
+    ],
+    [
+      221,
+      36,
+      0,
+      48,
+      0,
+      "IMAGE"
+    ],
+    [
+      222,
+      37,
+      0,
+      48,
+      1,
+      "IMAGE"
+    ],
+    [
+      223,
+      209,
+      0,
+      208,
+      0,
+      "IMAGE"
+    ],
+    [
+      224,
+      208,
+      0,
+      210,
+      0,
+      "*"
+    ],
+    [
+      225,
+      211,
+      0,
+      212,
+      0,
+      "IMAGE"
+    ],
+    [
+      226,
+      212,
+      0,
+      213,
+      0,
+      "*"
+    ],
+    [
+      227,
+      212,
+      1,
+      214,
+      0,
+      "*"
+    ],
+    [
+      228,
+      211,
+      0,
+      215,
+      0,
+      "IMAGE"
+    ],
+    [
+      229,
+      215,
+      0,
+      216,
+      0,
+      "IMAGE"
+    ],
+    [
+      230,
+      215,
+      1,
+      217,
+      0,
+      "*"
+    ],
+    [
+      231,
+      213,
+      0,
+      215,
+      1,
+      "STRING"
+    ],
+    [
+      232,
+      218,
+      0,
+      220,
+      0,
+      "*"
+    ],
+    [
+      233,
+      218,
+      1,
+      219,
+      0,
+      "*"
+    ],
+    [
+      235,
+      222,
+      0,
+      218,
+      0,
+      "IMAGE"
+    ],
+    [
+      236,
+      223,
+      0,
+      218,
+      1,
+      "IMAGE"
+    ],
+    [
+      237,
+      224,
+      0,
+      218,
+      2,
+      "IMAGE"
+    ],
+    [
+      238,
+      221,
+      0,
+      225,
+      0,
+      "IMAGE"
+    ],
+    [
+      239,
+      221,
+      1,
+      226,
+      0,
+      "*"
+    ],
+    [
+      240,
+      222,
+      0,
+      221,
+      0,
+      "IMAGE"
+    ],
+    [
+      241,
+      223,
+      0,
+      221,
+      1,
+      "IMAGE"
+    ],
+    [
+      242,
+      224,
+      0,
+      221,
+      2,
+      "IMAGE"
+    ],
+    [
+      243,
+      218,
+      0,
+      227,
+      0,
+      "STRING"
+    ],
+    [
+      244,
+      227,
+      0,
+      221,
+      4,
+      "STRING"
+    ],
+    [
+      248,
+      190,
+      0,
+      228,
+      0,
+      "IMAGE"
+    ],
+    [
+      254,
+      189,
+      0,
+      228,
+      1,
+      "IMAGE"
+    ],
+    [
+      257,
+      228,
+      0,
+      193,
+      0,
+      "IMAGE"
+    ],
+    [
+      258,
+      228,
+      0,
+      188,
+      0,
+      "IMAGE"
+    ],
+    [
+      259,
+      228,
+      1,
+      197,
+      0,
+      "*"
+    ],
+    [
+      262,
+      191,
+      0,
+      228,
+      2,
+      "IMAGE"
+    ],
+    [
+      264,
+      230,
+      0,
+      228,
+      3,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 5,
+      "title": "镜像站Nano-Banana API调用",
+      "bounding": [
+        -310.0699512020098,
+        -4784.182550205253,
+        3262.342529296875,
+        1645.52197265625
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 6,
+      "title": "Multiple image input (Ctrl-B to enable)",
+      "bounding": [
+        -323.42460652613937,
+        -3029.2372390637456,
+        3266.947301478546,
+        1687.0650311315828
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 10,
+      "title": "Nano-Banana官方API单图编辑",
+      "bounding": [
+        -4664.49462890625,
+        -4277.25634765625,
+        3402.6904296875,
+        1404.9063720703125
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 11,
+      "title": "Group88",
+      "bounding": [
+        -282.14351153352277,
+        -1284.4598909459135,
+        3243.2179522434117,
+        1789.0773180103388
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 13,
+      "title": "Nano-Banana官方API图像生成",
+      "bounding": [
+        -4615.349130506285,
+        -6204.771816483909,
+        2034.4155837270064,
+        1599.2134145521259
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 15,
+      "title": "Group9999",
+      "bounding": [
+        -4581.2548828125,
+        -953.3051147460938,
+        1785.64697265625,
+        1372.972900390625
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 17,
+      "title": "Nano-Banana官方API多图编辑",
+      "bounding": [
+        -4662.8773741319455,
+        -2814.454531901043,
+        3275.1943359375,
+        1713.9583740234375
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 18,
+      "title": "Group999",
+      "bounding": [
+        3951.751708984375,
+        -4610.84521484375,
+        1603.27685546875,
+        1390.636962890625
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 19,
+      "title": "Group-t",
+      "bounding": [
+        -14.370415581603128,
+        -5459.661512586806,
+        716.8720703125,
+        535.5999755859375
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 20,
+      "title": "多图拼接",
+      "bounding": [
+        3242.956602680978,
+        -2856.6885946465673,
+        3064.65035011102,
+        1342.595408631772
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 21,
+      "title": "Group68",
+      "bounding": [
+        -2473.829957899312,
+        -6220.045902618129,
+        1863.6185977063903,
+        1603.5999999999995
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 22,
+      "title": "Group88",
+      "bounding": [
+        7019.940733179318,
+        -4457.378578959987,
+        1113.3337485352686,
+        517.6
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 23,
+      "title": "banana2-88",
+      "bounding": [
+        7474.466126152996,
+        -2567.9420381727396,
+        1944.3017071759095,
+        1297.6
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 24,
+      "title": "Sora三宫格漫话",
+      "bounding": [
+        9624.561152134132,
+        -2576.32567893816,
+        2753.4720092784282,
+        1513.2077881290738
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "ds": {
+      "scale": 0.1,
+      "offset": [
+        11428.65353113498,
+        10087.172124235163
+      ]
+    },
+    "links_added_by_ue": [],
+    "frontendVersion": "1.32.9",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true,
+    "workflowRendererVersion": "LG"
+  },
+  "version": 0.4
+}
