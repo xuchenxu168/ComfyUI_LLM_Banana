@@ -1857,7 +1857,7 @@ def format_error_message(error):
 
 def generate_with_official_api(api_key, model, content_parts, generation_config,
                                safety_settings=None, system_instruction=None,
-                               max_retries=5, proxy=None, tools=None):
+                               max_retries=5, proxy=None, tools=None, timeout=300):
     """使用官方google.genai库调用API"""
     try:
         # 尝试导入官方库
@@ -1867,7 +1867,7 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
         print(f"🚀 使用官方google.genai库调用模型: {model}")
 
         # 创建客户端
-        client = genai.Client(api_key=api_key)
+        client = genai.Client(api_key=api_key, http_options={'timeout': timeout * 1000} if timeout else None)
 
         # 转换generation_config格式
         config_params = {
@@ -2006,7 +2006,7 @@ def generate_with_official_api(api_key, model, content_parts, generation_config,
 
 def generate_with_rest_api(api_key, model, content_parts, generation_config,
                           safety_settings=None, system_instruction=None,
-                          max_retries=5, proxy=None, base_url=None, tools=None):
+                          max_retries=5, proxy=None, base_url=None, tools=None, timeout=300):
     """使用REST API调用Gemini"""
     import requests
 
@@ -2070,7 +2070,7 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
                 f"{base_url}/v1beta/models/{model}:generateContent",
                 headers=headers,
                 json=request_data,
-                timeout=120,
+                timeout=timeout,
                 proxies=proxies
             )
 
@@ -2094,13 +2094,13 @@ def generate_with_rest_api(api_key, model, content_parts, generation_config,
 
 def generate_with_priority_api(api_key, model, content_parts, generation_config,
                                safety_settings=None, system_instruction=None,
-                               max_retries=5, proxy=None, base_url=None, tools=None):
+                               max_retries=5, proxy=None, base_url=None, tools=None, timeout=300):
     """优先使用官方API，失败时回退到REST API"""
 
     # 首先尝试官方API
     print("🎯 优先尝试官方google.genai API")
     result = generate_with_official_api(api_key, model, content_parts, generation_config,
-                                       safety_settings, system_instruction, max_retries, proxy, tools)
+                                       safety_settings, system_instruction, max_retries, proxy, tools, timeout=timeout)
 
     if result is not None:
         print("✅ 官方API调用成功")
@@ -2109,7 +2109,7 @@ def generate_with_priority_api(api_key, model, content_parts, generation_config,
     # 官方API失败，回退到REST API
     print("🔄 官方API失败，回退到REST API")
     return generate_with_rest_api(api_key, model, content_parts, generation_config,
-                                  safety_settings, system_instruction, max_retries, proxy, base_url, tools)
+                                  safety_settings, system_instruction, max_retries, proxy, base_url, tools, timeout=timeout)
 
 def extract_text_from_response(response_json):
     """从响应中提取文本内容"""
@@ -2254,7 +2254,7 @@ def _parse_size_str(size_str: str, default: str = "1024x1024") -> str:
         pass
     return default
 
-def _comfly_nano_banana_generate(api_url: str, api_key: str, model: str, prompt: str, size: str, temperature: float = 1.0, top_p: float = 0.95, max_tokens: int = 32768, seed: int = 0) -> dict:
+def _comfly_nano_banana_generate(api_url: str, api_key: str, model: str, prompt: str, size: str, temperature: float = 1.0, top_p: float = 0.95, max_tokens: int = 32768, seed: int = 0, timeout: int = 300) -> dict:
     """Call images/generations endpoint for nano-banana image generation (supports both Comfly and T8 mirror sites)."""
     import requests, json, os, re, time
 
@@ -2326,7 +2326,7 @@ def _comfly_nano_banana_generate(api_url: str, api_key: str, model: str, prompt:
                 url,
                 headers=headers,
                 json=payload,
-                timeout=(20, 120),
+                timeout=(20, timeout),
                 allow_redirects=True,
             )
             print(f"[ComflyNanoBananaMirror] HTTP status: {response.status_code}")
@@ -2428,7 +2428,7 @@ def _comfly_nano_banana_generate(api_url: str, api_key: str, model: str, prompt:
 
     raise Exception(f"Error in nano-banana generation: {str(last_error)}")
 
-def _comfly_nano_banana_edit(api_url: str, api_key: str, model: str, prompt: str, pil_images: list, size: str, temperature: float = 1.0, top_p: float = 0.95, max_tokens: int = 32768, seed: int = 0) -> dict:
+def _comfly_nano_banana_edit(api_url: str, api_key: str, model: str, prompt: str, pil_images: list, size: str, temperature: float = 1.0, top_p: float = 0.95, max_tokens: int = 32768, seed: int = 0, timeout: int = 300) -> dict:
     """Call chat completions endpoint for nano-banana image editing with multiple images (supports both Comfly and T8 mirror sites)."""
     import requests, json, io, base64, re, time, os
     # 使用传入的api_url，如果已经是完整URL则直接使用，否则构建完整URL
@@ -2525,7 +2525,7 @@ def _comfly_nano_banana_edit(api_url: str, api_key: str, model: str, prompt: str
                 headers=headers,
                 json=payload,
                 stream=True,
-                timeout=(20, 120),  # 连接/读取超时分离
+                timeout=(20, timeout),  # 连接/读取超时分离
                 allow_redirects=True,
             )
             print(f"[ComflyNanoBananaMirror] HTTP status: {response.status_code}")
@@ -2603,7 +2603,7 @@ def _comfly_nano_banana_edit(api_url: str, api_key: str, model: str, prompt: str
                         url,
                         headers=headers,
                         json={**payload, "stream": False},
-                        timeout=(20, 120),
+                        timeout=(20, timeout),
                         allow_redirects=True,
                     )
                     if resp2.status_code != 200:
@@ -2754,7 +2754,7 @@ def _comfly_falai_edit(api_url: str, api_key: str, model: str, prompt: str, pil_
     r.raise_for_status()
     return r.json()
 
-def _comfly_fal_ai_nano_banana(api_url: str, api_key: str, model: str, prompt: str, images: list = None, num_images: int = 1, seed: int = 0, image_way: str = "image_url") -> dict:
+def _comfly_fal_ai_nano_banana(api_url: str, api_key: str, model: str, prompt: str, images: list = None, num_images: int = 1, seed: int = 0, image_way: str = "image_url", timeout: int = 300) -> dict:
     """Call Comfly's fal-ai/nano-banana endpoint for image generation and editing."""
     import requests, io, base64, time
     from PIL import Image
@@ -2837,7 +2837,7 @@ def _comfly_fal_ai_nano_banana(api_url: str, api_key: str, model: str, prompt: s
                             upload_url,
                             headers=upload_headers,
                             files=files,
-                            timeout=60,
+                            timeout=timeout,
                             verify=False
                         )
 
@@ -2880,7 +2880,7 @@ def _comfly_fal_ai_nano_banana(api_url: str, api_key: str, model: str, prompt: s
     # print(f"📦 请求payload: {str(payload)[:300]}...")  # 注释掉可能包含base64数据的输出
     print(f"📦 请求payload结构: {list(payload.keys())}")  # 只显示payload的键名
 
-    response = requests.post(api_endpoint, headers=headers, json=payload, timeout=300)
+    response = requests.post(api_endpoint, headers=headers, json=payload, timeout=timeout)
 
     print(f"📡 响应状态码: {response.status_code}")
     if response.status_code != 200:
@@ -2920,7 +2920,7 @@ def _comfly_fal_ai_nano_banana(api_url: str, api_key: str, model: str, prompt: s
             retry_count += 1
 
             try:
-                result_response = requests.get(response_url, headers=headers, timeout=60)
+                result_response = requests.get(response_url, headers=headers, timeout=timeout)
 
                 if result_response.status_code != 200:
                     time.sleep(1)
@@ -4288,6 +4288,13 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     "tooltip": "摘要最大字符数（建议 600-1000）"
                 }),
 
+                # ⏱️ 镜像站超时设置
+                "timeout": ("INT", {
+                    "default": 300,
+                    "min": 10,
+                    "max": 3600,
+                    "tooltip": "请求超时时间(秒)，默认为300秒"
+                }),
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
         }
@@ -4361,6 +4368,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                       enable_conversation_summary: bool = False,
                       summary_injection: str = "System Instruction",
                       summary_max_chars: int = 600,
+                      timeout: int = 300,
                       unique_id: str = "") -> Tuple[torch.Tensor, str, str]:
         """使用镜像站API生成图片"""
 
@@ -4650,7 +4658,8 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                         system_instruction=system_instruction,
                         max_retries=5,
                         proxy=proxy,
-                        base_url=api_url  # 使用镜像站 URL
+                        base_url=api_url,  # 使用镜像站 URL
+                        timeout=timeout
                     )
                 else:
                     # nano-banana 官方使用优先API调用（官方API优先，失败时回退到REST API）
@@ -4663,7 +4672,8 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                         system_instruction=system_instruction,
                         max_retries=5,
                         proxy=proxy,
-                        tools=tools
+                        tools=tools,
+                        timeout=timeout
                     )
 
                 if response_json:
@@ -4746,10 +4756,10 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                         print("⚠️ 检测到编辑模型在图像生成节点中使用，自动切换到生成模型")
                         # 将编辑模型转换为生成模型
                         generation_model = normalized_model.replace("/edit", "")
-                        result = _comfly_fal_ai_nano_banana(api_url, api_key, generation_model, enhanced_prompt, None, 1, seed, "image_url")
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, generation_model, enhanced_prompt, None, 1, seed, "image_url", timeout=timeout)
                     else:
                         # 使用fal-ai端点
-                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, None, 1, seed, "image_url")
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, None, 1, seed, "image_url", timeout=timeout)
 
                     # print(f"🔍 Comfly fal-ai函数返回结果: {str(result)[:200]}...")  # 注释掉可能包含base64数据的输出
                     print(f"🔍 Comfly fal-ai函数返回结果类型: {type(result)}")
@@ -4833,7 +4843,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     # 使用原有的nano-banana端点
                     try:
                         # 由于移除了size参数，使用默认尺寸"1024x1024"
-                        result = _comfly_nano_banana_generate(api_url, api_key, normalized_model, enhanced_prompt, "1024x1024", temperature, top_p, max_output_tokens, seed)
+                        result = _comfly_nano_banana_generate(api_url, api_key, normalized_model, enhanced_prompt, "1024x1024", temperature, top_p, max_output_tokens, seed, timeout=timeout)
                         # print(f"[DEBUG] result type: {type(result)}")
                         # print(f"[DEBUG] result keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
                         # print(f"[DEBUG] result content: {str(result)[:500]}...")
@@ -5070,10 +5080,10 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                         print("⚠️ 检测到编辑模型在图像生成节点中使用，自动切换到生成模型")
                         # 将编辑模型转换为生成模型
                         generation_model = normalized_model.replace("/edit", "")
-                        result = _comfly_fal_ai_nano_banana(api_url, api_key, generation_model, enhanced_prompt, None, 1, seed, "image_url")
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, generation_model, enhanced_prompt, None, 1, seed, "image_url", timeout=timeout)
                     else:
                         # T8镜像站使用与Comfly相同的fal-ai端点调用方式
-                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, None, 1, seed, "image_url")
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, None, 1, seed, "image_url", timeout=timeout)
 
                     generated_image = None
                     response_text = ""
@@ -5151,7 +5161,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                 elif _normalize_model_name(model) in ["nano-banana", "nano-banana-hd"]:
                     print("🔗 T8镜像站使用chat/completions端点 (nano-banana 直连)")
                 try:
-                    result = _comfly_nano_banana_generate(api_url, api_key, _normalize_model_name(model), enhanced_prompt, "1024x1024", temperature, top_p, max_output_tokens, seed)
+                    result = _comfly_nano_banana_generate(api_url, api_key, _normalize_model_name(model), enhanced_prompt, "1024x1024", temperature, top_p, max_output_tokens, seed, timeout=timeout)
                     # 🔍 调试：打印T8返回的结果格式 - 已关闭
                     # print(f"[DEBUG] T8 result type: {type(result)}")
                     # print(f"[DEBUG] T8 result keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
@@ -5339,7 +5349,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     headers=headers,
                     json=request_data,
                     proxies=proxies,
-                    timeout=120
+                    timeout=timeout
                 )
                 response.raise_for_status()
 
@@ -5478,7 +5488,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
 
             try:
                 # 发送请求
-                response = requests.post(full_url, headers=headers, json=request_data, timeout=120, stream=True, verify=False)
+                response = requests.post(full_url, headers=headers, json=request_data, timeout=timeout, stream=True, verify=False)
 
                 if response.status_code == 200:
                     # 处理流式响应
@@ -5556,7 +5566,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     headers=headers,
                     json=request_data,
                     proxies=proxies,
-                    timeout=120,
+                    timeout=timeout,
                     verify=False
                 )
 
@@ -5729,7 +5739,7 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
                     full_url,  # 使用完整的 URL 而不是基础 URL
                     headers=headers,
                     json=request_body,
-                    timeout=120,
+                    timeout=timeout,
                     verify=False
                 )
 
@@ -6000,6 +6010,14 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     "max": 2000,
                     "tooltip": "摘要长度上限（字符数）"
                 }),
+
+                # ⏱️ 镜像站超时设置
+                "timeout": ("INT", {
+                    "default": 300,
+                    "min": 10,
+                    "max": 3600,
+                    "tooltip": "请求超时时间(秒)，默认为300秒"
+                }),
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
         }
@@ -6072,6 +6090,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     enable_conversation_summary: bool = False,
                     summary_injection: str = "System Instruction",
                     summary_max_chars: int = 600,
+                    timeout: int = 300,
                     unique_id: str = "") -> Tuple[torch.Tensor, str]:
         """使用镜像站API编辑图片"""
 
@@ -6379,7 +6398,8 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     system_instruction=system_instruction,
                     max_retries=5,
                     proxy=proxy,
-                    base_url=api_url
+                    base_url=api_url,
+                    timeout=timeout
                 )
 
                 if response_json:
@@ -6458,7 +6478,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 if normalized_model.startswith("fal-ai/") or normalized_model.endswith("/edit"):
                     # 使用fal-ai端点进行编辑
                     try:
-                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, [pil_image], 1, seed, "image_url")
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, [pil_image], 1, seed, "image_url", timeout=timeout)
                         edited_image = None
                         response_text = ""
 
@@ -6561,7 +6581,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 else:
                     # 使用原有的nano-banana端点进行编辑
                     try:
-                        result = _comfly_nano_banana_edit(api_url, api_key, normalized_model, enhanced_prompt, [pil_image], controls['size'], temperature, top_p, max_output_tokens, seed)
+                        result = _comfly_nano_banana_edit(api_url, api_key, normalized_model, enhanced_prompt, [pil_image], controls['size'], temperature, top_p, max_output_tokens, seed, timeout=timeout)
                         edited_image = None
                         response_text = ""
 
@@ -6776,7 +6796,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 if normalized_model.startswith("fal-ai/") or normalized_model.endswith("/edit"):
                     # T8镜像站使用与Comfly相同的fal-ai端点调用方式
                     try:
-                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, [pil_image], 1, seed, "image_url")
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, [pil_image], 1, seed, "image_url", timeout=timeout)
                         edited_image = None
                         response_text = ""
 
@@ -6863,7 +6883,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                 elif _normalize_model_name(model) in ["nano-banana", "nano-banana-hd"]:
                     print("🔗 T8镜像站使用chat/completions端点 (nano-banana 直连)")
                 try:
-                    result = _comfly_nano_banana_edit(full_url, api_key, _normalize_model_name(model), enhanced_prompt, [pil_image], controls['size'], temperature, top_p, max_output_tokens, seed)
+                    result = _comfly_nano_banana_edit(full_url, api_key, _normalize_model_name(model), enhanced_prompt, [pil_image], controls['size'], temperature, top_p, max_output_tokens, seed, timeout=timeout)
                     edited_image = None
                     response_text = ""
 
@@ -7075,7 +7095,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                         headers=headers_nb2,
                         json=request_data,
                         proxies=proxies,
-                        timeout=300
+                        timeout=timeout
                     )
                     response_nb2.raise_for_status()
 
@@ -7176,7 +7196,7 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
                     files=files,
                     data=data,
                     proxies=proxies,
-                    timeout=300  # 增加到5分钟，因为图生图需要上传图片
+                    timeout=timeout
                 )
                 response.raise_for_status()
 
@@ -7389,7 +7409,6 @@ Execute the image editing task now and return the edited image."""
 
         # 智能重试机制 - 完全移植参考项目
         max_retries = 5
-        timeout = 120
 
         for attempt in range(max_retries):
             try:
@@ -7954,6 +7973,12 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     "max": 2000,
                     "tooltip": "摘要最大字符数"
                 }),
+                "timeout": ("INT", {
+                    "default": 300,
+                    "min": 10,
+                    "max": 3600,
+                    "tooltip": "请求超时时间(秒)，默认为300秒"
+                }),
             },
             "hidden": {"unique_id": "UNIQUE_ID"}
         }
@@ -8018,8 +8043,9 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                            enable_conversation_summary: bool = False,
                            summary_injection: str = "System Instruction",
                            summary_max_chars: int = 600,
+                           timeout: int = 300,
                            unique_id: str = "") -> Tuple[torch.Tensor, str]:
-        """使用镜像站API进行多图像编辑"""
+        pass
 
         # Process wildcards in the prompt
         wildcard_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wildcards")
@@ -8396,7 +8422,8 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     content_parts=content_parts,
                     generation_config=generation_config,
                     max_retries=5,
-                    proxy=proxy
+                    proxy=proxy,
+                    timeout=timeout
                 )
 
                 if response_json:
@@ -8481,7 +8508,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 if normalized_model.startswith("fal-ai/") or normalized_model.endswith("/edit"):
                     # 使用fal-ai端点进行多图编辑
                     try:
-                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, all_input_pils, 1, seed, "image_url")
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, all_input_pils, 1, seed, "image_url", timeout=timeout)
                         edited_image = None
                         response_text = ""
 
@@ -8567,7 +8594,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     # 使用原有的nano-banana端点进行多图编辑
                     try:
                         # 使用所有输入图像
-                        result = _comfly_nano_banana_edit(api_url, api_key, normalized_model, enhanced_prompt, all_input_pils, controls['size'], temperature, top_p, max_output_tokens, seed)
+                        result = _comfly_nano_banana_edit(api_url, api_key, normalized_model, enhanced_prompt, all_input_pils, controls['size'], temperature, top_p, max_output_tokens, seed, timeout=timeout)
                         edited_image = None
                         response_text = ""
 
@@ -8766,7 +8793,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                 if normalized_model.startswith("fal-ai/") or normalized_model.endswith("/edit"):
                     # T8镜像站使用与Comfly相同的fal-ai端点调用方式
                     try:
-                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, all_input_pils, 1, seed, "image_url")
+                        result = _comfly_fal_ai_nano_banana(api_url, api_key, normalized_model, enhanced_prompt, all_input_pils, 1, seed, "image_url", timeout=timeout)
                         edited_image = None
                         response_text = ""
 
@@ -8850,7 +8877,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                     print("🔗 T8镜像站使用chat/completions端点 (nano-banana 直连)")
                 try:
                     # 使用所有输入图像
-                    result = _comfly_nano_banana_edit(full_url, api_key, _normalize_model_name(model), enhanced_prompt, all_input_pils, controls['size'], temperature, top_p, max_output_tokens, seed)
+                    result = _comfly_nano_banana_edit(full_url, api_key, _normalize_model_name(model), enhanced_prompt, all_input_pils, controls['size'], temperature, top_p, max_output_tokens, seed, timeout=timeout)
                     edited_image = None
                     response_text = ""
 
@@ -9030,7 +9057,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                         headers=headers_nb2,
                         json=request_data,
                         proxies=proxies,
-                        timeout=300
+                        timeout=timeout
                     )
                     response_nb2.raise_for_status()
 
@@ -9157,7 +9184,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                                 files=files,
                                 data=data,
                                 proxies=proxies,
-                                timeout=300
+                                timeout=timeout
                             )
                             response.raise_for_status()
                             print(f"✅ 使用代理上传成功")
@@ -9177,7 +9204,7 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
                                 files=files,
                                 data=data,
                                 proxies=None,  # 不使用代理
-                                timeout=300
+                                timeout=timeout
                             )
                             response.raise_for_status()
                             print(f"✅ 直连上传成功")
@@ -9428,7 +9455,6 @@ Execute the multi-image editing task now and return the edited image."""
 
         # 智能重试机制
         max_retries = 5
-        timeout = 120
 
         for attempt in range(max_retries):
             try:
