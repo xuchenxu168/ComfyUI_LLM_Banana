@@ -529,6 +529,9 @@ def _upscale_with_gigapixel_ai(img: Image.Image, target_w: int, target_h: int, g
 		timeout_seconds = gigapixel_config.get("timeout_seconds", 300)
 
 		# 执行 Gigapixel AI
+		# 忽略 Access Violation (0xC0000005 / 3221225477) 错误
+		# 如果返回码是 3221226505 (0xC0000409) 或 0xC0000005，但有输出文件，则视为成功
+		
 		result = subprocess.run(
 			command,
 			capture_output=True,
@@ -537,16 +540,33 @@ def _upscale_with_gigapixel_ai(img: Image.Image, target_w: int, target_h: int, g
 			check=False
 		)
 
-		if result.returncode != 0:
-			print(f"[Gigapixel] 执行失败: {result.stderr}")
-			return None
-
 		# 查找输出文件
-		output_files = [
-			os.path.join(output_dir, f)
-			for f in os.listdir(output_dir)
-			if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tif', '.tiff'))
-		]
+		output_files = []
+		if os.path.exists(output_dir):
+			output_files = [
+				os.path.join(output_dir, f)
+				for f in os.listdir(output_dir)
+				if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tif', '.tiff'))
+			]
+
+		# 特殊处理：Gigapixel 可能会崩溃但文件已生成 (Code 3221226505 / -1073740791)
+		if result.returncode != 0:
+			is_crash_but_success = False
+			
+			# 检查是否生成了输出文件
+			if output_files:
+				print(f"[Gigapixel] 进程异常退出 (Code {result.returncode}) 但检测到输出文件，视为成功")
+				is_crash_but_success = True
+			
+			if not is_crash_but_success:
+				print(f"[Gigapixel] 执行失败 (Code {result.returncode}):")
+				if result.stdout:
+					print(f"STDOUT: {result.stdout}")
+				if result.stderr:
+					print(f"STDERR: {result.stderr}")
+				if not result.stdout and not result.stderr:
+					print("(无输出信息)")
+				return None
 
 		if not output_files:
 			print(f"[Gigapixel] 未找到输出文件")

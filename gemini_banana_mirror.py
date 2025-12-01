@@ -2233,7 +2233,7 @@ def _normalize_model_name(model: str) -> str:
 
 def _is_comfly_base(url: str) -> bool:
     try:
-        return isinstance(url, str) and ("ai.comfly.chat" in url or "comfly.chat" in url)
+        return isinstance(url, str) and ("ai.comfly.chat" in url or "comfly.chat" in url or "gptbest.vip" in url)
     except Exception:
         return False
 
@@ -4531,9 +4531,9 @@ class KenChenLLMGeminiBananaMirrorImageGenNode:
 
         # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → Gemini → custom
         is_nano_banana_official = mirror_site == "nano-banana官方"
-        is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url
+        is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url or (mirror_site and "T8" in mirror_site)
         is_api4gpt_mirror = "api4gpt.com" in api_url or "[API4GPT]" in model
-        is_comfly_mirror = _is_comfly_base(api_url)
+        is_comfly_mirror = _is_comfly_base(api_url) and not is_t8_mirror
         is_kuai_mirror = _is_kuai_base(api_url)
         is_openrouter_mirror = "openrouter.ai" in api_url or "[OpenRouter]" in model
         is_openai_mirror = "api.openai.com" in api_url or site_config.get("api_format") == "openai"
@@ -6268,9 +6268,9 @@ class KenChenLLMGeminiBananaMirrorImageEditNode:
 
         # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → custom
         is_nano_banana_official = mirror_site == "nano-banana官方"
-        is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url
+        is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url or (mirror_site and "T8" in mirror_site)
         is_api4gpt_mirror = "api4gpt.com" in api_url or "[API4GPT]" in model
-        is_comfly_mirror = _is_comfly_base(api_url)
+        is_comfly_mirror = _is_comfly_base(api_url) and not is_t8_mirror
         is_kuai_mirror = _is_kuai_base(api_url)
         is_openrouter_mirror = "openrouter.ai" in api_url or "[OpenRouter]" in model
         is_openai_mirror = "api.openai.com" in api_url or site_config.get("api_format") == "openai"
@@ -8308,9 +8308,9 @@ class KenChenLLMGeminiBananaMultiImageEditNode:
 
         # 检查镜像站类型 - 按照优先级顺序：nano-banana官方 → Comfly → Kuai → T8 → API4GPT → OpenRouter → OpenAI → custom
         is_nano_banana_official = mirror_site == "nano-banana官方"
-        is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url
+        is_t8_mirror = "t8star.cn" in api_url or "ai.t8star.cn" in api_url or (mirror_site and "T8" in mirror_site)
         is_api4gpt_mirror = "api4gpt.com" in api_url or "[API4GPT]" in model
-        is_comfly_mirror = _is_comfly_base(api_url)
+        is_comfly_mirror = _is_comfly_base(api_url) and not is_t8_mirror
         is_kuai_mirror = _is_kuai_base(api_url)
         is_openrouter_mirror = "openrouter.ai" in api_url or "[OpenRouter]" in model
         is_openai_mirror = "api.openai.com" in api_url or site_config.get("api_format") == "openai"

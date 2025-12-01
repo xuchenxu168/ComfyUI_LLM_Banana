@@ -26,9 +26,49 @@
                 "gemini-3-pro-preview-thinking"
             ]
         },
+        "T8-Comfly": {
+            "api_key": "",
+            "base_url": "https://ai.comfly.chat/v1",
+            "models": [
+                "gemini-3-pro-preview",
+                "gemini-3-pro-preview-thinking"
+            ]
+        },
+        "T8-HK": {
+            "api_key": "",
+            "base_url": "https://hk-api.gptbest.vip/v1",
+            "models": [
+                "gemini-3-pro-preview",
+                "gemini-3-pro-preview-thinking"
+            ]
+        },
+        "T8-US": {
+            "api_key": "",
+            "base_url": "https://api.gptbest.vip/v1",
+            "models": [
+                "gemini-3-pro-preview",
+                "gemini-3-pro-preview-thinking"
+            ]
+        },
         "comfly": {
             "api_key": "",
             "base_url": "https://ai.comfly.chat/v1/",
+            "models": [
+                "gemini-3-pro-preview",
+                "gemini-3-pro-preview-thinking"
+            ]
+        },
+        "Comfly-HK": {
+            "api_key": "",
+            "base_url": "https://hk-api.gptbest.vip/v1/",
+            "models": [
+                "gemini-3-pro-preview",
+                "gemini-3-pro-preview-thinking"
+            ]
+        },
+        "Comfly-US": {
+            "api_key": "",
+            "base_url": "https://api.gptbest.vip/v1/",
             "models": [
                 "gemini-3-pro-preview",
                 "gemini-3-pro-preview-thinking"

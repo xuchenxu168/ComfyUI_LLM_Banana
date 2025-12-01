@@ -1143,8 +1143,16 @@ class KenChenLLMGeminiMultimodalNode:
         ]
         labelled = []
         providers_by_model = {}
+        provider_list = ["google", "custom"] # default fallback
+
         try:
             _cfg = get_gemini_config()
+            config_providers = list((_cfg.get("api_providers", {}) or {}).keys())
+            if config_providers:
+                provider_list = config_providers
+                if "custom" not in provider_list:
+                    provider_list.append("custom")
+
             for prov, detail in (_cfg.get("api_providers", {}) or {}).items():
                 for m in (detail.get("models") or []):
                     providers_by_model.setdefault(m, []).append(prov)
@@ -1164,7 +1172,7 @@ class KenChenLLMGeminiMultimodalNode:
             "required": {
                 "prompt": ("STRING", {"default": "请对所有提供的媒体进行详细的综合分析。", "multiline": True}),
                 "model": (labelled, {"default": default_label}),
-                "api_provider": (["google", "comet", "T8的贞贞AI工坊", "comfly", "aabao", "custom"], {"default": "google"}),
+                "api_provider": (provider_list, {"default": "google" if "google" in provider_list else provider_list[0]}),
                 "api_key": ("STRING", {"default": "", "multiline": False}),
                 "base_url": ("STRING", {"default": "", "multiline": False}),
                 "version": (["Auto", "v1", "v1alpha", "v1beta"], {"default": "Auto"}),

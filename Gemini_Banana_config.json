@@ -48,6 +48,14 @@
             "url": "https://ai.comfly.chat/v1",
             "api_key": ""
         },
+        "Comfly-HK": {
+            "url": "https://hk-api.gptbest.vip/v1",
+            "api_key": ""
+        },
+        "Comfly-US": {
+            "url": "https://api.gptbest.vip/v1",
+            "api_key": ""
+        },
         "Kuai API": {
             "url": "https://apis.kuai.host",
             "api_key": "",
@@ -61,6 +69,27 @@
             "api_format": "openai",
             "models": ["gemini-2.5-flash-image-preview"],
             "description": "T8贞贞的AI工坊镜像站，支持Gemini 2.5 Flash Image Preview模型，使用OpenAI兼容的API格式"
+        },
+        "T8-Comfly": {
+            "url": "https://ai.comfly.chat",
+            "api_key": "",
+            "api_format": "openai",
+            "models": ["gemini-2.5-flash-image-preview"],
+            "description": "T8-Comfly镜像站，支持Gemini 2.5 Flash Image Preview模型，使用OpenAI兼容的API格式"
+        },
+        "T8-HK": {
+            "url": "https://hk-api.gptbest.vip",
+            "api_key": "",
+            "api_format": "openai",
+            "models": ["gemini-2.5-flash-image-preview"],
+            "description": "T8-HK镜像站，支持Gemini 2.5 Flash Image Preview模型，使用OpenAI兼容的API格式"
+        },
+        "T8-US": {
+            "url": "https://api.gptbest.vip",
+            "api_key": "",
+            "api_format": "openai",
+            "models": ["gemini-2.5-flash-image-preview"],
+            "description": "T8-US镜像站，支持Gemini 2.5 Flash Image Preview模型，使用OpenAI兼容的API格式"
         },
         "API4GPT": {
             "url": "https://one.api4gpt.com",

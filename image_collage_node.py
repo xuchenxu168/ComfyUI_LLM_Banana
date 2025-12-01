@@ -1,5 +1,5 @@
 """
-图像拼接节点 - 支持最多14张图片的智能拼接
+图像拼接节点 - 支持最多30张图片的智能拼接
 为 Gemini Banana 2 多图编辑优化，添加序号标识便于模型识别
 """
 
@@ -45,17 +45,23 @@ def calculate_grid_layout(num_images):
         return 3, 3  # 3x3
     elif num_images <= 12:
         return 4, 3  # 4x3
-    else:  # 13-14
-        return 4, 4  # 4x4（最多14张，留2个空位）
+    elif num_images <= 16:
+        return 4, 4  # 4x4
+    elif num_images <= 20:
+        return 5, 4  # 5x4
+    elif num_images <= 25:
+        return 5, 5  # 5x5
+    else:  # 26-30
+        return 6, 5  # 6x5 (最多30张)
 
 class KenChenLLMGeminiBananaImageCollageNode:
     """
-    图像拼接节点 - 智能拼接最多14张图片
+    图像拼接节点 - 智能拼接最多30张图片
     
     功能特性:
-    - 支持1-14张图片输入
+    - 支持1-30张图片输入
     - 自动计算最优网格布局
-    - 添加序号标识（1-14）
+    - 添加序号标识（1-30）
     - 智能调整图片尺寸
     - 生成图片位置说明文本
     - 优化用于 Gemini Banana 2 多图编辑
@@ -63,7 +69,7 @@ class KenChenLLMGeminiBananaImageCollageNode:
     
     @classmethod
     def INPUT_TYPES(cls):
-        return {
+        inputs = {
             "required": {
                 # 拼接设置
                 "max_cell_size": ("INT", {
@@ -97,23 +103,14 @@ class KenChenLLMGeminiBananaImageCollageNode:
                     "tooltip": "背景颜色（用于填充空白区域）"
                 }),
             },
-            "optional": {
-                "image1": ("IMAGE",),
-                "image2": ("IMAGE",),
-                "image3": ("IMAGE",),
-                "image4": ("IMAGE",),
-                "image5": ("IMAGE",),
-                "image6": ("IMAGE",),
-                "image7": ("IMAGE",),
-                "image8": ("IMAGE",),
-                "image9": ("IMAGE",),
-                "image10": ("IMAGE",),
-                "image11": ("IMAGE",),
-                "image12": ("IMAGE",),
-                "image13": ("IMAGE",),
-                "image14": ("IMAGE",),
-            }
+            "optional": {}
         }
+        
+        # 动态添加 image1 到 image30
+        for i in range(1, 31):
+            inputs["optional"][f"image{i}"] = ("IMAGE",)
+            
+        return inputs
     
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("collage_image", "position_guide")
@@ -130,17 +127,17 @@ class KenChenLLMGeminiBananaImageCollageNode:
         self.bgcolor = "#8B008B"
         self.groupcolor = "#DDA0DD"
     
-    def create_collage(self, max_cell_size, resize_mode, add_numbers, number_size, number_position, background_color,
-                      image1=None, image2=None, image3=None, image4=None, image5=None, image6=None,
-                      image7=None, image8=None, image9=None, image10=None, image11=None, image12=None,
-                      image13=None, image14=None):
+    def create_collage(self, max_cell_size, resize_mode, add_numbers, number_size, number_position, background_color, **kwargs):
         """创建图片拼接"""
         
         # 收集所有输入的图片
-        input_images = [
-            image1, image2, image3, image4, image5, image6, image7,
-            image8, image9, image10, image11, image12, image13, image14
-        ]
+        input_images = []
+        for i in range(1, 31):
+            img_name = f"image{i}"
+            if img_name in kwargs:
+                input_images.append(kwargs[img_name])
+            else:
+                input_images.append(None)
         
         # 过滤掉 None 的图片并转换为 PIL
         valid_pil_images = []
@@ -342,5 +339,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "KenChenLLMGeminiBananaImageCollageNode": "🍌 Gemini Banana 图片拼接 (最多14张)",
+    "KenChenLLMGeminiBananaImageCollageNode": "🍌 Gemini Banana 图片拼接 (最多30张)",
 }
